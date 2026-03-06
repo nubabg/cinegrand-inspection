@@ -1,0 +1,967 @@
+﻿<!DOCTYPE html>
+<html lang="bg">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cine Grand Hygiene Control</title>
+    <style>
+      :root {
+        --bg: #080808;
+        --panel: #131313;
+        --panel-2: #1a1a1a;
+        --border: #2a2a2a;
+        --gold: #c9a227;
+        --gold-2: #e8c35a;
+        --white: #ffffff;
+        --muted: #9ca3af;
+        --muted-2: #6b7280;
+        --green: #22c55e;
+        --green-dark: #166534;
+        --red: #ef4444;
+        --red-dark: #7f1d1d;
+        --blue: #60a5fa;
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: radial-gradient(circle at top, rgba(201,162,39,.18), transparent 30%), var(--bg);
+        color: var(--white);
+        font-family: "Segoe UI", sans-serif;
+      }
+
+      button, input, select, textarea {
+        font: inherit;
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        background: linear-gradient(135deg, var(--gold), var(--gold-2), #8a6c10);
+        color: #111;
+        padding: 16px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .brand {
+        font-weight: 800;
+        letter-spacing: .18em;
+        text-transform: uppercase;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .btn {
+        border: 1px solid transparent;
+        border-radius: 10px;
+        padding: 10px 14px;
+        cursor: pointer;
+      }
+
+      .btn-gold {
+        background: linear-gradient(135deg, var(--gold), var(--gold-2));
+        color: #111;
+        font-weight: 700;
+      }
+
+      .btn-outline {
+        background: transparent;
+        color: var(--white);
+        border-color: rgba(255,255,255,.18);
+      }
+
+      .btn-green {
+        background: rgba(34,197,94,.14);
+        color: var(--green);
+        border-color: rgba(34,197,94,.35);
+      }
+
+      .btn-red {
+        background: rgba(239,68,68,.14);
+        color: var(--red);
+        border-color: rgba(239,68,68,.35);
+      }
+
+      .btn-blue {
+        background: rgba(96,165,250,.14);
+        color: var(--blue);
+        border-color: rgba(96,165,250,.35);
+      }
+
+      .page {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 24px;
+      }
+
+      .grid {
+        display: grid;
+        gap: 16px;
+      }
+
+      .cards-2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .cards-4 {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .panel {
+        background: linear-gradient(180deg, var(--panel), #0f0f0f);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      }
+
+      .hero-title, .section-title {
+        margin: 0 0 8px;
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
+      .muted-2 {
+        color: var(--muted-2);
+      }
+
+      .stat {
+        text-align: center;
+      }
+
+      .stat strong {
+        display: block;
+        font-size: 34px;
+        margin-top: 8px;
+      }
+
+      .card-pick {
+        cursor: pointer;
+        overflow: hidden;
+        padding: 0;
+      }
+
+      .card-head {
+        padding: 24px;
+        min-height: 150px;
+      }
+
+      .card-body {
+        padding: 18px 20px 20px;
+      }
+
+      .tag-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 16px;
+      }
+
+      .tag {
+        font-size: 12px;
+        padding: 4px 8px;
+        border-radius: 999px;
+        border: 1px solid rgba(255,255,255,.12);
+        color: var(--muted);
+      }
+
+      .field {
+        display: grid;
+        gap: 8px;
+        margin-bottom: 14px;
+      }
+
+      .field label {
+        font-size: 12px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: .12em;
+      }
+
+      .field input, .field select, .field textarea {
+        width: 100%;
+        background: #0b0b0b;
+        color: var(--white);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 12px 14px;
+      }
+
+      .items {
+        display: grid;
+        gap: 10px;
+      }
+
+      .item-row {
+        display: grid;
+        grid-template-columns: 1fr 240px;
+        gap: 16px;
+        align-items: center;
+        background: rgba(255,255,255,.02);
+        border: 1px solid var(--border);
+        border-left: 4px solid var(--border);
+        border-radius: 12px;
+        padding: 14px 16px;
+      }
+
+      .item-row.clean { border-left-color: var(--green); background: rgba(34,197,94,.08); }
+      .item-row.dirty { border-left-color: var(--red); background: rgba(239,68,68,.08); }
+      .item-row.missing { border-left-color: #f59e0b; }
+
+      .item-title {
+        font-weight: 700;
+        margin-bottom: 4px;
+      }
+
+      .status-buttons {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .status-btn {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 12px 8px;
+        cursor: pointer;
+        background: #111;
+        color: var(--white);
+      }
+
+      .status-btn.active.clean {
+        background: linear-gradient(135deg, var(--green), var(--green-dark));
+        border-color: var(--green);
+      }
+
+      .status-btn.active.dirty {
+        background: linear-gradient(135deg, var(--red), var(--red-dark));
+        border-color: var(--red);
+      }
+
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 18px;
+      }
+
+      .table-wrap {
+        overflow-x: auto;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      th, td {
+        text-align: left;
+        padding: 12px 14px;
+        border-bottom: 1px solid rgba(255,255,255,.06);
+      }
+
+      th {
+        color: var(--muted);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: .12em;
+      }
+
+      tr:nth-child(even) td {
+        background: rgba(255,255,255,.02);
+      }
+
+      .pill {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .pill.ok { color: var(--green); background: rgba(34,197,94,.15); }
+      .pill.bad { color: var(--red); background: rgba(239,68,68,.15); }
+
+      .progress {
+        height: 4px;
+        background: #101010;
+      }
+
+      .progress > div {
+        height: 100%;
+        background: linear-gradient(135deg, var(--gold), var(--gold-2));
+      }
+
+      .tabs {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .tab {
+        background: transparent;
+        color: var(--muted);
+        border: 1px solid rgba(255,255,255,.1);
+        border-radius: 999px;
+        padding: 8px 12px;
+        cursor: pointer;
+      }
+
+      .tab.active {
+        color: var(--gold);
+        border-color: rgba(201,162,39,.5);
+      }
+
+      .bars {
+        display: grid;
+        gap: 10px;
+      }
+
+      .bar-label {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 6px;
+        gap: 10px;
+      }
+
+      .bar-track {
+        height: 8px;
+        background: #0d0d0d;
+        border-radius: 999px;
+        overflow: hidden;
+      }
+
+      .bar-fill {
+        height: 100%;
+        border-radius: 999px;
+      }
+
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,.75);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        z-index: 40;
+      }
+
+      .modal {
+        width: min(520px, 100%);
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 24px;
+      }
+
+      .toast {
+        position: fixed;
+        right: 20px;
+        bottom: 20px;
+        z-index: 50;
+        padding: 14px 16px;
+        border-radius: 12px;
+        color: var(--white);
+        border: 1px solid transparent;
+      }
+
+      .toast.success { background: rgba(22,101,52,.95); border-color: var(--green); }
+      .toast.error { background: rgba(127,29,29,.95); border-color: var(--red); }
+
+      .hidden { display: none; }
+
+      @media (max-width: 900px) {
+        .cards-2, .cards-4 { grid-template-columns: 1fr; }
+        .item-row { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script>
+      const HALLS = ["Зала 1", "Зала 2", "Зала 3", "Зала 4", "Зала 5", "Зала 6"];
+      const HALL_ITEMS = [
+        { id: "cup_holders", label: "Cup Holders", icon: "☕", desc: "Поставки за чаши" },
+        { id: "seats", label: "Седалки", icon: "💺", desc: "Тапицерия и механизъм" },
+        { id: "carpet", label: "Мокет", icon: "🟫", desc: "Под и пътеки" },
+        { id: "armrests", label: "Подлакътници", icon: "✋", desc: "Повърхности" },
+        { id: "floor", label: "Под (без мокет)", icon: "🧹", desc: "Твърди настилки" },
+        { id: "screen_area", label: "Зона до екрана", icon: "🎬", desc: "Предна зона" },
+      ];
+      const BATHROOM_ITEMS = [
+        { id: "trash_bins", label: "Кошчета", icon: "🗑️", desc: "Изпразване и дезинфекция" },
+        { id: "general_clean", label: "Общо почистване", icon: "🧽", desc: "Всички повърхности" },
+        { id: "toilet_paper", label: "Тоалетна хартия", icon: "🧻", desc: "Зареждане" },
+        { id: "soap", label: "Сапун", icon: "🧴", desc: "Дозатори" },
+        { id: "mirrors", label: "Огледала", icon: "🪞", desc: "Без петна" },
+        { id: "floor_bathroom", label: "Под", icon: "🧹", desc: "Мокро почистване" },
+        { id: "sinks", label: "Мивки", icon: "🚿", desc: "Кран и мивка" },
+      ];
+      const BATHROOMS = [
+        "Дамска тоалетна - Партер",
+        "Мъжка тоалетна - Партер",
+        "Дамска тоалетна - Етаж 1",
+        "Мъжка тоалетна - Етаж 1",
+        "Персонална тоалетна",
+      ];
+      const STATUS = { CLEAN: "clean", DIRTY: "dirty" };
+      const DELETE_PASSWORD = "CineGrand2025";
+      const STORAGE = { records: "cg_v4_records", sheetsUrl: "cg_sheets_url", sync: "cg_sync_hist" };
+      const CONFIGS = {
+        hall: {
+          title: "Проверка на Кинозала",
+          shortTitle: "Кинозала",
+          icon: "🎭",
+          accent: "var(--gold)",
+          locations: HALLS,
+          items: HALL_ITEMS,
+          tags: ["Cup Holders", "Седалки", "Мокет", "Под", "Екран", "Подлакътници"],
+        },
+        bathroom: {
+          title: "Проверка на Санитарен Възел",
+          shortTitle: "Санитарен Възел",
+          icon: "🚿",
+          accent: "var(--blue)",
+          locations: BATHROOMS,
+          items: BATHROOM_ITEMS,
+          tags: ["Кошчета", "Почистване", "Хартия", "Сапун", "Мивки", "Огледала"],
+        },
+      };
+
+      const state = {
+        screen: "home",
+        inspectionType: "hall",
+        location: HALLS[0],
+        inspector: "",
+        itemState: {},
+        notes: "",
+        records: [],
+        sheetsUrl: localStorage.getItem(STORAGE.sheetsUrl) || "",
+        urlInput: localStorage.getItem(STORAGE.sheetsUrl) || "",
+        syncHistory: JSON.parse(localStorage.getItem(STORAGE.sync) || "{}"),
+        statsRange: "all",
+        showValidation: false,
+        showSheetsModal: false,
+        showDeleteModal: false,
+        deletePass: "",
+        deleteErr: "",
+        showPassword: false,
+        syncStatus: null,
+        toast: null,
+      };
+
+      try {
+        state.records = JSON.parse(localStorage.getItem(STORAGE.records) || "[]");
+      } catch {
+        state.records = [];
+      }
+
+      const app = document.getElementById("app");
+
+      function fmt(iso) {
+        return new Date(iso).toLocaleString("bg-BG", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+      }
+
+      function pct(issues, total) {
+        return total > 0 ? Math.round((issues / total) * 100) : 0;
+      }
+
+      function isFilled(value) {
+        return value === STATUS.CLEAN || value === STATUS.DIRTY;
+      }
+
+      function dirtyItems(record) {
+        return record.items.filter((item) => item.status === STATUS.DIRTY);
+      }
+
+      function filteredRecords() {
+        const now = new Date();
+        return state.records.filter((record) => {
+          const date = new Date(record.timestamp);
+          if (state.statsRange === "today") return date.toDateString() === now.toDateString();
+          if (state.statsRange === "week") return now - date < 7 * 86400000;
+          if (state.statsRange === "month") return now - date < 30 * 86400000;
+          return true;
+        });
+      }
+
+      function computeStats(records) {
+        const byLocation = {};
+        const byItem = {};
+        records.forEach((record) => {
+          if (!byLocation[record.location]) byLocation[record.location] = { total: 0, issues: 0 };
+          record.items.forEach((item) => {
+            byLocation[record.location].total += 1;
+            if (!byItem[item.label]) byItem[item.label] = { total: 0, issues: 0 };
+            byItem[item.label].total += 1;
+            if (item.status === STATUS.DIRTY) {
+              byLocation[record.location].issues += 1;
+              byItem[item.label].issues += 1;
+            }
+          });
+        });
+        return { byLocation, byItem };
+      }
+
+      function persist() {
+        localStorage.setItem(STORAGE.records, JSON.stringify(state.records));
+        localStorage.setItem(STORAGE.sheetsUrl, state.sheetsUrl);
+        localStorage.setItem(STORAGE.sync, JSON.stringify(state.syncHistory));
+      }
+
+      function showToast(msg, type = "success") {
+        state.toast = { msg, type };
+        render();
+        clearTimeout(showToast.timer);
+        showToast.timer = setTimeout(() => {
+          state.toast = null;
+          render();
+        }, 4000);
+      }
+
+      async function sendToSheets(url, record) {
+        if (!url || !url.startsWith("https://")) return { success: false, error: "Невалиден URL" };
+        await fetch(url, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ record }),
+        });
+        return { success: true };
+      }
+
+      async function syncRecord(record) {
+        if (!state.sheetsUrl) {
+          state.showSheetsModal = true;
+          render();
+          return false;
+        }
+        state.syncHistory[record.id] = "syncing";
+        persist();
+        render();
+        try {
+          const result = await sendToSheets(state.sheetsUrl, record);
+          state.syncHistory[record.id] = result.success ? "synced" : "error";
+          persist();
+          render();
+          return result.success;
+        } catch {
+          state.syncHistory[record.id] = "error";
+          persist();
+          render();
+          return false;
+        }
+      }
+
+      function startInspection(type) {
+        const config = CONFIGS[type];
+        state.inspectionType = type;
+        state.location = config.locations[0];
+        state.inspector = "";
+        state.itemState = {};
+        state.notes = "";
+        state.showValidation = false;
+        state.screen = "inspection";
+        render();
+      }
+
+      async function submitInspection() {
+        const config = CONFIGS[state.inspectionType];
+        state.showValidation = true;
+        const allFilled = config.items.every((item) => state.itemState[item.id] === STATUS.CLEAN || state.itemState[item.id] === STATUS.DIRTY);
+        if (!state.inspector.trim()) {
+          showToast("Моля въведи своето пълно име.", "error");
+          return;
+        }
+        if (!allFilled) {
+          showToast("Всички точки трябва да бъдат попълнени.", "error");
+          render();
+          return;
+        }
+        const record = {
+          id: Date.now(),
+          type: state.inspectionType,
+          location: state.location,
+          inspector: state.inspector.trim(),
+          timestamp: new Date().toISOString(),
+          items: config.items.map((item) => ({ id: item.id, label: item.label, icon: item.icon, status: state.itemState[item.id] })),
+          notes: state.notes,
+        };
+        state.records = [record, ...state.records];
+        persist();
+        state.screen = "home";
+        render();
+        showToast(`Проверката на „${state.location}“ е записана.`);
+        if (state.sheetsUrl && await syncRecord(record)) showToast("Синхронизирано с Google Sheets.");
+      }
+
+      function renderTopbar() {
+        return `
+          <div class="topbar">
+            <div class="brand">Cine Grand</div>
+            <div class="actions">
+              ${state.screen !== "home" ? `<button class="btn btn-outline" data-action="go-home">Начало</button>` : ""}
+              <button class="btn btn-outline" data-action="open-sheets">${state.sheetsUrl ? "Sheets: ON" : "Свържи Sheets"}</button>
+              <button class="btn btn-outline" data-action="go-history">История</button>
+              <button class="btn btn-outline" data-action="go-stats">Статистика</button>
+            </div>
+          </div>
+        `;
+      }
+
+      function renderHome() {
+        const today = state.records.filter((record) => new Date(record.timestamp).toDateString() === new Date().toDateString());
+        return `
+          <div class="page">
+            ${!state.sheetsUrl ? `<div class="panel" style="margin-bottom:16px;display:flex;justify-content:space-between;gap:16px;align-items:center;"><div><h3 class="section-title">Свържи Google Sheets</h3><div class="muted">Данните ще се изпращат автоматично при всяка проверка.</div></div><button class="btn btn-gold" data-action="open-sheets">Настрой</button></div>` : ""}
+            ${state.records.length ? `<div class="grid cards-4" style="margin-bottom:24px;">${[
+              ["Общо проверки", state.records.length, "var(--gold)"],
+              ["Проверки днес", today.length, "var(--white)"],
+              ["Проблема днес", today.reduce((sum, record) => sum + dirtyItems(record).length, 0), "var(--red)"],
+              ["Несинхронизирани", state.records.filter((record) => !state.syncHistory[record.id] || state.syncHistory[record.id] === "error").length, "#f59e0b"],
+            ].map(([label, value, color]) => `<div class="panel stat"><div class="muted">${label}</div><strong style="color:${color};">${value}</strong></div>`).join("")}</div>` : ""}
+            <div style="margin-bottom:18px;"><h1 class="hero-title">Нова Проверка</h1><div class="muted">Избери типа на проверката. Основното предназначение остава същото: маркиране, запис, история и статистика.</div></div>
+            <div class="grid cards-2 cg-action-grid" style="margin-bottom:24px;">
+              ${Object.entries(CONFIGS).map(([key, config]) => `
+                <div class="panel card-pick" data-action="start-inspection" data-type="${key}">
+                  <div class="card-head" style="background:linear-gradient(160deg, rgba(255,255,255,.03), rgba(0,0,0,.1)), radial-gradient(circle at top right, ${key === "hall" ? "rgba(201,162,39,.22)" : "rgba(96,165,250,.20)"}, transparent 40%);">
+                    <div style="font-size:56px;margin-bottom:8px;">${config.icon}</div>
+                    <div style="font-size:28px;font-weight:700;">${config.shortTitle}</div>
+                    <div class="muted">${key === "hall" ? "Зали 1–6" : "Тоалетни"}</div>
+                  </div>
+                  <div class="card-body">
+                    <div class="tag-list">${config.tags.map((tag) => `<span class="tag">${tag}</span>`).join("")}</div>
+                    <div class="btn btn-gold" style="text-align:center;">Започни проверка</div>
+                  </div>
+                </div>
+              `).join("")}
+            </div>
+            ${state.records.length ? renderRecentTable(state.records.slice(0, 7), true) : ""}
+          </div>
+        `;
+      }
+
+      function renderRecentTable(records, compact) {
+        return `
+          <div class="panel">
+            <div class="toolbar">
+              <h3 class="section-title" style="margin:0;">${compact ? "Последни проверки" : "История на Проверки"}</h3>
+              ${compact ? `<div style="display:flex;gap:8px;"><button class="btn btn-outline" data-action="go-history">Виж история</button><button class="btn btn-outline" data-action="open-delete">Изтрий локални записи</button></div>` : ""}
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Дата/Час</th>
+                    <th>Локация</th>
+                    <th>Проверяващ</th>
+                    <th>Статус</th>
+                    <th>Sheets</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${records.map((record) => {
+                    const issues = dirtyItems(record);
+                    const sync = state.syncHistory[record.id];
+                    return `
+                      <tr>
+                        <td>${fmt(record.timestamp)}</td>
+                        <td>${CONFIGS[record.type].icon} ${record.location}</td>
+                        <td class="muted">${record.inspector}</td>
+                        <td><span class="pill ${issues.length ? "bad" : "ok"}">${issues.length ? `✗ ${issues.length} проблема` : "✓ Чисто"}</span></td>
+                        <td>
+                          <div style="display:flex;gap:8px;align-items:center;">
+                            <span>${sync === "synced" ? "✓" : sync === "syncing" ? "⟳" : sync === "error" ? "✗" : "—"}</span>
+                            ${(sync === "error" || (!sync && state.sheetsUrl)) ? `<button class="btn btn-outline" data-action="retry-sync" data-id="${record.id}" style="padding:4px 8px;">retry</button>` : ""}
+                          </div>
+                        </td>
+                      </tr>
+                    `;
+                  }).join("")}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+      }
+      function renderInspection() {
+        const config = CONFIGS[state.inspectionType];
+        const filledCount = config.items.filter((item) => isFilled(state.itemState[item.id])).length;
+        const allFilled = filledCount === config.items.length;
+        const progress = Math.round((filledCount / config.items.length) * 100);
+        const dirtyCount = Object.values(state.itemState).filter((value) => value === STATUS.DIRTY).length;
+        return `
+          <div class="page">
+            <div class="progress" style="margin:-24px -24px 24px;"><div style="width:${progress}%;"></div></div>
+            <div class="toolbar">
+              <div>
+                <h1 class="hero-title">${config.title}</h1>
+                <div class="muted">${state.sheetsUrl ? "Данните ще се изпратят автоматично към Google Sheets след запис." : "Локален запис в браузъра."}</div>
+              </div>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <span class="muted"><strong style="color:var(--green);">${filledCount}</strong>/${config.items.length} попълнени</span>
+                ${dirtyCount ? `<span class="pill bad">⚠ ${dirtyCount} проблема</span>` : ""}
+              </div>
+            </div>
+            <div class="panel" style="margin-bottom:16px;">
+              <div class="grid cards-2">
+                <div class="field">
+                  <label>Локация *</label>
+                  <select id="location-select">${config.locations.map((location) => `<option value="${location}" ${location === state.location ? "selected" : ""}>${location}</option>`).join("")}</select>
+                </div>
+                <div class="field">
+                  <label>Проверяващ *</label>
+                  <input id="inspector-input" value="${escapeHtml(state.inspector)}" placeholder="Пълно име…" />
+                  ${state.showValidation && !state.inspector.trim() ? `<div style="color:var(--red);font-size:12px;">Задължително поле</div>` : ""}
+                </div>
+              </div>
+              <div class="muted" style="font-size:13px;">Дата и час: ${fmt(new Date().toISOString())}</div>
+            </div>
+            <div class="panel" style="margin-bottom:16px;">
+              <div class="toolbar">
+                <h3 class="section-title" style="margin:0;">${config.sectionTitle}</h3>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                  <button class="btn btn-green" data-action="fill-all" data-value="clean">Всичко чисто</button>
+                  <button class="btn btn-red" data-action="fill-all" data-value="dirty">Всичко нечисто</button>
+                </div>
+              </div>
+              <div class="items">
+                ${config.items.map((item) => {
+                  const value = state.itemState[item.id];
+                  const cls = value === STATUS.CLEAN ? "clean" : value === STATUS.DIRTY ? "dirty" : state.showValidation ? "missing" : "";
+                  return `
+                    <div class="item-row ${cls}">
+                      <div>
+                        <div class="item-title">${item.icon} ${item.label}</div>
+                        <div class="muted">${item.desc}</div>
+                        ${state.showValidation && !value ? `<div style="color:#f59e0b;font-size:12px;margin-top:4px;">Задължително поле</div>` : ""}
+                      </div>
+                      <div class="status-buttons">
+                        <button class="status-btn ${value === STATUS.CLEAN ? "active clean" : ""}" data-action="set-item" data-id="${item.id}" data-value="clean">✓ Чисто</button>
+                        <button class="status-btn ${value === STATUS.DIRTY ? "active dirty" : ""}" data-action="set-item" data-id="${item.id}" data-value="dirty">✗ Нечисто</button>
+                      </div>
+                    </div>
+                  `;
+                }).join("")}
+              </div>
+              ${state.showValidation && !allFilled ? `<div style="margin-top:12px;padding:12px 14px;border:1px solid rgba(239,68,68,.35);border-radius:12px;background:rgba(239,68,68,.12);color:#fca5a5;">Маркирай всяка точка като Чисто или Нечисто преди да запишеш.</div>` : ""}
+            </div>
+            <div class="panel" style="margin-bottom:16px;">
+              <div class="field" style="margin:0;">
+                <label>Бележки</label>
+                <textarea id="notes-input" rows="4" placeholder="Допълнителни коментари…">${escapeHtml(state.notes)}</textarea>
+              </div>
+            </div>
+            <button class="btn btn-gold" data-action="submit-inspection" style="width:100%;padding:16px;font-size:16px;">${allFilled && state.inspector.trim() ? `Запази${state.sheetsUrl ? " и изпрати" : ""}` : `Попълни всички полета (${filledCount}/${config.items.length})`}</button>
+          </div>
+        `;
+      }
+
+      function renderHistory() {
+        return `<div class="page">${state.records.length ? renderRecentTable(state.records, false) : `<div class="panel" style="text-align:center;color:var(--muted);padding:60px 20px;">Все още няма записани проверки.</div>`}</div>`;
+      }
+
+      function barColor(percent) {
+        return percent > 60 ? "var(--red)" : percent > 30 ? "#f59e0b" : "var(--green)";
+      }
+
+      function renderBars(entries) {
+        return `<div class="bars">${entries.map(([label, data]) => {
+          const percent = pct(data.issues, data.total);
+          return `
+            <div>
+              <div class="bar-label"><span>${label}</span><span style="color:${barColor(percent)};">${data.issues}/${data.total} - ${percent}%</span></div>
+              <div class="bar-track"><div class="bar-fill" style="width:${percent}%;background:${barColor(percent)};"></div></div>
+            </div>
+          `;
+        }).join("")}</div>`;
+      }
+
+      function renderStats() {
+        const records = filteredRecords();
+        if (!records.length) return `<div class="page"><div class="panel" style="text-align:center;color:var(--muted);padding:60px 20px;">Няма данни за избрания период.</div></div>`;
+        const stats = computeStats(records);
+        const totalDirty = records.reduce((sum, record) => sum + dirtyItems(record).length, 0);
+        const totalClean = records.reduce((sum, record) => sum + record.items.filter((item) => item.status === STATUS.CLEAN).length, 0);
+        const overall = pct(totalDirty, totalClean + totalDirty);
+        const topIssue = Object.entries(stats.byItem).sort((a, b) => pct(b[1].issues, b[1].total) - pct(a[1].issues, a[1].total))[0];
+        const topLocation = Object.entries(stats.byLocation).sort((a, b) => pct(b[1].issues, b[1].total) - pct(a[1].issues, a[1].total))[0];
+        const trafficText = overall === 0 ? "ЗЕЛЕНО - Отлично" : overall <= 20 ? "ЖЪЛТО - Добро" : overall <= 50 ? "ОРАНЖЕВО - Нужно внимание" : "ЧЕРВЕНО - Критично";
+        return `
+          <div class="page">
+            <div class="tabs" style="margin-bottom:16px;">${RANGE_OPTIONS().map(([value, label]) => `<button class="tab ${state.statsRange === value ? "active" : ""}" data-action="set-range" data-value="${value}">${label}</button>`).join("")}</div>
+            <div class="grid cards-4" style="margin-bottom:16px;">${[
+              ["Проверки", records.length, "var(--gold)"],
+              ["Проблема", totalDirty, "var(--red)"],
+              ["Чисти", totalClean, "var(--green)"],
+              ["% Проблем", overall + "%", "var(--white)"],
+            ].map(([label, value, color]) => `<div class="panel stat"><div class="muted">${label}</div><strong style="color:${color};">${value}</strong></div>`).join("")}</div>
+            <div class="panel" style="margin-bottom:16px;border-left:4px solid ${barColor(overall)};"><strong>${trafficText}</strong><div class="muted" style="margin-top:6px;">Обща оценка за периода</div></div>
+            <div class="grid cards-2 cg-chart-grid" style="margin-bottom:16px;">
+              ${topIssue ? `<div class="panel"><div class="muted" style="font-size:12px;text-transform:uppercase;letter-spacing:.12em;">Най-чест проблем</div><h3 class="section-title" style="color:var(--red);">${topIssue[0]}</h3><div class="muted">${topIssue[1].issues}/${topIssue[1].total} проверки - ${pct(topIssue[1].issues, topIssue[1].total)}%</div></div>` : ""}
+              ${topLocation ? `<div class="panel"><div class="muted" style="font-size:12px;text-transform:uppercase;letter-spacing:.12em;">Най-проблемна локация</div><h3 class="section-title" style="color:#fbbf24;">${topLocation[0]}</h3><div class="muted">${topLocation[1].issues} проблема</div></div>` : ""}
+            </div>
+            <div class="grid cards-2 cg-chart-grid">
+              <div class="panel"><h3 class="section-title">По Локация</h3>${renderBars(Object.entries(stats.byLocation))}</div>
+              <div class="panel"><h3 class="section-title">По Елемент</h3>${renderBars(Object.entries(stats.byItem))}</div>
+            </div>
+          </div>
+        `;
+      }
+
+      function RANGE_OPTIONS() {
+        return [["all", "Всичко"], ["today", "Днес"], ["week", "Седмица"], ["month", "Месец"]];
+      }
+
+      function escapeHtml(value) {
+        return String(value || "")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;");
+      }
+
+      function renderModals() {
+        let html = "";
+        if (state.showSheetsModal) {
+          html += `
+            <div class="modal-backdrop" data-action="close-sheets">
+              <div class="modal" onclick="event.stopPropagation()">
+                <h2 class="section-title">Свързване с Google Sheets</h2>
+                <p class="muted" style="margin-bottom:14px;">Въведи Web App URL от Google Apps Script.</p>
+                <div class="field"><label>Apps Script URL</label><input id="sheets-url-input" value="${escapeHtml(state.urlInput)}" placeholder="https://script.google.com/macros/s/.../exec" /></div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+                  <button class="btn btn-outline" data-action="test-sheets">${state.syncStatus === "syncing" ? "Тества се..." : "Тествай връзката"}</button>
+                  <button class="btn btn-gold" data-action="save-sheets">Запази</button>
+                  <button class="btn btn-outline" data-action="close-sheets">Отказ</button>
+                </div>
+                ${state.syncStatus === "synced" ? `<div style="color:var(--green);margin-top:12px;">✓ Връзката работи.</div>` : ""}
+                ${state.syncStatus === "error" ? `<div style="color:var(--red);margin-top:12px;">✗ Грешка. Провери URL.</div>` : ""}
+              </div>
+            </div>
+          `;
+        }
+        if (state.showDeleteModal) {
+          html += `
+            <div class="modal-backdrop" data-action="close-delete">
+              <div class="modal" onclick="event.stopPropagation()">
+                <h2 class="section-title" style="color:var(--red);">Изтриване на Данни</h2>
+                <p class="muted">Ще бъдат изтрити <strong style="color:var(--white);">${state.records.length} записа</strong> от локалното хранилище.</p>
+                <div class="field"><label>Администраторска парола</label><input id="delete-pass-input" type="${state.showPassword ? "text" : "password"}" value="${escapeHtml(state.deletePass)}" placeholder="Въведи парола..." /></div>
+                ${state.deleteErr ? `<div style="color:var(--red);margin-bottom:12px;">${state.deleteErr}</div>` : ""}
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                  <button class="btn btn-outline" data-action="toggle-pass">${state.showPassword ? "Скрий" : "Покажи"}</button>
+                  <button class="btn btn-red" data-action="confirm-delete">Изтрий</button>
+                  <button class="btn btn-outline" data-action="close-delete">Отказ</button>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+        if (state.toast) html += `<div class="toast ${state.toast.type}">${state.toast.msg}</div>`;
+        return html;
+      }
+
+      function render() {
+        const content = state.screen === "home" ? renderHome() : state.screen === "inspection" ? renderInspection() : state.screen === "history" ? renderHistory() : renderStats();
+        app.innerHTML = renderTopbar() + content + renderModals();
+        bindInputs();
+      }
+
+      function bindInputs() {
+        const location = document.getElementById("location-select");
+        if (location) location.onchange = (event) => { state.location = event.target.value; };
+        const inspector = document.getElementById("inspector-input");
+        if (inspector) inspector.oninput = (event) => { state.inspector = event.target.value; };
+        const notes = document.getElementById("notes-input");
+        if (notes) notes.oninput = (event) => { state.notes = event.target.value; };
+        const sheets = document.getElementById("sheets-url-input");
+        if (sheets) sheets.oninput = (event) => { state.urlInput = event.target.value; };
+        const deletePass = document.getElementById("delete-pass-input");
+        if (deletePass) deletePass.oninput = (event) => { state.deletePass = event.target.value; state.deleteErr = ""; };
+      }
+
+      document.addEventListener("click", async (event) => {
+        const button = event.target.closest("[data-action]");
+        if (!button) return;
+        const action = button.dataset.action;
+        if (action === "go-home") state.screen = "home";
+        if (action === "go-history") state.screen = "history";
+        if (action === "go-stats") state.screen = "stats";
+        if (action === "open-sheets") state.showSheetsModal = true;
+        if (action === "close-sheets") { state.showSheetsModal = false; state.syncStatus = null; }
+        if (action === "open-delete") state.showDeleteModal = true;
+        if (action === "close-delete") { state.showDeleteModal = false; state.deleteErr = ""; state.deletePass = ""; }
+        if (action === "start-inspection") startInspection(button.dataset.type);
+        if (action === "set-item") { state.itemState[button.dataset.id] = button.dataset.value; render(); return; }
+        if (action === "fill-all") { const value = button.dataset.value; getConfig(state.inspectionType).items.forEach((item) => state.itemState[item.id] = value); render(); return; }
+        if (action === "submit-inspection") { await submitInspection(); return; }
+        if (action === "retry-sync") { const record = state.records.find((entry) => String(entry.id) === button.dataset.id); if (record) await syncRecord(record); return; }
+        if (action === "set-range") { state.statsRange = button.dataset.value; }
+        if (action === "toggle-pass") state.showPassword = !state.showPassword;
+        if (action === "confirm-delete") {
+          if (state.deletePass !== DELETE_PASSWORD) {
+            state.deleteErr = "Грешна парола. Опитай отново.";
+            render();
+            return;
+          }
+          state.records = [];
+          state.syncHistory = {};
+          localStorage.removeItem(STORAGE.records);
+          localStorage.removeItem(STORAGE.sync);
+          state.showDeleteModal = false;
+          state.deletePass = "";
+          state.deleteErr = "";
+          state.screen = "home";
+          showToast("Всички локални записи са изтрити.");
+          render();
+          return;
+        }
+        if (action === "test-sheets") {
+          if (!state.urlInput.startsWith("https://")) {
+            showToast("Въведи валиден URL.", "error");
+            return;
+          }
+          state.syncStatus = "syncing";
+          render();
+          try {
+            await fetch(state.urlInput, { method: "GET", mode: "no-cors" });
+            state.syncStatus = "synced";
+            showToast("Връзката работи.");
+          } catch {
+            state.syncStatus = "error";
+            showToast("Грешка при свързване.", "error");
+          }
+          render();
+          return;
+        }
+        if (action === "save-sheets") {
+          state.sheetsUrl = state.urlInput.trim();
+          persist();
+          state.showSheetsModal = false;
+          state.syncStatus = null;
+          showToast(state.sheetsUrl ? "Google Sheets URL е запазен." : "URL е изтрит.");
+        }
+        render();
+      });
+
+      function getConfig(type) { return CONFIGS[type] || HALL_CONFIG; }
+      const HALL_CONFIG = CONFIGS.hall;
+
+      render();
+    </script>
+  </body>
+</html>

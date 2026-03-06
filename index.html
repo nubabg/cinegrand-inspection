@@ -1,0 +1,238 @@
+﻿<!DOCTYPE html>
+<html lang="bg">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Streamify | Неограничени филми, сериали и още</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="global-bg"></div>
+    <header class="nf-header">
+      <div class="logo">Streamify</div>
+      <nav class="nf-nav" aria-label="Основна навигация">
+        <a href="#hero">Начало</a>
+        <a href="#features">Характеристики</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+      <button class="btn ghost">Вход</button>
+    </header>
+
+    <main>
+      <section class="hero" id="hero" aria-labelledby="hero-title">
+        <div class="hero-glow"></div>
+        <div class="hero-content">
+          <p class="eyebrow">Гледай навсякъде. Отменяш по всяко време.</p>
+          <h1 id="hero-title">Неограничени филми, сериали и още.</h1>
+          <p class="lead">
+            Гледай на телевизора, компютъра, телефона и таблета. Готов ли си да
+            гледаш? Въведи имейл, за да започнеш или възобновиш членството си.
+          </p>
+          <form class="signup-form" novalidate>
+            <label class="sr-only" for="hero-email">Имейл адрес</label>
+            <input
+              type="email"
+              id="hero-email"
+              name="email"
+              placeholder="Имейл адрес"
+              required
+            />
+            <button type="submit" class="btn primary">Започни</button>
+            <p class="form-feedback" aria-live="polite"></p>
+          </form>
+        </div>
+      </section>
+
+      <section class="feature" id="features">
+        <div class="feature-text">
+          <h2>Гледай на телевизора.</h2>
+          <p>
+            Наслади се на Streamify на смарт телевизори, Playstation, Xbox,
+            Chromecast, Apple TV, Blu-ray плейъри и още.
+          </p>
+        </div>
+        <div class="feature-media">
+          <div class="media-frame">
+            <img
+              src="https://images.unsplash.com/photo-1587825140708-dfaf72ae4b04?auto=format&fit=crop&w=1200&q=80"
+              alt="Семейство гледа филм на телевизор"
+              loading="lazy"
+            />
+          </div>
+        </div>
+      </section>
+
+      <section class="feature reverse">
+        <div class="feature-text">
+          <h2>Изтегляй сериали за офлайн гледане.</h2>
+          <p>
+            Запази любимите си заглавия на телефона и таблета си и гледай без
+            връзка с интернет.
+          </p>
+        </div>
+        <div class="feature-media">
+          <div class="media-frame">
+            <img
+              src="https://images.unsplash.com/photo-1510552776732-05b39eca07de?auto=format&fit=crop&w=1200&q=80"
+              alt="Мобилен телефон с отворено приложение за стрийминг"
+              loading="lazy"
+            />
+            <div class="download-card">
+              <div>
+                <strong>Космически клуб</strong>
+                <p>Изтегляне...</p>
+              </div>
+              <div class="spinner"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="feature">
+        <div class="feature-text">
+          <h2>Гледай безкрайно на всички устройства.</h2>
+          <p>
+            Премести гледането от телевизора на телефона само с едно докосване.
+            Напълно синхронизирано между профилите ти.
+          </p>
+        </div>
+        <div class="feature-media">
+          <div class="media-frame multi">
+            <img
+              src="https://images.unsplash.com/photo-1523475472560-d2df97ec485c?auto=format&fit=crop&w=1200&q=80"
+              alt="Различни устройства със стрийминг съдържание"
+              loading="lazy"
+            />
+          </div>
+        </div>
+      </section>
+
+      <section class="feature reverse kids">
+        <div class="feature-text">
+          <h2>Създай профили за деца.</h2>
+          <p>
+            Дайте на децата приключения с любимите им герои, в отделна, безопасна
+            зона без странично съдържание.
+          </p>
+        </div>
+        <div class="feature-media">
+          <div class="media-frame">
+            <img
+              src="https://images.unsplash.com/photo-1504593811423-6dd665756598?auto=format&fit=crop&w=1200&q=80"
+              alt="Деца гледат анимация на таблет"
+              loading="lazy"
+            />
+          </div>
+        </div>
+      </section>
+
+      <section class="faq" id="faq" aria-labelledby="faq-title">
+        <h2 id="faq-title">Често задавани въпроси</h2>
+        <div class="faq-list">
+          <div class="faq-item">
+            <button aria-expanded="false">
+              <span>Какво е Streamify?</span>
+              <span class="icon">+</span>
+            </button>
+            <div class="faq-panel" hidden>
+              <p>
+                Streamify е онлайн услуга за стрийминг, която предлага голяма
+                библиотека от филми, сериали, документални и детски продукции без
+                реклами.
+              </p>
+            </div>
+          </div>
+          <div class="faq-item">
+            <button aria-expanded="false">
+              <span>Колко струва?</span>
+              <span class="icon">+</span>
+            </button>
+            <div class="faq-panel" hidden>
+              <p>
+                Плановете започват от 13,99 лв./месец. Можеш да отмениш по всяко
+                време без допълнителни такси.
+              </p>
+            </div>
+          </div>
+          <div class="faq-item">
+            <button aria-expanded="false">
+              <span>Къде мога да гледам?</span>
+              <span class="icon">+</span>
+            </button>
+            <div class="faq-panel" hidden>
+              <p>
+                Гледай на телевизор, компютър, смартфон или таблет. Достатъчно е
+                да влезеш в профила си и да натиснеш Play.
+              </p>
+            </div>
+          </div>
+          <div class="faq-item">
+            <button aria-expanded="false">
+              <span>Мога ли да отменя?</span>
+              <span class="icon">+</span>
+            </button>
+            <div class="faq-panel" hidden>
+              <p>
+                Да, членството е гъвкаво. Отмени онлайн в настройките си само с
+                няколко клика.
+              </p>
+            </div>
+          </div>
+          <div class="faq-item">
+            <button aria-expanded="false">
+              <span>Подходящо ли е за децата?</span>
+              <span class="icon">+</span>
+            </button>
+            <div class="faq-panel" hidden>
+              <p>
+                Специалните детски профили включват PIN защита и каталог, подбран
+                за различните възрасти.
+              </p>
+            </div>
+          </div>
+        </div>
+        <p class="lead">
+          Готов ли си да гледаш? Въведи имейл, за да започнеш или възобновиш
+          членството си.
+        </p>
+        <form class="signup-form" novalidate>
+          <label class="sr-only" for="faq-email">Имейл адрес</label>
+          <input
+            type="email"
+            id="faq-email"
+            name="email"
+            placeholder="Имейл адрес"
+            required
+          />
+          <button type="submit" class="btn primary">Започни</button>
+          <p class="form-feedback" aria-live="polite"></p>
+        </form>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>Имаш въпроси? Обади се на 0800 900 900</p>
+      <div class="footer-grid">
+        <a href="#">ЧЗВ</a>
+        <a href="#">Център за помощ</a>
+        <a href="#">Акаунт</a>
+        <a href="#">Медийни центрове</a>
+        <a href="#">Кариери</a>
+        <a href="#">Правила за подаръци</a>
+        <a href="#">Политика за поверителност</a>
+        <a href="#">Настройки за „бисквитки“</a>
+        <a href="#">Правна информация</a>
+        <a href="#">Контакт</a>
+      </div>
+      <p class="locale">Streamify България</p>
+    </footer>
+
+    <script src="script.js" defer></script>
+  </body>
+</html>
