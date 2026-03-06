@@ -482,6 +482,13 @@
 
       const QR_DEFAULT_URL = "https://nubabg.github.io/cinegrand-inspection/cinegrand-inspection.html";
 
+      /* Само тези локации се показват в QR модала */
+      const QR_LOCATIONS = [
+        ...HALLS.map((loc) => ({ type: "hall", location: loc, icon: "🎬" })),
+        { type: "bathroom", location: "Дамска тоалетна - Партер", icon: "🚿" },
+        { type: "bathroom", location: "Мъжка тоалетна - Партер", icon: "🚿" },
+      ];
+
       const CONFIGS = {
         hall: {
           title: "Проверка на Кинозала",
@@ -1208,10 +1215,7 @@
       function renderQRModal() {
         const base = getQRBaseUrl();
         const hasBase = base.length > 0;
-        const items = [
-          ...HALLS.map((loc) => ({ type: "hall", location: loc, icon: "🎬" })),
-          ...BATHROOMS.map((loc) => ({ type: "bathroom", location: loc, icon: "🚿" })),
-        ];
+        const items = QR_LOCATIONS;
         const qrUrl = (type, loc) => {
           const b = base.replace(/\/?$/, "");
           const sep = b.includes("?") ? "&" : "?";
