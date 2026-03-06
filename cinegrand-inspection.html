@@ -543,6 +543,12 @@
       /* ── Helpers ── */
       const app = document.getElementById("app");
 
+      function isMobile() {
+        if (typeof navigator === "undefined") return false;
+        const ua = navigator.userAgent || "";
+        return /Mobi|Android|iPhone|iPad|iPod/i.test(ua);
+      }
+
       function getConfig(type) { return CONFIGS[type] || CONFIGS.hall; }
 
       function fmt(iso) {
@@ -769,8 +775,10 @@
         }
         if (state.openedFromQR) {
           state.openedFromQR = false;
-          const homeUrl = getQRBaseUrl() || (window.location.origin + window.location.pathname);
-          setTimeout(() => { window.location.href = homeUrl; }, 1200);
+          const targetUrl = isMobile()
+            ? "https://www.google.com/"
+            : (getQRBaseUrl() || (window.location.origin + window.location.pathname));
+          setTimeout(() => { window.location.href = targetUrl; }, 1200);
           return;
         }
         state.screen = "home";
