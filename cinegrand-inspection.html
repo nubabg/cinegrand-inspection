@@ -480,6 +480,8 @@
          ══════════════════════════════════════════════════ */
       const SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwqOpU1wZ_k8I7aXgDHcsV2_UroQrTg13R0zQnOQUrwso3H6jDd1GUykW75-OViIAUPSQ/exec";
 
+      const QR_DEFAULT_URL = "https://nubabg.github.io/cinegrand-inspection/cinegrand-inspection.html";
+
       const CONFIGS = {
         hall: {
           title: "Проверка на Кинозала",
@@ -522,6 +524,7 @@
         deleteErr: "",
         showPassword: false,
         toast: null,
+        openedFromQR: false,
       };
 
       try { state.records = JSON.parse(localStorage.getItem(STORAGE_KEYS.records) || "[]"); }
@@ -702,14 +705,14 @@
 
       function getQRBaseUrl() {
         const saved = (localStorage.getItem(STORAGE_KEYS.qrBaseUrl) || "").trim();
-        if (saved && saved.startsWith("http")) return saved.replace(/\/$/, "");
+        if (saved && saved.startsWith("http") && saved.length > 40) return saved.replace(/\/$/, "");
         if (typeof window !== "undefined" && window.location && window.location.href) {
           const href = window.location.href;
           if (href.startsWith("http") && (href.includes("github.io") || href.includes("vercel.app") || href.includes("netlify.app"))) {
             return href.split("?")[0].split("#")[0].replace(/\/$/, "");
           }
         }
-        return "";
+        return QR_DEFAULT_URL;
       }
 
       function startInspection(type, locationOverride) {
@@ -746,8 +749,6 @@
         state.records = [record, ...state.records];
         cleanupOldRecords(); /* Изчистване на стари записи >7 дни */
         persist();
-        state.screen = "home";
-        render();
         showToast(`Проверката на „${state.location}" е записана.`);
         if (isSheetsConfigured()) {
           const syncResult = await syncRecord(record);
@@ -756,9 +757,17 @@
           } else if (syncResult.success) {
             showToast("\u2713 \u0417\u0430\u044f\u0432\u043a\u0430\u0442\u0430 \u0435 \u0438\u0437\u043f\u0440\u0430\u0442\u0435\u043d\u0430 \u043a\u044a\u043c Google Sheets. \u0410\u043a\u043e \u0440\u0435\u0434\u044a\u0442 \u043d\u0435 \u0441\u0435 \u043f\u043e\u044f\u0432\u0438, \u043f\u0440\u043e\u0432\u0435\u0440\u0438 Apps Script \u043b\u043e\u0433\u043e\u0432\u0435\u0442\u0435.");
           } else {
-            showToast("\u26a0 \u0417\u0430\u043f\u0438\u0441\u044a\u0442 \u0435 \u0437\u0430\u043f\u0430\u0437\u0435\u043d \u043b\u043e\u043a\u0430\u043b\u043d\u043e. Sheets sync \u043d\u0435\u0443\u0441\u043f\u0435\u0448\u0435\u043d: " + (syncResult.error || "\u043d\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043d\u0430 \u0433\u0440\u0435\u0448\u043a\u0430"), "error");
+            showToast("\u26a0 \u0417\u0430\u043f\u0438\u0441\u044c\u0442 \u0435 \u0437\u0430\u043f\u0430\u0437\u0435\u043d \u043b\u043e\u043a\u0430\u043b\u043d\u043e. Sheets sync \u043d\u0435\u0443\u0441\u043f\u0435\u0448\u0435\u043d: " + (syncResult.error || "\u043d\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043d\u0430 \u0433\u0440\u0435\u0448\u043a\u0430"), "error");
           }
         }
+        if (state.openedFromQR) {
+          state.openedFromQR = false;
+          const homeUrl = getQRBaseUrl() || (window.location.origin + window.location.pathname);
+          setTimeout(() => { window.location.href = homeUrl; }, 1200);
+          return;
+        }
+        state.screen = "home";
+        render();
       }
 
       /* ?? Export ?? */
@@ -1387,6 +1396,7 @@
           const type = params.get("type");
           const loc = params.get("location");
           if ((type === "hall" || type === "bathroom") && loc) {
+            state.openedFromQR = true;
             const decodedLoc = decodeURIComponent(loc.replace(/\+/g, "%20"));
             startInspection(type, decodedLoc);
             try {
