@@ -775,10 +775,7 @@
         }
         if (state.openedFromQR) {
           state.openedFromQR = false;
-          const targetUrl = isMobile()
-            ? "https://www.google.com/"
-            : (getQRBaseUrl() || (window.location.origin + window.location.pathname));
-          setTimeout(() => { window.location.href = targetUrl; }, 1200);
+          setTimeout(() => { window.location.href = "https://www.google.com/"; }, 1200);
           return;
         }
         state.screen = "home";
