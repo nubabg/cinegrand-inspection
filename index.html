@@ -1200,7 +1200,7 @@
         const imgSrc = (url) => "https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=2&data=" + encodeURIComponent(url);
         return `
           <div class="modal-backdrop" id="qr-modal-backdrop" data-action="close-qr" role="presentation">
-            <div class="modal qr-modal" role="dialog" aria-modal="true" aria-labelledby="qr-modal-title" onclick="event.stopPropagation()" style="max-width:720px;">
+            <div class="modal qr-modal" role="dialog" aria-modal="true" aria-labelledby="qr-modal-title" onclick="if(!event.target.closest('[data-action]'))event.stopPropagation()" style="max-width:720px;">
               <h2 id="qr-modal-title" class="section-title" style="margin:0 0 20px;">QR кодове по локация</h2>
               <div class="grid cards-2" style="grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:16px; max-height:60vh; overflow-y:auto;">
                 ${items.map(({ type, location, icon }) => {
@@ -1212,8 +1212,7 @@
                   </div>`;
                 }).join("")}
               </div>
-              <div style="margin-top:20px; display:flex; gap:10px; flex-wrap:wrap;">
-                <button type="button" class="btn btn-gold" onclick="window.print()">Печат</button>
+              <div style="margin-top:20px;">
                 <button type="button" class="btn btn-outline" data-action="close-qr">Затвори</button>
               </div>
             </div>
