@@ -487,6 +487,24 @@
       /* ── Access Control ── */
       const ACCESS_ALLOWED_IPS = ["62.176.97.58", "130.204.143.95"];
       const QR_SESSION_KEY = "cg_qr_access";
+      const QR_COOLDOWN_KEY = "cg_qr_cooldown";
+      const QR_COOLDOWN_MS = 10 * 60 * 1000; /* 10 минути */
+
+      function getQRCooldownRemaining(type, loc) {
+        try {
+          const data = JSON.parse(localStorage.getItem(QR_COOLDOWN_KEY) || "{}");
+          const remaining = QR_COOLDOWN_MS - (Date.now() - (data[type + "_" + loc] || 0));
+          return remaining > 0 ? remaining : 0;
+        } catch (_) { return 0; }
+      }
+
+      function setQRCooldown(type, loc) {
+        try {
+          const data = JSON.parse(localStorage.getItem(QR_COOLDOWN_KEY) || "{}");
+          data[type + "_" + loc] = Date.now();
+          localStorage.setItem(QR_COOLDOWN_KEY, JSON.stringify(data));
+        } catch (_) {}
+      }
 
       function showAccessDenied() {
         document.getElementById("app").innerHTML = `
@@ -513,6 +531,9 @@
         const params = new URLSearchParams(window.location.search || (window.location.hash.startsWith("#") ? window.location.hash.slice(1) : ""));
         /* QR достъп — URL съдържа QR параметри */
         if (params.get("open") === "inspection") {
+          const type = params.get("type") || "";
+          const loc = params.get("location") || "";
+          if (getQRCooldownRemaining(type, loc) > 0) return false;
           sessionStorage.setItem(QR_SESSION_KEY, "1");
           return true;
         }
@@ -819,8 +840,9 @@
           }
         }
         if (state.openedFromQR) {
+          setQRCooldown(state.inspectionType, state.location);
           state.openedFromQR = false;
-          setTimeout(() => { window.location.href = "https://www.google.com/"; }, 1200);
+          setTimeout(() => { sessionStorage.removeItem(QR_SESSION_KEY); window.location.replace("https://www.google.com/"); }, 1200);
           return;
         }
         state.screen = "home";
