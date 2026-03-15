@@ -6,12 +6,6 @@
     <title>Cine Grand Hygiene Control</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <link rel="shortcut icon" href="favicon.svg" />
-    <link rel="manifest" href="manifest.json" />
-    <meta name="theme-color" content="#c8a756" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="CG Inspection" />
     <script>
       // ── Security: block DevTools & source inspection ──────────────────────
 
@@ -59,13 +53,7 @@
         return e.returnValue;
       });
 
-      // 6. Register Service Worker (PWA offline support)
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', function() {
-          navigator.serviceWorker.register('/sw.js');
-        });
-      }
-    </script>
+</script>
     <style>
       @import url("https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap");
 
@@ -1077,13 +1065,6 @@
           </div>
 
 
-          ${state.records.length ? `<div class="grid cards-4" style="margin-bottom:24px;">${[
-            ["Общо проверки", state.records.length, "var(--gold)"],
-            ["Проверки днес", today.length, "var(--text)"],
-            ["Проблема днес", today.reduce((s, r) => s + dirtyItems(r).length, 0), "var(--red)"],
-            ["Несинхронизирани", pendingSync, pendingSync ? "#f59e0b" : "var(--blue)"],
-          ].map(([l, v, c]) => `<div class="panel stat"><div class="muted">${l}</div><strong style="color:${c};">${v}</strong></div>`).join("")}</div>` : ""}
-
           <div style="margin-bottom:24px;">
             <div class="panel">
               <div class="toolbar"><h3 class="section-title" style="margin:0;">Нова Проверка</h3><span class="meta-chip">Quick Start</span></div>
@@ -1103,7 +1084,6 @@
             </div>
           </div>
 
-          ${state.records.length ? renderRecentTable(state.records.slice(0, 7), true) : ""}
         </div>`;
       }
 
