@@ -6,6 +6,12 @@
     <title>Cine Grand Hygiene Control</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <link rel="shortcut icon" href="favicon.svg" />
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#c8a756" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="CG Inspection" />
     <script>
       // ── Security: block DevTools & source inspection ──────────────────────
 
@@ -45,6 +51,20 @@
 
       // 4. Block drag-select of content
       document.addEventListener('selectstart', function(e) { e.preventDefault(); });
+
+      // 5. Warn before closing / navigating away
+      window.addEventListener('beforeunload', function(e) {
+        e.preventDefault();
+        e.returnValue = 'Сайтът е част от работния процес. Сигурни ли сте, че искате да излезете?';
+        return e.returnValue;
+      });
+
+      // 6. Register Service Worker (PWA offline support)
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('/sw.js');
+        });
+      }
     </script>
     <style>
       @import url("https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap");
