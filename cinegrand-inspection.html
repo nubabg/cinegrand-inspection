@@ -470,8 +470,7 @@
 
       const STATUS = { CLEAN: "clean", DIRTY: "dirty" };
       const DELETE_PASSWORD = "CineGrand2025";
-      const STORAGE_KEYS = { records: "cg_v4_records", sync: "cg_sync_hist", qrBaseUrl: "cg_qr_base_url" };
-      const LOCAL_RETENTION_DAYS = 7; /* Локални записи се пазят 7 дни */
+      const STORAGE_KEYS = { qrBaseUrl: "cg_qr_base_url", sheetsUrl: "cg_sheets_url" };
 
       /* ══════════════════════════════════════════════════
          ВАЖНО: Замени URL-то по-долу с твоето Web App URL
@@ -479,6 +478,10 @@
          Виж инструкциите в документа за настройка.
          ══════════════════════════════════════════════════ */
       const SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwqOpU1wZ_k8I7aXgDHcsV2_UroQrTg13R0zQnOQUrwso3H6jDd1GUykW75-OViIAUPSQ/exec";
+
+      function getSheetsUrl() {
+        return (localStorage.getItem(STORAGE_KEYS.sheetsUrl) || "").trim();
+      }
 
       const QR_DEFAULT_URL = "https://nubabg.github.io/cinegrand-inspection/cinegrand-inspection.html";
 
@@ -517,13 +520,8 @@
         location: HALLS[0],
         inspector: "",
         itemState: {},
-        notes: "",
         records: [],
-        syncHistory: JSON.parse(localStorage.getItem(STORAGE_KEYS.sync) || "{}"),
-        statsRange: "week",
-        exportRange: "week",
-        historyTypeFilter: "all",
-        historyLocationFilter: "all",
+        syncHistory: {},
         showValidation: false,
         showDeleteModal: false,
         showQRModal: false,
@@ -534,8 +532,6 @@
         openedFromQR: false,
       };
 
-      try { state.records = JSON.parse(localStorage.getItem(STORAGE_KEYS.records) || "[]"); }
-      catch { state.records = []; }
 
       /* ── Toast timer (clean, no property on function) ── */
       let toastTimer = null;
@@ -558,7 +554,6 @@
         });
       }
 
-      function pct(issues, total) { return total > 0 ? Math.round((issues / total) * 100) : 0; }
       function isFilled(v) { return v === STATUS.CLEAN || v === STATUS.DIRTY; }
       function dirtyItems(record) { return record.items.filter((i) => i.status === STATUS.DIRTY); }
 
@@ -567,77 +562,6 @@
           .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
       }
 
-      function csvEscape(v) { return '"' + String(v ?? "").replace(/"/g, '""') + '"'; }
-
-      const RANGE_OPTIONS = [["today", "\u0414\u043d\u0435\u0441"], ["week", "\u0421\u0435\u0434\u043c\u0438\u0446\u0430"]];
-
-      function rangeLabel(range) {
-        const found = RANGE_OPTIONS.find(([v]) => v === range);
-        return found ? found[1] : "\u0421\u0435\u0434\u043c\u0438\u0446\u0430";
-      }
-
-      function recordsForRange(range) {
-        const now = new Date();
-        return state.records.filter((r) => {
-          const d = new Date(r.timestamp);
-          if (range === "today") return d.toDateString() === now.toDateString();
-          if (range === "week") return now - d < 7 * 86400000;
-          return now - d < 7 * 86400000;
-        });
-      }
-
-      function filteredRecords() { return recordsForRange(state.statsRange); }
-
-      function historyRecords() {
-        return recordsForRange(state.exportRange).filter((r) => {
-          if (state.historyTypeFilter !== "all" && r.type !== state.historyTypeFilter) return false;
-          if (state.historyLocationFilter !== "all" && r.location !== state.historyLocationFilter) return false;
-          return true;
-        });
-      }
-
-      function computeStats(records) {
-        const byLocation = {}, byItem = {};
-        records.forEach((r) => {
-          if (!byLocation[r.location]) byLocation[r.location] = { total: 0, issues: 0 };
-          r.items.forEach((item) => {
-            byLocation[r.location].total += 1;
-            if (!byItem[item.label]) byItem[item.label] = { total: 0, issues: 0 };
-            byItem[item.label].total += 1;
-            if (item.status === STATUS.DIRTY) {
-              byLocation[r.location].issues += 1;
-              byItem[item.label].issues += 1;
-            }
-          });
-        });
-        return { byLocation, byItem };
-      }
-
-      function latestIssues(limit = 6) {
-        return state.records
-          .flatMap((r) => dirtyItems(r).map((i) => ({
-            ...i, location: r.location, inspector: r.inspector, timestamp: r.timestamp,
-          })))
-          .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-          .slice(0, limit);
-      }
-
-      /* ── Persistence ── */
-      function persist() {
-        localStorage.setItem(STORAGE_KEYS.records, JSON.stringify(state.records));
-        localStorage.setItem(STORAGE_KEYS.sync, JSON.stringify(state.syncHistory));
-      }
-
-      /* ── Auto-cleanup: изтрива локални записи по-стари от 7 дни ── */
-      function cleanupOldRecords() {
-        const cutoff = Date.now() - LOCAL_RETENTION_DAYS * 86400000;
-        const before = state.records.length;
-        state.records = state.records.filter((r) => new Date(r.timestamp).getTime() > cutoff);
-        if (state.records.length < before) {
-          persist();
-          console.log(`[Cleanup] Изтрити ${before - state.records.length} стари записа (>7 дни)`);
-        }
-      }
 
       function showToast(msg, type = "success") {
         state.toast = { msg, type };
@@ -657,7 +581,6 @@
         const status = issues.length ? "\u041c\u0420\u042a\u0421\u041d\u0410" : "\u0427\u0418\u0421\u0422\u0410";
         const typeLabel = config.shortTitle + " - " + record.location;
         const issueLabel = issues.length ? issues.map((item) => item.label).join(", ") : "";
-        const notes = record.notes || "";
 
         return {
           entry_id: String(record.id),
@@ -666,7 +589,6 @@
           inspector: record.inspector,
           status,
           issues: issueLabel,
-          notes,
           row_values: JSON.stringify([
             record.id,
             fmt(record.timestamp),
@@ -674,7 +596,6 @@
             record.inspector,
             status,
             issueLabel,
-            notes,
           ]),
           record_json: JSON.stringify(record),
         };
@@ -706,15 +627,6 @@
         }
       }
 
-      async function syncRecord(record) {
-        if (!isSheetsConfigured()) return { success: false, error: "Sheets URL \u043d\u0435 \u0435 \u043a\u043e\u043d\u0444\u0438\u0433\u0443\u0440\u0438\u0440\u0430\u043d" };
-        state.syncHistory[record.id] = "syncing";
-        persist(); render();
-        const result = await sendToSheets(record);
-        state.syncHistory[record.id] = result.success ? (result.verified ? "synced" : "sent") : "error";
-        persist(); render();
-        return result;
-      }
 
       function getQRBaseUrl() {
         const saved = (localStorage.getItem(STORAGE_KEYS.qrBaseUrl) || "").trim();
@@ -736,7 +648,6 @@
           location: loc,
           inspector: "",
           itemState: {},
-          notes: "",
           showValidation: false,
           screen: "inspection",
         });
@@ -757,21 +668,14 @@
           inspector: state.inspector.trim(),
           timestamp: new Date().toISOString(),
           items: config.items.map((i) => ({ id: i.id, label: i.label, icon: i.icon, status: state.itemState[i.id] })),
-          notes: state.notes,
         };
         state.records = [record, ...state.records];
-        cleanupOldRecords(); /* Изчистване на стари записи >7 дни */
-        persist();
-        showToast(`Проверката на „${state.location}" е записана.`);
-        if (isSheetsConfigured()) {
-          const syncResult = await syncRecord(record);
-          if (syncResult.success && syncResult.verified) {
-            showToast("\u2713 \u0421\u0438\u043d\u0445\u0440\u043e\u043d\u0438\u0437\u0438\u0440\u0430\u043d\u043e \u0441 Google Sheets.");
-          } else if (syncResult.success) {
-            showToast("\u2713 \u0417\u0430\u044f\u0432\u043a\u0430\u0442\u0430 \u0435 \u0438\u0437\u043f\u0440\u0430\u0442\u0435\u043d\u0430 \u043a\u044a\u043c Google Sheets. \u0410\u043a\u043e \u0440\u0435\u0434\u044a\u0442 \u043d\u0435 \u0441\u0435 \u043f\u043e\u044f\u0432\u0438, \u043f\u0440\u043e\u0432\u0435\u0440\u0438 Apps Script \u043b\u043e\u0433\u043e\u0432\u0435\u0442\u0435.");
-          } else {
-            showToast("\u26a0 \u0417\u0430\u043f\u0438\u0441\u044c\u0442 \u0435 \u0437\u0430\u043f\u0430\u0437\u0435\u043d \u043b\u043e\u043a\u0430\u043b\u043d\u043e. Sheets sync \u043d\u0435\u0443\u0441\u043f\u0435\u0448\u0435\u043d: " + (syncResult.error || "\u043d\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043d\u0430 \u0433\u0440\u0435\u0448\u043a\u0430"), "error");
-          }
+        showToast("Изпращане към Google Sheets…");
+        const syncResult = await sendToSheets(record);
+        if (syncResult.success) {
+          showToast("✓ Проверката е записана в Google Sheets.");
+        } else {
+          showToast("⚠ Грешка при изпращане към Google Sheets: " + (syncResult.error || "неизвестна грешка"), "error");
         }
         if (state.openedFromQR) {
           state.openedFromQR = false;
@@ -782,107 +686,11 @@
         render();
       }
 
-      /* ?? Export ?? */
-
-      function exportRows(records) {
-        return records.map((r) => {
-          const issues = dirtyItems(r);
-          return {
-            date: fmt(r.timestamp), type: getConfig(r.type).shortTitle,
-            location: r.location, inspector: r.inspector,
-            status: issues.length ? "Проблем" : "Чисто",
-            issues: issues.length ? issues.map((i) => i.label).join(", ") : "—",
-            notes: r.notes || "", sheets: state.syncHistory[r.id] || "—",
-          };
-        });
-      }
-
-      function downloadFile(filename, content, mimeType) {
-        const blob = new Blob([content], { type: mimeType });
-        const url = URL.createObjectURL(blob);
-        const a = Object.assign(document.createElement("a"), { href: url, download: filename });
-        document.body.appendChild(a); a.click(); a.remove();
-        URL.revokeObjectURL(url);
-      }
-
-      function exportCsv() {
-        const records = historyRecords();
-        if (!records.length) { showToast("Няма записи за експорт.", "error"); return; }
-        const header = ["Дата/Час", "Тип", "Локация", "Проверяващ", "Статус", "Проблеми", "Бележки", "Sheets"];
-        const rows = exportRows(records).map((r) =>
-          [r.date, r.type, r.location, r.inspector, r.status, r.issues, r.notes, r.sheets].map(csvEscape).join(";")
-        );
-        downloadFile(
-          "cinegrand-report-" + state.exportRange + ".csv",
-          "\uFEFF" + [header.join(";"), ...rows].join("\n"),
-          "text/csv;charset=utf-8;"
-        );
-        showToast("Excel файлът за " + rangeLabel(state.exportRange).toLowerCase() + " е готов.");
-      }
-
-      function exportPdf() {
-        const records = historyRecords();
-        if (!records.length) { showToast("\u041d\u044f\u043c\u0430 \u0437\u0430\u043f\u0438\u0441\u0438 \u0437\u0430 PDF \u043e\u0442\u0447\u0435\u0442.", "error"); return; }
-        const rows = exportRows(records);
-        const issueCount = records.reduce((s, r) => s + dirtyItems(r).length, 0);
-        const filterType = state.historyTypeFilter === "all" ? "\u0412\u0441\u0438\u0447\u043a\u0438 \u0442\u0438\u043f\u043e\u0432\u0435" : getConfig(state.historyTypeFilter).shortTitle;
-        const filterLocation = state.historyLocationFilter === "all" ? "\u0412\u0441\u0438\u0447\u043a\u0438 \u043b\u043e\u043a\u0430\u0446\u0438\u0438" : state.historyLocationFilter;
-        const w = window.open("", "_blank", "width=1280,height=920");
-        if (!w) { showToast("\u0411\u0440\u0430\u0443\u0437\u044a\u0440\u044a\u0442 \u0431\u043b\u043e\u043a\u0438\u0440\u0430 PDF \u043f\u0440\u043e\u0437\u043e\u0440\u0435\u0446\u0430.", "error"); return; }
-        const html = [
-          '<!DOCTYPE html>',
-          '<html lang="bg">',
-          '<head>',
-          '<meta charset="UTF-8"/>',
-          '<meta name="viewport" content="width=device-width, initial-scale=1.0"/>',
-          '<title>Cine Grand PDF Report</title>',
-          '<style>',
-          'body{font-family:Arial,sans-serif;padding:24px;color:#111827;background:#eef2f7}',
-          '.page{max-width:1180px;margin:0 auto;background:#fff;padding:28px;border-radius:18px;box-shadow:0 12px 40px rgba(0,0,0,.08)}',
-          'h1{margin:0 0 8px}',
-          '.meta{margin-bottom:20px;color:#4b5563}',
-          '.summary{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}',
-          '.box{border:1px solid #d1d5db;border-radius:10px;padding:12px 14px;min-width:160px}',
-          '.actions{position:sticky;top:0;display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin:-4px 0 20px;padding:12px 0;background:rgba(255,255,255,.92);backdrop-filter:blur(6px)}',
-          '.btn{border:1px solid #d1d5db;border-radius:999px;padding:10px 16px;background:#111827;color:#fff;cursor:pointer;font-size:14px}',
-          '.btn.secondary{background:#fff;color:#111827}',
-          'table{width:100%;border-collapse:collapse;font-size:12px}',
-          'th,td{border:1px solid #d1d5db;padding:8px;text-align:left;vertical-align:top}',
-          'th{background:#f3f4f6}',
-          '@media print {.actions{display:none} body{background:#fff;padding:0} .page{box-shadow:none;border-radius:0;max-width:none;padding:0}}',
-          '</style>',
-          '</head>',
-          '<body>',
-          '<div class="page">',
-          '<div class="actions"><button class="btn" onclick="window.print()">\u0417\u0430\u043f\u0430\u0437\u0438 / \u0418\u0437\u0442\u0435\u0433\u043b\u0438 PDF</button><button class="btn secondary" onclick="window.close()">\u0417\u0430\u0442\u0432\u043e\u0440\u0438</button></div>',
-          '<h1>Cine Grand PDF Report</h1>',
-          '<div class="meta">\u041f\u0435\u0440\u0438\u043e\u0434: ' + escapeHtml(rangeLabel(state.exportRange)) + ' | \u0413\u0435\u043d\u0435\u0440\u0438\u0440\u0430\u043d: ' + escapeHtml(fmt(new Date().toISOString())) + '</div>',
-          '<div class="summary">',
-          '<div class="box"><strong>\u041f\u0440\u043e\u0432\u0435\u0440\u043a\u0438</strong><div>' + rows.length + '</div></div>',
-          '<div class="box"><strong>\u041f\u0440\u043e\u0431\u043b\u0435\u043c\u0438</strong><div>' + issueCount + '</div></div>',
-          '<div class="box"><strong>\u0422\u0438\u043f</strong><div>' + escapeHtml(filterType) + '</div></div>',
-          '<div class="box"><strong>\u041b\u043e\u043a\u0430\u0446\u0438\u044f</strong><div>' + escapeHtml(filterLocation) + '</div></div>',
-          '</div>',
-          '<table><thead><tr><th>\u0414\u0430\u0442\u0430/\u0427\u0430\u0441</th><th>\u0422\u0438\u043f</th><th>\u041b\u043e\u043a\u0430\u0446\u0438\u044f</th><th>\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0432\u0430\u0449</th><th>\u0421\u0442\u0430\u0442\u0443\u0441</th><th>\u041f\u0440\u043e\u0431\u043b\u0435\u043c\u0438</th><th>\u0411\u0435\u043b\u0435\u0436\u043a\u0438</th></tr></thead><tbody>',
-          rows.map((r) => '<tr><td>' + escapeHtml(r.date) + '</td><td>' + escapeHtml(r.type) + '</td><td>' + escapeHtml(r.location) + '</td><td>' + escapeHtml(r.inspector) + '</td><td>' + escapeHtml(r.status) + '</td><td>' + escapeHtml(r.issues) + '</td><td>' + escapeHtml(r.notes) + '</td></tr>').join(''),
-          '</tbody></table>',
-          '</div>',
-          '</body>',
-          '</html>'
-        ].join('');
-        w.document.open();
-        w.document.write(html);
-        w.document.close();
-        w.focus();
-        showToast("PDF \u043f\u0440\u0435\u0433\u043b\u0435\u0434\u044a\u0442 \u0437\u0430 " + rangeLabel(state.exportRange).toLowerCase() + " \u0435 \u043e\u0442\u0432\u043e\u0440\u0435\u043d.");
-      }
       function renderTopbar() {
         const navItems = [
           state.screen !== "home" ? `<button class="nav-btn" data-action="go-home" aria-label="Начална страница">Начало</button>` : "",
-          `<button class="nav-btn${state.screen === 'history' ? ' state' : ''}" data-action="go-history" aria-label="История на проверките">История</button>`,
-          `<button class="nav-btn${state.screen === 'stats' ? ' state' : ''}" data-action="go-stats" aria-label="Статистика">Статистика</button>`,
           `<button class="nav-btn" data-action="open-qr" aria-label="QR кодове за печат">QR кодове</button>`,
-          `<span class="nav-btn${isSheetsConfigured() ? ' state' : ''}" style="cursor:default;pointer-events:none;" aria-label="Sheets статус">${isSheetsConfigured() ? "Sheets ✓" : "Sheets ✗"}</span>`,
+          getSheetsUrl() ? `<a class="nav-btn state" href="${getSheetsUrl()}" target="_blank" rel="noopener noreferrer" aria-label="Отвори Google Sheets" style="text-decoration:none;">📊 Google Sheets</a>` : "",
         ].filter(Boolean).join("");
 
         return `
@@ -912,30 +720,7 @@
           </div></div>`;
       }
 
-      function renderRangeOptions(selected, id) {
-        return RANGE_OPTIONS.map(([v, l]) => `<option value="${v}" ${selected === v ? "selected" : ""}>${l}</option>`).join("");
-      }
-
-      function renderExportControls() {
-        return `
-          <div class="toolbar toolbar-controls">
-            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-              <span class="muted">\u0050\u0044\u0046 \u043e\u0442\u0447\u0435\u0442:</span>
-              <select id="export-range-select" style="min-width:180px;">${renderRangeOptions(state.exportRange)}</select>
-              <span class="meta-chip">${rangeLabel(state.exportRange)}</span>
-            </div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;">
-              <button class="btn btn-outline" data-action="export-pdf">PDF</button>
-            </div>
-          </div>`;
-      }
       function renderHome() {
-        const today = state.records.filter((r) => new Date(r.timestamp).toDateString() === new Date().toDateString());
-        const issuesLastWeek = recordsForRange("week").reduce((s, r) => s + dirtyItems(r).length, 0);
-        const pendingSync = state.records.filter((r) => !state.syncHistory[r.id] || state.syncHistory[r.id] === "error").length;
-        const recentIssues = latestIssues(6);
-        const latestRecord = state.records[0];
-
         return `<div class="page">
           <div class="panel panel-soft" style="margin-bottom:18px;">
             <div class="hero-grid">
@@ -946,164 +731,30 @@
                   <div class="muted" style="max-width:60ch;">\u0427\u0438\u0441\u0442\u0430\u0442\u0430 \u0441\u0440\u0435\u0434\u0430 \u043d\u0435 \u0435 \u0434\u0435\u0442\u0430\u0439\u043b, \u0430 \u0441\u0442\u0430\u043d\u0434\u0430\u0440\u0442. \u041f\u043e\u0441\u0442\u043e\u044f\u043d\u043d\u0438\u044f\u0442 \u043a\u043e\u043d\u0442\u0440\u043e\u043b \u043d\u0430 \u0445\u0438\u0433\u0438\u0435\u043d\u0430\u0442\u0430 \u0433\u0430\u0440\u0430\u043d\u0442\u0438\u0440\u0430 \u043a\u0430\u0447\u0435\u0441\u0442\u0432\u0435\u043d\u0430 \u0443\u0441\u043b\u0443\u0433\u0430 \u0438 \u0443\u0432\u0430\u0436\u0435\u043d\u0438\u0435 \u043a\u044a\u043c \u0432\u0441\u0435\u043a\u0438 \u043a\u043b\u0438\u0435\u043d\u0442.</div>
                 </div>
                 <div class="hero-metrics">
-                  <div class="metric"><div class="metric-label">Локации</div><div class="metric-value">${HALLS.length + BATHROOMS.length}</div></div>
-                  <div class="metric"><div class="metric-label">Проблеми 7д</div><div class="metric-value">${issuesLastWeek}</div></div>
-                  <div class="metric"><div class="metric-label">Sync Queue</div><div class="metric-value">${pendingSync}</div></div>
+                  <div class="metric"><div class="metric-label">Зали</div><div class="metric-value">${HALLS.length}</div></div>
+                  <div class="metric"><div class="metric-label">Тоалетни</div><div class="metric-value">${BATHROOMS.length}</div></div>
                 </div>
               </div>
               <div class="hero-orbit"><div class="hero-core">CG</div></div>
             </div>
           </div>
 
-
-          ${state.records.length ? `<div class="grid cards-4" style="margin-bottom:24px;">${[
-            ["Общо проверки", state.records.length, "var(--gold)"],
-            ["Проверки днес", today.length, "var(--text)"],
-            ["Проблема днес", today.reduce((s, r) => s + dirtyItems(r).length, 0), "var(--red)"],
-            ["Несинхронизирани", pendingSync, pendingSync ? "#f59e0b" : "var(--blue)"],
-          ].map(([l, v, c]) => `<div class="panel stat"><div class="muted">${l}</div><strong style="color:${c};">${v}</strong></div>`).join("")}</div>` : ""}
-
-          <div class="grid cards-2" style="margin-bottom:24px;">
-            <div class="panel">
-              <div class="toolbar"><h3 class="section-title" style="margin:0;">Нова Проверка</h3><span class="meta-chip">Quick Start</span></div>
-              <div class="muted" style="margin-bottom:16px;">Избери типа на проверката и започни въвеждането.</div>
-              <div class="grid cards-2 cg-action-grid">${Object.entries(CONFIGS).map(([key, cfg]) => `
-                <div class="panel card-pick" data-action="start-inspection" data-type="${key}">
-                  <div class="card-head" style="background:linear-gradient(160deg, rgba(255,255,255,.03), rgba(0,0,0,.1)), radial-gradient(circle at top right, ${key === "hall" ? "rgba(201,162,39,.22)" : "rgba(96,165,250,.20)"}, transparent 40%);">
-                    <span class="card-text-icon">${key === "hall" ? "КИНО ЗАЛА" : "WC"}</span>
-                    <div style="font-size:28px;font-weight:700;position:relative;z-index:1;">${cfg.shortTitle}</div>
-                    <div class="muted" style="position:relative;z-index:1;">${key === "hall" ? "Зали 1–6" : "Тоалетни"}</div>
-                  </div>
-                  <div class="card-body">
-                    <div class="tag-list">${cfg.tags.map((t) => `<span class="tag">${t}</span>`).join("")}</div>
-                    <div class="btn btn-gold" style="text-align:center;">Започни проверка</div>
-                  </div>
-                </div>`).join("")}</div>
+          <div class="panel">
+            <div class="toolbar"><h3 class="section-title" style="margin:0;">Нова Проверка</h3><span class="meta-chip">Quick Start</span></div>
+            <div class="muted" style="margin-bottom:16px;">Избери типа на проверката и започни въвеждането.</div>
+            <div class="grid cards-2 cg-action-grid">${Object.entries(CONFIGS).map(([key, cfg]) => `
+              <div class="panel card-pick" data-action="start-inspection" data-type="${key}">
+                <div class="card-head" style="background:linear-gradient(160deg, rgba(255,255,255,.03), rgba(0,0,0,.1)), radial-gradient(circle at top right, ${key === "hall" ? "rgba(201,162,39,.22)" : "rgba(96,165,250,.20)"}, transparent 40%);">
+                  <span class="card-text-icon">${key === "hall" ? "КИНО ЗАЛА" : "WC"}</span>
+                  <div style="font-size:28px;font-weight:700;position:relative;z-index:1;">${cfg.shortTitle}</div>
+                  <div class="muted" style="position:relative;z-index:1;">${key === "hall" ? "Зали 1–6" : "Тоалетни"}</div>
+                </div>
+                <div class="card-body">
+                  <div class="tag-list">${cfg.tags.map((t) => `<span class="tag">${t}</span>`).join("")}</div>
+                  <div class="btn btn-gold" style="text-align:center;">Започни проверка</div>
+                </div>
+              </div>`).join("")}
             </div>
-
-            <div class="panel">
-              <div class="toolbar"><h3 class="section-title" style="margin:0;">Оперативен Фокус</h3><span class="meta-chip"><span class="live-dot" aria-hidden="true"></span>Live</span></div>
-              ${latestRecord ? `
-                <div style="margin-bottom:14px;padding:14px;border-radius:16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);">
-                  <div class="muted" style="font-size:12px;text-transform:uppercase;letter-spacing:.12em;">Последна проверка</div>
-                  <div style="margin-top:8px;font-weight:700;display:flex;align-items:center;gap:8px;">
-                    <span style="font-size:20px;">${latestRecord.type === "hall" ? "🎬" : "🚿"}</span>
-                    ${latestRecord.location}
-                  </div>
-                  <div class="muted" style="margin-top:4px;">${fmt(latestRecord.timestamp)} · ${latestRecord.inspector}</div>
-                </div>` : `<div class="muted">Все още няма записани проверки.</div>`}
-              <div class="muted" style="font-size:12px;text-transform:uppercase;letter-spacing:.12em;margin-bottom:10px;">Последни проблеми</div>
-              <div class="bars">${recentIssues.length ? recentIssues.map((iss) => `
-                <div style="padding:12px 14px;border-radius:16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);">
-                  <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;">
-                    <strong>${iss.icon} ${iss.label}</strong><span class="pill bad">Issue</span>
-                  </div>
-                  <div class="muted" style="margin-top:6px;">${iss.location} · ${iss.inspector}</div>
-                </div>`).join("") : `<div class="muted">Няма активни проблеми в последните записи.</div>`}</div>
-            </div>
-          </div>
-
-          ${state.records.length ? renderRecentTable(state.records.slice(0, 7), true) : ""}
-        </div>`;
-      }
-
-      function renderRecentTable(records, compact) {
-        return `<div class="panel">
-          <div class="toolbar">
-            <h3 class="section-title" style="margin:0;">${compact ? "\u041f\u043e\u0441\u043b\u0435\u0434\u043d\u0438 \u043f\u0440\u043e\u0432\u0435\u0440\u043a\u0438" : "\u0418\u0441\u0442\u043e\u0440\u0438\u044f \u043d\u0430 \u043f\u0440\u043e\u0432\u0435\u0440\u043a\u0438"}</h3>
-            ${compact ? `<div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn btn-outline" data-action="go-history">\u0412\u0438\u0436 \u0438\u0441\u0442\u043e\u0440\u0438\u044f</button></div>` : ""}
-          </div>
-          <div class="table-wrap"><table>
-            <thead><tr><th>\u0414\u0430\u0442\u0430/\u0427\u0430\u0441</th><th>\u041b\u043e\u043a\u0430\u0446\u0438\u044f</th><th>\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0432\u0430\u0449</th><th>\u0421\u0442\u0430\u0442\u0443\u0441</th><th>\u041f\u0440\u043e\u0431\u043b\u0435\u043c\u0438</th><th>Sheets</th></tr></thead>
-            <tbody>${records.map((r) => {
-              const issues = dirtyItems(r);
-              const sync = state.syncHistory[r.id];
-              return `<tr>
-                <td>${fmt(r.timestamp)}</td>
-                <td style="display:flex;align-items:center;gap:6px;">
-                  <span style="font-size:14px;">${r.type === "hall" ? "🎬" : "🚿"}</span>
-                  ${r.location}
-                </td>
-                <td class="muted">${r.inspector}</td>
-                <td><span class="pill ${issues.length ? "bad" : "ok"}">${issues.length ? `✗ ${issues.length} \u043f\u0440\u043e\u0431\u043b\u0435\u043c\u0430` : "✓ \u0427\u0438\u0441\u0442\u043e"}</span></td>
-                <td class="muted">${issues.length ? issues.map((i) => i.label).join(", ") : "—"}</td>
-                <td><div style="display:flex;gap:8px;align-items:center;">
-                  <span>${sync === "synced" ? "✓" : sync === "sent" ? "↑" : sync === "syncing" ? "⟳" : sync === "error" ? "✗" : "—"}</span>
-                  ${(sync === "error" || (!sync && isSheetsConfigured())) ? `<button class="btn btn-outline" data-action="retry-sync" data-id="${r.id}" style="padding:4px 8px;">retry</button>` : ""}
-                </div></td>
-              </tr>`;
-            }).join("")}</tbody>
-          </table></div>
-        </div>`;
-      }
-      function renderHistory() {
-        const records = historyRecords();
-        const locations = [...new Set(state.records.map((r) => r.location))];
-        return `<div class="page">
-          <div class="panel" style="margin-bottom:16px;">
-            <div class="toolbar"><h3 class="section-title" style="margin:0;">\u0418\u0441\u0442\u043e\u0440\u0438\u044f \u0438 PDF \u043e\u0442\u0447\u0435\u0442</h3><span class="meta-chip">${records.length} \u0437\u0430\u043f\u0438\u0441\u0430</span></div>
-            <div class="grid cards-2" style="grid-template-columns: 1.2fr 1.2fr; margin-bottom:16px;">
-              <div class="field" style="margin:0;"><label>\u0422\u0438\u043f</label><select id="history-type-filter"><option value="all">\u0412\u0441\u0438\u0447\u043a\u0438</option><option value="hall" ${state.historyTypeFilter === "hall" ? "selected" : ""}>\u041a\u0438\u043d\u043e\u0437\u0430\u043b\u0430</option><option value="bathroom" ${state.historyTypeFilter === "bathroom" ? "selected" : ""}>\u0421\u0430\u043d\u0438\u0442\u0430\u0440\u0435\u043d \u0432\u044a\u0437\u0435\u043b</option></select></div>
-              <div class="field" style="margin:0;"><label>\u041b\u043e\u043a\u0430\u0446\u0438\u044f</label><select id="history-location-filter"><option value="all">\u0412\u0441\u0438\u0447\u043a\u0438</option>${locations.map((l) => `<option value="${l}" ${state.historyLocationFilter === l ? "selected" : ""}>${l}</option>`).join("")}</select></div>
-            </div>
-            ${renderExportControls()}
-          </div>
-          ${records.length ? renderRecentTable(records, false) : `<div class="panel" style="text-align:center;color:var(--muted);padding:60px 20px;">\u041d\u044f\u043c\u0430 \u0437\u0430\u043f\u0438\u0441\u0438 \u043f\u043e \u0442\u0435\u043a\u0443\u0449\u0438\u0442\u0435 \u0444\u0438\u043b\u0442\u0440\u0438.</div>`}
-        </div>`;
-      }
-      function barColor(p) { return p > 60 ? "var(--red)" : p > 30 ? "#f59e0b" : "var(--green)"; }
-
-      function renderBars(entries) {
-        return `<div class="bars">${entries.map(([label, data]) => {
-          const p = pct(data.issues, data.total);
-          return `<div>
-            <div class="bar-label"><span>${label}</span><span style="color:${barColor(p)};">${data.issues}/${data.total} - ${p}%</span></div>
-            <div class="bar-track"><div class="bar-fill" style="width:${p}%;background:${barColor(p)};"></div></div>
-          </div>`;
-        }).join("")}</div>`;
-      }
-
-      function renderStats() {
-        const records = filteredRecords();
-        if (!records.length) return `<div class="page"><div class="panel" style="text-align:center;color:var(--muted);padding:60px 20px;">\u041d\u044f\u043c\u0430 \u0434\u0430\u043d\u043d\u0438 \u0437\u0430 \u0438\u0437\u0431\u0440\u0430\u043d\u0438\u044f \u043f\u0435\u0440\u0438\u043e\u0434.</div></div>`;
-        const stats = computeStats(records);
-        const totalDirty = records.reduce((s, r) => s + dirtyItems(r).length, 0);
-        const totalClean = records.reduce((s, r) => s + r.items.filter((i) => i.status === STATUS.CLEAN).length, 0);
-        const overall = pct(totalDirty, totalClean + totalDirty);
-        const topIssue = Object.entries(stats.byItem).sort((a, b) => pct(b[1].issues, b[1].total) - pct(a[1].issues, a[1].total))[0];
-        const topLocation = Object.entries(stats.byLocation).sort((a, b) => pct(b[1].issues, b[1].total) - pct(a[1].issues, a[1].total))[0];
-        const trafficText = overall === 0 ? "\u0417\u0415\u041b\u0415\u041d\u041e - \u041e\u0442\u043b\u0438\u0447\u043d\u043e" : overall <= 20 ? "\u0416\u042a\u041b\u0422\u041e - \u0414\u043e\u0431\u0440\u043e" : overall <= 50 ? "\u041e\u0420\u0410\u041d\u0416\u0415\u0412\u041e - \u041d\u0443\u0436\u043d\u043e \u0432\u043d\u0438\u043c\u0430\u043d\u0438\u0435" : "\u0427\u0415\u0420\u0412\u0415\u041d\u041e - \u041a\u0440\u0438\u0442\u0438\u0447\u043d\u043e";
-
-        return `<div class="page">
-          <div class="panel" style="margin-bottom:16px;">
-            <div class="toolbar"><h3 class="section-title" style="margin:0;">\u041e\u0431\u0449\u0430 \u0441\u0442\u0430\u0442\u0438\u0441\u0442\u0438\u043a\u0430 \u043d\u0430 \u043f\u0440\u043e\u0432\u0435\u0440\u043a\u0438\u0442\u0435</h3><span class="meta-chip">${rangeLabel(state.statsRange)}</span></div>
-            <div class="muted" style="margin-bottom:14px;">\u0422\u0443\u043a \u0441\u0435 \u043e\u0431\u043e\u0431\u0449\u0430\u0432\u0430\u0442 \u0432\u0441\u0438\u0447\u043a\u0438 \u0437\u0430\u043f\u0438\u0441\u0430\u043d\u0438 \u043f\u0440\u043e\u0432\u0435\u0440\u043a\u0438 \u0437\u0430 \u0438\u0437\u0431\u0440\u0430\u043d\u0438\u044f \u043f\u0435\u0440\u0438\u043e\u0434.</div>
-            <div class="toolbar toolbar-controls">
-              <div class="tabs">${RANGE_OPTIONS.map(([v, l]) => `<button class="tab ${state.statsRange === v ? "active" : ""}" data-action="set-range" data-value="${v}">${l}</button>`).join("")}</div>
-              <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                <select id="export-range-select" style="min-width:180px;">${renderRangeOptions(state.exportRange)}</select>
-                <button class="btn btn-outline" data-action="export-pdf">PDF</button>
-              </div>
-            </div>
-          </div>
-
-          <div class="grid cards-4" style="margin-bottom:16px;">${[
-            ["\u041f\u0440\u043e\u0432\u0435\u0440\u043a\u0438", records.length, "var(--gold)"],
-            ["\u041f\u0440\u043e\u0431\u043b\u0435\u043c\u0438", totalDirty, "var(--red)"],
-            ["\u0427\u0438\u0441\u0442\u0438", totalClean, "var(--green)"],
-            ["% \u041f\u0440\u043e\u0431\u043b\u0435\u043c", overall + "%", "var(--text)"],
-          ].map(([l, v, c]) => `<div class="panel stat"><div class="muted">${l}</div><strong style="color:${c};">${v}</strong></div>`).join("")}</div>
-
-          <div class="panel" style="margin-bottom:16px;border-left:4px solid ${barColor(overall)};"><strong>${trafficText}</strong><div class="muted" style="margin-top:6px;">\u041e\u0431\u0449\u0430 \u043e\u0446\u0435\u043d\u043a\u0430 \u0437\u0430 \u043f\u0435\u0440\u0438\u043e\u0434\u0430</div></div>
-
-          <div class="grid cards-2 cg-chart-grid" style="margin-bottom:16px;">
-            ${topIssue ? `<div class="panel"><div class="muted" style="font-size:12px;text-transform:uppercase;letter-spacing:.12em;">\u041d\u0430\u0439-\u0447\u0435\u0441\u0442 \u043f\u0440\u043e\u0431\u043b\u0435\u043c</div><h3 class="section-title" style="color:var(--red);">${topIssue[0]}</h3><div class="muted">${topIssue[1].issues}/${topIssue[1].total} \u043f\u0440\u043e\u0432\u0435\u0440\u043a\u0438 - ${pct(topIssue[1].issues, topIssue[1].total)}%</div></div>` : ""}
-            ${topLocation ? `<div class="panel"><div class="muted" style="font-size:12px;text-transform:uppercase;letter-spacing:.12em;">\u041d\u0430\u0439-\u043f\u0440\u043e\u0431\u043b\u0435\u043c\u043d\u0430 \u043b\u043e\u043a\u0430\u0446\u0438\u044f</div><h3 class="section-title" style="color:#fbbf24;">${topLocation[0]}</h3><div class="muted">${topLocation[1].issues} \u043f\u0440\u043e\u0431\u043b\u0435\u043c\u0430</div></div>` : ""}
-          </div>
-
-          <div class="grid cards-2 cg-chart-grid">
-            <div class="panel"><h3 class="section-title">\u041f\u043e \u043b\u043e\u043a\u0430\u0446\u0438\u044f</h3>${renderBars(Object.entries(stats.byLocation))}</div>
-            <div class="panel"><h3 class="section-title">\u041f\u043e \u0435\u043b\u0435\u043c\u0435\u043d\u0442</h3>${renderBars(Object.entries(stats.byItem))}</div>
           </div>
         </div>`;
       }
@@ -1122,7 +773,7 @@
                 <span style="font-size:32px;">${state.inspectionType === "hall" ? "🎬" : "🚿"}</span>
                 ${config.title}
               </h1>
-              <div class="muted">${isSheetsConfigured() ? "Данните ще се изпратят автоматично към Google Sheets след запис." : "Локален запис в браузъра."}</div>
+              <div class="muted">Данните ще се изпратят директно към Google Sheets.</div>
             </div>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
               <span class="muted"><strong style="color:var(--green);">${filledCount}</strong>/${config.items.length} попълнени</span>
@@ -1150,10 +801,6 @@
               ${config.items.map((item) => renderItemRow(item)).join("")}
             </div>
             ${state.showValidation && !allFilled ? `<div style="margin-top:12px;padding:12px 14px;border:1px solid rgba(239,68,68,.35);border-radius:12px;background:rgba(239,68,68,.12);color:#fca5a5;">Маркирай всяка точка като Чисто или Нечисто преди да запишеш.</div>` : ""}
-          </div>
-
-          <div class="panel" style="margin-bottom:16px;">
-            <div class="field" style="margin:0;"><label>Бележки</label><textarea id="notes-input" rows="4" placeholder="Допълнителни коментари…">${escapeHtml(state.notes)}</textarea></div>
           </div>
 
           <button class="btn btn-gold" data-action="submit-inspection" style="width:100%;padding:16px;font-size:16px;">
@@ -1201,7 +848,7 @@
           html += `<div class="modal-backdrop" data-action="close-delete" role="presentation">
             <div class="modal" id="modal-delete" role="dialog" aria-modal="true" aria-labelledby="modal-delete-title" aria-describedby="modal-delete-desc" onclick="event.stopPropagation()">
               <h2 id="modal-delete-title" class="section-title" style="color:var(--red);">Изтриване на Данни</h2>
-              <p id="modal-delete-desc" class="muted">Ще бъдат изтрити <strong style="color:var(--text);">${state.records.length} записа</strong> от локалното хранилище.</p>
+              <p id="modal-delete-desc" class="muted">Ще бъдат изчистени <strong style="color:var(--text);">${state.records.length} записа</strong> от текущата сесия.</p>
               <div class="field"><label for="delete-pass-input">Администраторска парола</label><input id="delete-pass-input" type="${state.showPassword ? "text" : "password"}" value="${escapeHtml(state.deletePass)}" placeholder="Въведи парола..." autocomplete="off" /></div>
               ${state.deleteErr ? `<div id="modal-delete-err" style="color:var(--red);margin-bottom:12px;" role="alert">${state.deleteErr}</div>` : ""}
               <div style="display:flex;gap:8px;flex-wrap:wrap;">
@@ -1258,6 +905,15 @@
               <div style="margin-top:16px;">
                 <button type="button" class="btn btn-outline" data-action="close-qr">Затвори</button>
               </div>`}
+              <div class="panel" style="margin-top:20px; padding:16px; background: rgba(255,255,255,.03); border: 1px solid var(--border);">
+                <p class="muted" style="margin:0 0 10px; font-size:12px; text-transform:uppercase; letter-spacing:.12em;">Линк към Google Таблицата</p>
+                <p class="muted" style="margin:0 0 12px; font-size:13px;">Постави URL на твоята Google Sheets таблица — ще се появи бутон в навигацията за директно отваряне.</p>
+                <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                  <input type="url" id="sheets-url-input" value="${getSheetsUrl()}" placeholder="https://docs.google.com/spreadsheets/d/..." style="flex:1; min-width:200px; padding:10px 14px; background: var(--panel-3); border: 1px solid var(--border); border-radius:12px; color: var(--text);" />
+                  <button type="button" class="btn btn-gold" data-action="save-sheets-url">Запази</button>
+                  ${getSheetsUrl() ? `<a href="${getSheetsUrl()}" target="_blank" rel="noopener noreferrer" class="btn btn-green" style="text-decoration:none;">Отвори Sheets ↗</a>` : ""}
+                </div>
+              </div>
             </div>
           </div>`;
       }
@@ -1290,9 +946,7 @@
       function render() {
         const content =
           state.screen === "home" ? renderHome() :
-          state.screen === "inspection" ? renderInspection() :
-          state.screen === "history" ? renderHistory() :
-          renderStats();
+          renderInspection();
         app.innerHTML = renderShell(content) + renderModals();
         bindInputs();
         if (state.showDeleteModal) setupModalFocusTrap();
@@ -1303,12 +957,8 @@
         const bind = (id, event, fn) => { const e = el(id); if (e) e["on" + event] = fn; };
         bind("location-select", "change", (e) => { state.location = e.target.value; });
         bind("inspector-input", "input", (e) => { state.inspector = e.target.value; });
-        bind("notes-input", "input", (e) => { state.notes = e.target.value; });
         bind("delete-pass-input", "input", (e) => { state.deletePass = e.target.value; state.deleteErr = ""; });
-        bind("export-range-select", "change", (e) => { state.exportRange = e.target.value; render(); });
-        bind("history-type-filter", "change", (e) => { state.historyTypeFilter = e.target.value; render(); });
-        bind("history-location-filter", "change", (e) => { state.historyLocationFilter = e.target.value; render(); });
-}
+      }
 
       /* ── Event Delegation ── */
       document.addEventListener("click", async (e) => {
@@ -1318,8 +968,6 @@
 
         /* Navigation */
         if (action === "go-home") { state.screen = "home"; render(); return; }
-        if (action === "go-history") { state.screen = "history"; render(); return; }
-        if (action === "go-stats") { state.screen = "stats"; render(); return; }
 
         /* Inspection item status — targeted update, no full re-render */
         if (action === "set-item") {
@@ -1337,31 +985,16 @@
         if (action === "submit-inspection") { await submitInspection(); return; }
         if (action === "start-inspection") { startInspection(btn.dataset.type); return; }
 
-        /* Sync */
-        if (action === "retry-sync") {
-          const rec = state.records.find((r) => String(r.id) === btn.dataset.id);
-          if (rec) await syncRecord(rec);
-          return;
-        }
-
-        /* Stats range */
-        if (action === "set-range") { state.statsRange = btn.dataset.value; render(); return; }
-
         /* Delete modal */
         if (action === "close-delete") { state.showDeleteModal = false; state.deleteErr = ""; state.deletePass = ""; render(); return; }
         if (action === "toggle-pass") { state.showPassword = !state.showPassword; render(); return; }
         if (action === "confirm-delete") {
           if (state.deletePass !== DELETE_PASSWORD) { state.deleteErr = "Грешна парола. Опитай отново."; render(); return; }
-          state.records = []; state.syncHistory = {};
-          localStorage.removeItem(STORAGE_KEYS.records);
-          localStorage.removeItem(STORAGE_KEYS.sync);
+          state.records = [];
           Object.assign(state, { showDeleteModal: false, deletePass: "", deleteErr: "", screen: "home" });
-          showToast("Всички локални записи са изтрити.");
+          showToast("Сесийните данни са изчистени.");
           return;
         }
-
-        /* Export */
-        if (action === "export-pdf") { exportPdf(); return; }
 
         /* QR modal */
         if (action === "open-qr") { state.showQRModal = true; render(); return; }
@@ -1382,6 +1015,18 @@
           }
           return;
         }
+        if (action === "save-sheets-url") {
+          const input = document.getElementById("sheets-url-input");
+          const url = (input && input.value ? input.value : "").trim();
+          if (!url || !url.startsWith("http")) {
+            showToast("Въведи валиден Sheets URL (започва с https://).", "error");
+            return;
+          }
+          localStorage.setItem(STORAGE_KEYS.sheetsUrl, url);
+          showToast("✓ Sheets URL запазен. Бутонът е добавен в навигацията.");
+          render();
+          return;
+        }
       });
 
       document.addEventListener("keydown", (e) => {
@@ -1396,7 +1041,6 @@
       });
 
       /* ── Initial Render: URL params за QR (отвори форма с локация) ── */
-      cleanupOldRecords();
       (function initFromUrl() {
         const search = window.location.search || "";
         const hash = window.location.hash || "";
