@@ -1065,13 +1065,6 @@
           </div>
 
 
-          ${state.records.length ? `<div class="grid cards-4" style="margin-bottom:24px;">${[
-            ["Общо проверки", state.records.length, "var(--gold)"],
-            ["Проверки днес", today.length, "var(--text)"],
-            ["Проблема днес", today.reduce((s, r) => s + dirtyItems(r).length, 0), "var(--red)"],
-            ["Несинхронизирани", pendingSync, pendingSync ? "#f59e0b" : "var(--blue)"],
-          ].map(([l, v, c]) => `<div class="panel stat"><div class="muted">${l}</div><strong style="color:${c};">${v}</strong></div>`).join("")}</div>` : ""}
-
           <div style="margin-bottom:24px;">
             <div class="panel">
               <div class="toolbar"><h3 class="section-title" style="margin:0;">Нова Проверка</h3><span class="meta-chip">Quick Start</span></div>
@@ -1091,7 +1084,6 @@
             </div>
           </div>
 
-          ${state.records.length ? renderRecentTable(state.records.slice(0, 7), true) : ""}
         </div>`;
       }
 
