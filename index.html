@@ -820,7 +820,7 @@
         }
         if (state.openedFromQR) {
           state.openedFromQR = false;
-          setTimeout(() => { window.location.href = "https://www.google.com/"; }, 1200);
+          setTimeout(() => { sessionStorage.removeItem(QR_SESSION_KEY); window.location.replace("https://www.google.com/"); }, 1200);
           return;
         }
         state.screen = "home";
