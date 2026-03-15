@@ -483,6 +483,39 @@
 
       const QR_DEFAULT_URL = "https://nubabg.github.io/cinegrand-inspection/cinegrand-inspection.html";
 
+      /* ── Access Control ── */
+      const ACCESS_ALLOWED_IPS = ["62.176.97.58", "130.204.143.95"];
+      const QR_SESSION_KEY = "cg_qr_access";
+
+      function showAccessDenied() {
+        document.getElementById("app").innerHTML = `
+          <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;">
+            <div style="text-align:center;max-width:400px;">
+              <div style="width:72px;height:72px;border-radius:50%;background:rgba(239,91,91,.15);border:1px solid rgba(239,91,91,.3);display:flex;align-items:center;justify-content:center;margin:0 auto 24px;font-size:32px;">🔒</div>
+              <div style="font-family:'Oswald',sans-serif;font-size:22px;font-weight:700;letter-spacing:.06em;margin-bottom:12px;">ДОСТЪПЪТ Е ОТКАЗАН</div>
+              <div style="color:var(--muted);font-size:14px;line-height:1.6;">Сканирайте QR кода на Вашата локация, за да влезете в системата.</div>
+            </div>
+          </div>`;
+      }
+
+      async function checkAccess() {
+        const params = new URLSearchParams(window.location.search || (window.location.hash.startsWith("#") ? window.location.hash.slice(1) : ""));
+        /* QR достъп — URL съдържа QR параметри */
+        if (params.get("open") === "inspection") {
+          sessionStorage.setItem(QR_SESSION_KEY, "1");
+          return true;
+        }
+        /* Сесия — вече е влязъл чрез QR в тази сесия */
+        if (sessionStorage.getItem(QR_SESSION_KEY) === "1") return true;
+        /* IP проверка — офис компютри */
+        try {
+          const res = await fetch("https://api.ipify.org?format=json");
+          const { ip } = await res.json();
+          if (ACCESS_ALLOWED_IPS.includes(ip)) return true;
+        } catch (_) {}
+        return false;
+      }
+
       /* Само тези локации се показват в QR модала */
       const QR_LOCATIONS = [
         ...HALLS.map((loc) => ({ type: "hall", location: loc, icon: "🎬" })),
@@ -1354,6 +1387,7 @@
 
       /* ── Initial Render: URL params за QR (отвори форма с локация) ── */
       cleanupOldRecords();
+      checkAccess().then((allowed) => { if (!allowed) { showAccessDenied(); return; } render(); });
       (function initFromUrl() {
         const search = window.location.search || "";
         const hash = window.location.hash || "";
@@ -1372,7 +1406,6 @@
           }
         }
       })();
-      render();
     </script>
   </body>
 </html>
