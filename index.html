@@ -360,6 +360,7 @@
       .toast.success { background: rgba(22,101,52,.95); border-color: var(--green); }
       .toast.error { background: rgba(127,29,29,.95); border-color: var(--red); }
 
+      @keyframes spin { to { transform: rotate(360deg); } }
       @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
       @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
       @keyframes slideIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
@@ -494,6 +495,16 @@
               <div style="width:72px;height:72px;border-radius:50%;background:rgba(239,91,91,.15);border:1px solid rgba(239,91,91,.3);display:flex;align-items:center;justify-content:center;margin:0 auto 24px;font-size:32px;">🔒</div>
               <div style="font-family:'Oswald',sans-serif;font-size:22px;font-weight:700;letter-spacing:.06em;margin-bottom:12px;">ДОСТЪПЪТ Е ОТКАЗАН</div>
               <div style="color:var(--muted);font-size:14px;line-height:1.6;">Сканирайте QR кода на Вашата локация, за да влезете в системата.</div>
+            </div>
+          </div>`;
+      }
+
+      function showAccessLoading() {
+        document.getElementById("app").innerHTML = `
+          <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;">
+            <div style="text-align:center;">
+              <div style="width:42px;height:42px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--gold);animation:spin .8s linear infinite;margin:0 auto 16px;"></div>
+              <div style="color:var(--muted);font-size:13px;">Проверка на достъп…</div>
             </div>
           </div>`;
       }
@@ -1385,10 +1396,12 @@
         }
       });
 
-      /* ── Initial Render: URL params за QR (отвори форма с локация) ── */
+      /* ── Initial Render ── */
       cleanupOldRecords();
-      checkAccess().then((allowed) => { if (!allowed) { showAccessDenied(); return; } render(); });
-      (function initFromUrl() {
+      showAccessLoading();
+      checkAccess().then((allowed) => {
+        if (!allowed) { showAccessDenied(); return; }
+        /* Обработи URL параметри от QR сканиране */
         const search = window.location.search || "";
         const hash = window.location.hash || "";
         const params = new URLSearchParams(search || (hash.startsWith("#") ? hash.slice(1) : ""));
@@ -1398,14 +1411,14 @@
           if ((type === "hall" || type === "bathroom") && loc) {
             state.openedFromQR = true;
             const decodedLoc = decodeURIComponent(loc.replace(/\+/g, "%20"));
-            startInspection(type, decodedLoc);
-            try {
-              const cleanUrl = window.location.origin + window.location.pathname;
-              history.replaceState({}, "", cleanUrl);
-            } catch (_) {}
+            const config = getConfig(type);
+            const resolvedLoc = config.locations.includes(decodedLoc) ? decodedLoc : config.locations[0];
+            Object.assign(state, { inspectionType: type, location: resolvedLoc, inspector: "", itemState: {}, notes: "", showValidation: false, screen: "inspection" });
+            try { history.replaceState({}, "", window.location.origin + window.location.pathname); } catch (_) {}
           }
         }
-      })();
+        render();
+      });
     </script>
   </body>
 </html>
