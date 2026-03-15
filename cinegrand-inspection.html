@@ -470,8 +470,7 @@
 
       const STATUS = { CLEAN: "clean", DIRTY: "dirty" };
       const DELETE_PASSWORD = "CineGrand2025";
-      const STORAGE_KEYS = { records: "cg_v4_records", sync: "cg_sync_hist", qrBaseUrl: "cg_qr_base_url" };
-      const LOCAL_RETENTION_DAYS = 7; /* Локални записи се пазят 7 дни */
+      const STORAGE_KEYS = { qrBaseUrl: "cg_qr_base_url", sheetsUrl: "cg_sheets_url" };
 
       /* ══════════════════════════════════════════════════
          ВАЖНО: Замени URL-то по-долу с твоето Web App URL
@@ -479,6 +478,10 @@
          Виж инструкциите в документа за настройка.
          ══════════════════════════════════════════════════ */
       const SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwqOpU1wZ_k8I7aXgDHcsV2_UroQrTg13R0zQnOQUrwso3H6jDd1GUykW75-OViIAUPSQ/exec";
+
+      function getSheetsUrl() {
+        return (localStorage.getItem(STORAGE_KEYS.sheetsUrl) || "").trim();
+      }
 
       const QR_DEFAULT_URL = "https://nubabg.github.io/cinegrand-inspection/cinegrand-inspection.html";
 
@@ -519,7 +522,7 @@
         itemState: {},
         notes: "",
         records: [],
-        syncHistory: JSON.parse(localStorage.getItem(STORAGE_KEYS.sync) || "{}"),
+        syncHistory: {},
         statsRange: "week",
         exportRange: "week",
         historyTypeFilter: "all",
@@ -534,8 +537,6 @@
         openedFromQR: false,
       };
 
-      try { state.records = JSON.parse(localStorage.getItem(STORAGE_KEYS.records) || "[]"); }
-      catch { state.records = []; }
 
       /* ── Toast timer (clean, no property on function) ── */
       let toastTimer = null;
@@ -622,22 +623,6 @@
           .slice(0, limit);
       }
 
-      /* ── Persistence ── */
-      function persist() {
-        localStorage.setItem(STORAGE_KEYS.records, JSON.stringify(state.records));
-        localStorage.setItem(STORAGE_KEYS.sync, JSON.stringify(state.syncHistory));
-      }
-
-      /* ── Auto-cleanup: изтрива локални записи по-стари от 7 дни ── */
-      function cleanupOldRecords() {
-        const cutoff = Date.now() - LOCAL_RETENTION_DAYS * 86400000;
-        const before = state.records.length;
-        state.records = state.records.filter((r) => new Date(r.timestamp).getTime() > cutoff);
-        if (state.records.length < before) {
-          persist();
-          console.log(`[Cleanup] Изтрити ${before - state.records.length} стари записа (>7 дни)`);
-        }
-      }
 
       function showToast(msg, type = "success") {
         state.toast = { msg, type };
@@ -706,15 +691,6 @@
         }
       }
 
-      async function syncRecord(record) {
-        if (!isSheetsConfigured()) return { success: false, error: "Sheets URL \u043d\u0435 \u0435 \u043a\u043e\u043d\u0444\u0438\u0433\u0443\u0440\u0438\u0440\u0430\u043d" };
-        state.syncHistory[record.id] = "syncing";
-        persist(); render();
-        const result = await sendToSheets(record);
-        state.syncHistory[record.id] = result.success ? (result.verified ? "synced" : "sent") : "error";
-        persist(); render();
-        return result;
-      }
 
       function getQRBaseUrl() {
         const saved = (localStorage.getItem(STORAGE_KEYS.qrBaseUrl) || "").trim();
@@ -760,18 +736,12 @@
           notes: state.notes,
         };
         state.records = [record, ...state.records];
-        cleanupOldRecords(); /* Изчистване на стари записи >7 дни */
-        persist();
-        showToast(`Проверката на „${state.location}" е записана.`);
-        if (isSheetsConfigured()) {
-          const syncResult = await syncRecord(record);
-          if (syncResult.success && syncResult.verified) {
-            showToast("\u2713 \u0421\u0438\u043d\u0445\u0440\u043e\u043d\u0438\u0437\u0438\u0440\u0430\u043d\u043e \u0441 Google Sheets.");
-          } else if (syncResult.success) {
-            showToast("\u2713 \u0417\u0430\u044f\u0432\u043a\u0430\u0442\u0430 \u0435 \u0438\u0437\u043f\u0440\u0430\u0442\u0435\u043d\u0430 \u043a\u044a\u043c Google Sheets. \u0410\u043a\u043e \u0440\u0435\u0434\u044a\u0442 \u043d\u0435 \u0441\u0435 \u043f\u043e\u044f\u0432\u0438, \u043f\u0440\u043e\u0432\u0435\u0440\u0438 Apps Script \u043b\u043e\u0433\u043e\u0432\u0435\u0442\u0435.");
-          } else {
-            showToast("\u26a0 \u0417\u0430\u043f\u0438\u0441\u044c\u0442 \u0435 \u0437\u0430\u043f\u0430\u0437\u0435\u043d \u043b\u043e\u043a\u0430\u043b\u043d\u043e. Sheets sync \u043d\u0435\u0443\u0441\u043f\u0435\u0448\u0435\u043d: " + (syncResult.error || "\u043d\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043d\u0430 \u0433\u0440\u0435\u0448\u043a\u0430"), "error");
-          }
+        showToast("Изпращане към Google Sheets…");
+        const syncResult = await sendToSheets(record);
+        if (syncResult.success) {
+          showToast("✓ Проверката е записана в Google Sheets.");
+        } else {
+          showToast("⚠ Грешка при изпращане към Google Sheets: " + (syncResult.error || "неизвестна грешка"), "error");
         }
         if (state.openedFromQR) {
           state.openedFromQR = false;
@@ -792,7 +762,7 @@
             location: r.location, inspector: r.inspector,
             status: issues.length ? "Проблем" : "Чисто",
             issues: issues.length ? issues.map((i) => i.label).join(", ") : "—",
-            notes: r.notes || "", sheets: state.syncHistory[r.id] || "—",
+            notes: r.notes || "",
           };
         });
       }
@@ -808,9 +778,9 @@
       function exportCsv() {
         const records = historyRecords();
         if (!records.length) { showToast("Няма записи за експорт.", "error"); return; }
-        const header = ["Дата/Час", "Тип", "Локация", "Проверяващ", "Статус", "Проблеми", "Бележки", "Sheets"];
+        const header = ["Дата/Час", "Тип", "Локация", "Проверяващ", "Статус", "Проблеми", "Бележки"];
         const rows = exportRows(records).map((r) =>
-          [r.date, r.type, r.location, r.inspector, r.status, r.issues, r.notes, r.sheets].map(csvEscape).join(";")
+          [r.date, r.type, r.location, r.inspector, r.status, r.issues, r.notes].map(csvEscape).join(";")
         );
         downloadFile(
           "cinegrand-report-" + state.exportRange + ".csv",
@@ -882,7 +852,7 @@
           `<button class="nav-btn${state.screen === 'history' ? ' state' : ''}" data-action="go-history" aria-label="История на проверките">История</button>`,
           `<button class="nav-btn${state.screen === 'stats' ? ' state' : ''}" data-action="go-stats" aria-label="Статистика">Статистика</button>`,
           `<button class="nav-btn" data-action="open-qr" aria-label="QR кодове за печат">QR кодове</button>`,
-          `<span class="nav-btn${isSheetsConfigured() ? ' state' : ''}" style="cursor:default;pointer-events:none;" aria-label="Sheets статус">${isSheetsConfigured() ? "Sheets ✓" : "Sheets ✗"}</span>`,
+          getSheetsUrl() ? `<a class="nav-btn state" href="${getSheetsUrl()}" target="_blank" rel="noopener noreferrer" aria-label="Отвори Google Sheets" style="text-decoration:none;">📊 Google Sheets</a>` : "",
         ].filter(Boolean).join("");
 
         return `
@@ -932,7 +902,6 @@
       function renderHome() {
         const today = state.records.filter((r) => new Date(r.timestamp).toDateString() === new Date().toDateString());
         const issuesLastWeek = recordsForRange("week").reduce((s, r) => s + dirtyItems(r).length, 0);
-        const pendingSync = state.records.filter((r) => !state.syncHistory[r.id] || state.syncHistory[r.id] === "error").length;
         const recentIssues = latestIssues(6);
         const latestRecord = state.records[0];
 
@@ -948,7 +917,6 @@
                 <div class="hero-metrics">
                   <div class="metric"><div class="metric-label">Локации</div><div class="metric-value">${HALLS.length + BATHROOMS.length}</div></div>
                   <div class="metric"><div class="metric-label">Проблеми 7д</div><div class="metric-value">${issuesLastWeek}</div></div>
-                  <div class="metric"><div class="metric-label">Sync Queue</div><div class="metric-value">${pendingSync}</div></div>
                 </div>
               </div>
               <div class="hero-orbit"><div class="hero-core">CG</div></div>
@@ -960,7 +928,6 @@
             ["Общо проверки", state.records.length, "var(--gold)"],
             ["Проверки днес", today.length, "var(--text)"],
             ["Проблема днес", today.reduce((s, r) => s + dirtyItems(r).length, 0), "var(--red)"],
-            ["Несинхронизирани", pendingSync, pendingSync ? "#f59e0b" : "var(--blue)"],
           ].map(([l, v, c]) => `<div class="panel stat"><div class="muted">${l}</div><strong style="color:${c};">${v}</strong></div>`).join("")}</div>` : ""}
 
           <div class="grid cards-2" style="margin-bottom:24px;">
@@ -1014,10 +981,9 @@
             ${compact ? `<div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn btn-outline" data-action="go-history">\u0412\u0438\u0436 \u0438\u0441\u0442\u043e\u0440\u0438\u044f</button></div>` : ""}
           </div>
           <div class="table-wrap"><table>
-            <thead><tr><th>\u0414\u0430\u0442\u0430/\u0427\u0430\u0441</th><th>\u041b\u043e\u043a\u0430\u0446\u0438\u044f</th><th>\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0432\u0430\u0449</th><th>\u0421\u0442\u0430\u0442\u0443\u0441</th><th>\u041f\u0440\u043e\u0431\u043b\u0435\u043c\u0438</th><th>Sheets</th></tr></thead>
+            <thead><tr><th>\u0414\u0430\u0442\u0430/\u0427\u0430\u0441</th><th>\u041b\u043e\u043a\u0430\u0446\u0438\u044f</th><th>\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0432\u0430\u0449</th><th>\u0421\u0442\u0430\u0442\u0443\u0441</th><th>\u041f\u0440\u043e\u0431\u043b\u0435\u043c\u0438</th></tr></thead>
             <tbody>${records.map((r) => {
               const issues = dirtyItems(r);
-              const sync = state.syncHistory[r.id];
               return `<tr>
                 <td>${fmt(r.timestamp)}</td>
                 <td style="display:flex;align-items:center;gap:6px;">
@@ -1027,10 +993,6 @@
                 <td class="muted">${r.inspector}</td>
                 <td><span class="pill ${issues.length ? "bad" : "ok"}">${issues.length ? `✗ ${issues.length} \u043f\u0440\u043e\u0431\u043b\u0435\u043c\u0430` : "✓ \u0427\u0438\u0441\u0442\u043e"}</span></td>
                 <td class="muted">${issues.length ? issues.map((i) => i.label).join(", ") : "—"}</td>
-                <td><div style="display:flex;gap:8px;align-items:center;">
-                  <span>${sync === "synced" ? "✓" : sync === "sent" ? "↑" : sync === "syncing" ? "⟳" : sync === "error" ? "✗" : "—"}</span>
-                  ${(sync === "error" || (!sync && isSheetsConfigured())) ? `<button class="btn btn-outline" data-action="retry-sync" data-id="${r.id}" style="padding:4px 8px;">retry</button>` : ""}
-                </div></td>
               </tr>`;
             }).join("")}</tbody>
           </table></div>
@@ -1122,7 +1084,7 @@
                 <span style="font-size:32px;">${state.inspectionType === "hall" ? "🎬" : "🚿"}</span>
                 ${config.title}
               </h1>
-              <div class="muted">${isSheetsConfigured() ? "Данните ще се изпратят автоматично към Google Sheets след запис." : "Локален запис в браузъра."}</div>
+              <div class="muted">Данните ще се изпратят директно към Google Sheets.</div>
             </div>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
               <span class="muted"><strong style="color:var(--green);">${filledCount}</strong>/${config.items.length} попълнени</span>
@@ -1201,7 +1163,7 @@
           html += `<div class="modal-backdrop" data-action="close-delete" role="presentation">
             <div class="modal" id="modal-delete" role="dialog" aria-modal="true" aria-labelledby="modal-delete-title" aria-describedby="modal-delete-desc" onclick="event.stopPropagation()">
               <h2 id="modal-delete-title" class="section-title" style="color:var(--red);">Изтриване на Данни</h2>
-              <p id="modal-delete-desc" class="muted">Ще бъдат изтрити <strong style="color:var(--text);">${state.records.length} записа</strong> от локалното хранилище.</p>
+              <p id="modal-delete-desc" class="muted">Ще бъдат изчистени <strong style="color:var(--text);">${state.records.length} записа</strong> от текущата сесия.</p>
               <div class="field"><label for="delete-pass-input">Администраторска парола</label><input id="delete-pass-input" type="${state.showPassword ? "text" : "password"}" value="${escapeHtml(state.deletePass)}" placeholder="Въведи парола..." autocomplete="off" /></div>
               ${state.deleteErr ? `<div id="modal-delete-err" style="color:var(--red);margin-bottom:12px;" role="alert">${state.deleteErr}</div>` : ""}
               <div style="display:flex;gap:8px;flex-wrap:wrap;">
@@ -1258,6 +1220,15 @@
               <div style="margin-top:16px;">
                 <button type="button" class="btn btn-outline" data-action="close-qr">Затвори</button>
               </div>`}
+              <div class="panel" style="margin-top:20px; padding:16px; background: rgba(255,255,255,.03); border: 1px solid var(--border);">
+                <p class="muted" style="margin:0 0 10px; font-size:12px; text-transform:uppercase; letter-spacing:.12em;">Линк към Google Таблицата</p>
+                <p class="muted" style="margin:0 0 12px; font-size:13px;">Постави URL на твоята Google Sheets таблица — ще се появи бутон в навигацията за директно отваряне.</p>
+                <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                  <input type="url" id="sheets-url-input" value="${getSheetsUrl()}" placeholder="https://docs.google.com/spreadsheets/d/..." style="flex:1; min-width:200px; padding:10px 14px; background: var(--panel-3); border: 1px solid var(--border); border-radius:12px; color: var(--text);" />
+                  <button type="button" class="btn btn-gold" data-action="save-sheets-url">Запази</button>
+                  ${getSheetsUrl() ? `<a href="${getSheetsUrl()}" target="_blank" rel="noopener noreferrer" class="btn btn-green" style="text-decoration:none;">Отвори Sheets ↗</a>` : ""}
+                </div>
+              </div>
             </div>
           </div>`;
       }
@@ -1308,7 +1279,7 @@
         bind("export-range-select", "change", (e) => { state.exportRange = e.target.value; render(); });
         bind("history-type-filter", "change", (e) => { state.historyTypeFilter = e.target.value; render(); });
         bind("history-location-filter", "change", (e) => { state.historyLocationFilter = e.target.value; render(); });
-}
+      }
 
       /* ── Event Delegation ── */
       document.addEventListener("click", async (e) => {
@@ -1337,13 +1308,6 @@
         if (action === "submit-inspection") { await submitInspection(); return; }
         if (action === "start-inspection") { startInspection(btn.dataset.type); return; }
 
-        /* Sync */
-        if (action === "retry-sync") {
-          const rec = state.records.find((r) => String(r.id) === btn.dataset.id);
-          if (rec) await syncRecord(rec);
-          return;
-        }
-
         /* Stats range */
         if (action === "set-range") { state.statsRange = btn.dataset.value; render(); return; }
 
@@ -1352,11 +1316,9 @@
         if (action === "toggle-pass") { state.showPassword = !state.showPassword; render(); return; }
         if (action === "confirm-delete") {
           if (state.deletePass !== DELETE_PASSWORD) { state.deleteErr = "Грешна парола. Опитай отново."; render(); return; }
-          state.records = []; state.syncHistory = {};
-          localStorage.removeItem(STORAGE_KEYS.records);
-          localStorage.removeItem(STORAGE_KEYS.sync);
+          state.records = [];
           Object.assign(state, { showDeleteModal: false, deletePass: "", deleteErr: "", screen: "home" });
-          showToast("Всички локални записи са изтрити.");
+          showToast("Сесийните данни са изчистени.");
           return;
         }
 
@@ -1382,6 +1344,18 @@
           }
           return;
         }
+        if (action === "save-sheets-url") {
+          const input = document.getElementById("sheets-url-input");
+          const url = (input && input.value ? input.value : "").trim();
+          if (!url || !url.startsWith("http")) {
+            showToast("Въведи валиден Sheets URL (започва с https://).", "error");
+            return;
+          }
+          localStorage.setItem(STORAGE_KEYS.sheetsUrl, url);
+          showToast("✓ Sheets URL запазен. Бутонът е добавен в навигацията.");
+          render();
+          return;
+        }
       });
 
       document.addEventListener("keydown", (e) => {
@@ -1396,7 +1370,6 @@
       });
 
       /* ── Initial Render: URL params за QR (отвори форма с локация) ── */
-      cleanupOldRecords();
       (function initFromUrl() {
         const search = window.location.search || "";
         const hash = window.location.hash || "";
