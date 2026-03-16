@@ -22,8 +22,6 @@ jobs:
           git clone https://x-access-token:${PAT}@github.com/nubabg/cinegrand-staging.git /tmp/staging
 
           cp index.html /tmp/staging/
-          cp styles.css /tmp/staging/
-          cp script.js /tmp/staging/
           cp favicon.svg /tmp/staging/
           cp charts.html /tmp/staging/
 
