@@ -6,40 +6,6 @@
     <title>Cine Grand Hygiene Control</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <link rel="shortcut icon" href="favicon.svg" />
-    <script>
-      // ── Security: block DevTools & source inspection ──────────────────────
-
-      // 1. Disable right-click context menu
-      document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
-
-      // 2. Block keyboard shortcuts
-      document.addEventListener('keydown', function(e) {
-        var key = e.key || e.keyCode;
-        // F12
-        if (e.keyCode === 123) { e.preventDefault(); return false; }
-        // Ctrl+Shift+I / Ctrl+Shift+J / Ctrl+Shift+C  (DevTools)
-        if (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) { e.preventDefault(); return false; }
-        // Ctrl+U  (View Source)
-        if (e.ctrlKey && e.keyCode === 85) { e.preventDefault(); return false; }
-        // Ctrl+S  (Save page)
-        if (e.ctrlKey && e.keyCode === 83) { e.preventDefault(); return false; }
-        // Ctrl+A  (Select All)
-        if (e.ctrlKey && e.keyCode === 65) { e.preventDefault(); return false; }
-        // Ctrl+P  (Print)
-        if (e.ctrlKey && e.keyCode === 80) { e.preventDefault(); return false; }
-      });
-
-      // 3. Block drag-select of content
-      document.addEventListener('selectstart', function(e) { e.preventDefault(); });
-
-      // 5. Warn before closing / navigating away
-      window.addEventListener('beforeunload', function(e) {
-        e.preventDefault();
-        e.returnValue = 'Сайтът е част от работния процес. Сигурни ли сте, че искате да излезете?';
-        return e.returnValue;
-      });
-
-</script>
     <style>
       @import url("https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap");
 
@@ -715,12 +681,6 @@
       /* ── Helpers ── */
       const app = document.getElementById("app");
 
-      function isMobile() {
-        if (typeof navigator === "undefined") return false;
-        const ua = navigator.userAgent || "";
-        return /Mobi|Android|iPhone|iPad|iPod/i.test(ua);
-      }
-
       function getConfig(type) { return CONFIGS[type] || CONFIGS.hall; }
 
       function fmt(iso) {
@@ -739,8 +699,6 @@
           .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
       }
 
-      function csvEscape(v) { return '"' + String(v ?? "").replace(/"/g, '""') + '"'; }
-
       const RANGE_OPTIONS = [["today", "\u0414\u043d\u0435\u0441"], ["week", "\u0421\u0435\u0434\u043c\u0438\u0446\u0430"]];
 
       function rangeLabel(range) {
@@ -753,7 +711,6 @@
         return state.records.filter((r) => {
           const d = new Date(r.timestamp);
           if (range === "today") return d.toDateString() === now.toDateString();
-          if (range === "week") return now - d < 7 * 86400000;
           return now - d < 7 * 86400000;
         });
       }
@@ -783,15 +740,6 @@
           });
         });
         return { byLocation, byItem };
-      }
-
-      function latestIssues(limit = 6) {
-        return state.records
-          .flatMap((r) => dirtyItems(r).map((i) => ({
-            ...i, location: r.location, inspector: r.inspector, timestamp: r.timestamp,
-          })))
-          .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-          .slice(0, limit);
       }
 
       /* ── Persistence ── */
@@ -977,29 +925,6 @@
         });
       }
 
-      function downloadFile(filename, content, mimeType) {
-        const blob = new Blob([content], { type: mimeType });
-        const url = URL.createObjectURL(blob);
-        const a = Object.assign(document.createElement("a"), { href: url, download: filename });
-        document.body.appendChild(a); a.click(); a.remove();
-        URL.revokeObjectURL(url);
-      }
-
-      function exportCsv() {
-        const records = historyRecords();
-        if (!records.length) { showToast("Няма записи за експорт.", "error"); return; }
-        const header = ["Дата/Час", "Тип", "Локация", "Проверяващ", "Статус", "Проблеми", "Бележки", "Sheets"];
-        const rows = exportRows(records).map((r) =>
-          [r.date, r.type, r.location, r.inspector, r.status, r.issues, r.notes, r.sheets].map(csvEscape).join(";")
-        );
-        downloadFile(
-          "cinegrand-report-" + state.exportRange + ".csv",
-          "\uFEFF" + [header.join(";"), ...rows].join("\n"),
-          "text/csv;charset=utf-8;"
-        );
-        showToast("Excel файлът за " + rangeLabel(state.exportRange).toLowerCase() + " е готов.");
-      }
-
       function exportPdf() {
         const records = historyRecords();
         if (!records.length) { showToast("\u041d\u044f\u043c\u0430 \u0437\u0430\u043f\u0438\u0441\u0438 \u0437\u0430 PDF \u043e\u0442\u0447\u0435\u0442.", "error"); return; }
@@ -1109,11 +1034,6 @@
           </div>`;
       }
       function renderHome() {
-        const today = state.records.filter((r) => new Date(r.timestamp).toDateString() === new Date().toDateString());
-        const issuesLastWeek = recordsForRange("week").reduce((s, r) => s + dirtyItems(r).length, 0);
-        const pendingSync = state.records.filter((r) => !state.syncHistory[r.id] || state.syncHistory[r.id] === "error").length;
-        const recentIssues = latestIssues(6);
-        const latestRecord = state.records[0];
 
         return `<div class="page">
           <div class="panel panel-soft" style="margin-bottom:18px;">
