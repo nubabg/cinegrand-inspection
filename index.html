@@ -66,6 +66,7 @@
       html, body { min-height: 100%; }
       body {
         margin: 0;
+        overscroll-behavior: none;
         background:
           radial-gradient(circle at top left, rgba(200,167,86,.14), transparent 24%),
           radial-gradient(circle at top right, rgba(98,169,255,.10), transparent 20%),
@@ -524,6 +525,8 @@
       const ACCESS_ALLOWED_IPS = ["62.176.97.58", "130.204.143.95", "149.102.239.74"];
       const QR_SESSION_KEY = "cg_qr_access";
       const QR_MODE_KEY = "cg_qr_mode";       /* маркира сесията като QR-достъп */
+      const QR_TYPE_KEY  = "cg_qr_type";      /* запазва типа (hall/bathroom) */
+      const QR_LOC_KEY   = "cg_qr_loc";       /* запазва локацията */
       const QR_SESSION_TTL_MS = 45 * 60 * 1000; /* 45 минути */
       const QR_COOLDOWN_KEY = "cg_qr_cooldown";
       const QR_COOLDOWN_MS = 10 * 60 * 1000; /* 10 минути */
@@ -574,6 +577,8 @@
           if (getQRCooldownRemaining(type, loc) > 0) return false;
           sessionStorage.setItem(QR_SESSION_KEY, String(Date.now()));
           sessionStorage.setItem(QR_MODE_KEY, "1");
+          sessionStorage.setItem(QR_TYPE_KEY, type);
+          sessionStorage.setItem(QR_LOC_KEY, loc);
           return true;
         }
         /* Сесия — вече е влязъл чрез QR в тази сесия, проверка за изтичане */
@@ -582,6 +587,8 @@
           if (Date.now() - sessionTs < QR_SESSION_TTL_MS) return true;
           sessionStorage.removeItem(QR_SESSION_KEY);
           sessionStorage.removeItem(QR_MODE_KEY);
+          sessionStorage.removeItem(QR_TYPE_KEY);
+          sessionStorage.removeItem(QR_LOC_KEY);
         }
         /* IP проверка — офис компютри */
         try {
@@ -889,6 +896,8 @@
           setTimeout(() => {
             sessionStorage.removeItem(QR_SESSION_KEY);
             sessionStorage.removeItem(QR_MODE_KEY);
+            sessionStorage.removeItem(QR_TYPE_KEY);
+            sessionStorage.removeItem(QR_LOC_KEY);
             window.location.replace("https://www.google.com/");
           }, 1200);
           return;
@@ -1481,6 +1490,15 @@
             Object.assign(state, { inspectionType: type, location: resolvedLoc, inspector: "", itemState: {}, notes: "", showValidation: false, screen: "inspection" });
             try { history.replaceState({}, "", window.location.origin + window.location.pathname); } catch (_) {}
           }
+        } else if (sessionStorage.getItem(QR_MODE_KEY) === "1") {
+          /* QR сесия след reload (pull-to-refresh) — възстанови inspection екрана */
+          const savedType = sessionStorage.getItem(QR_TYPE_KEY) || "hall";
+          const savedLoc  = sessionStorage.getItem(QR_LOC_KEY)  || "";
+          const config = getConfig(savedType);
+          const decodedLoc = decodeURIComponent(savedLoc.replace(/\+/g, "%20"));
+          const resolvedLoc = config.locations.includes(decodedLoc) ? decodedLoc : config.locations[0];
+          state.openedFromQR = true;
+          Object.assign(state, { inspectionType: savedType, location: resolvedLoc, inspector: "", itemState: {}, notes: "", showValidation: false, screen: "inspection" });
         }
         render();
         /* Периодична проверка за изтекла QR сесия (всяка минута) */
@@ -1490,6 +1508,8 @@
           if (!sessionTs || Date.now() - sessionTs >= QR_SESSION_TTL_MS) {
             sessionStorage.removeItem(QR_SESSION_KEY);
             sessionStorage.removeItem(QR_MODE_KEY);
+            sessionStorage.removeItem(QR_TYPE_KEY);
+            sessionStorage.removeItem(QR_LOC_KEY);
             window.location.replace("https://www.google.com/");
           }
         }, 60 * 1000);
