@@ -1432,6 +1432,7 @@
           localStorage.removeItem(STORAGE_KEYS.sync);
           Object.assign(state, { showDeleteModal: false, deletePass: "", deleteErr: "", screen: "home" });
           showToast("Всички локални записи са изтрити.");
+          render();
           return;
         }
 
