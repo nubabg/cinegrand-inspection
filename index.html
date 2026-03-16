@@ -991,8 +991,10 @@
         w.focus();
         showToast("PDF \u043f\u0440\u0435\u0433\u043b\u0435\u0434\u044a\u0442 \u0437\u0430 " + rangeLabel(state.exportRange).toLowerCase() + " \u0435 \u043e\u0442\u0432\u043e\u0440\u0435\u043d.");
       }
+      function isQROnlySession() { return sessionStorage.getItem(QR_MODE_KEY) === "1"; }
+
       function renderTopbar() {
-        const navItems = [
+        const navItems = isQROnlySession() ? "" : [
           state.screen !== "home" ? `<button class="nav-btn" data-action="go-home" aria-label="Начална страница">Начало</button>` : "",
           `<button class="nav-btn" data-action="open-qr" aria-label="QR кодове за печат">QR кодове</button>`,
           `<a class="nav-btn${isSheetsConfigured() ? ' state' : ''}" href="${SHEETS_SPREADSHEET_URL}" target="_blank" rel="noopener" aria-label="Отвори Sheets таблица">${isSheetsConfigured() ? "Sheets ✓" : "Sheets ✗"}</a>`,
@@ -1379,7 +1381,8 @@
         if (!btn) return;
         const action = btn.dataset.action;
 
-        /* Navigation */
+        /* Navigation — blocked for QR-only sessions */
+        if (isQROnlySession() && (action === "go-home" || action === "go-history" || action === "go-stats" || action === "open-qr" || action === "start-inspection")) return;
         if (action === "go-home") { state.screen = "home"; render(); return; }
         if (action === "go-history") { state.screen = "history"; render(); return; }
         if (action === "go-stats") { state.screen = "stats"; render(); return; }
