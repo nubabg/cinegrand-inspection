@@ -1,0 +1,42 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches:
+      - 'claude/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Push files to cinegrand-staging
+        env:
+          PAT: ${{ secrets.STAGING_PAT }}
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+
+          git clone https://x-access-token:${PAT}@github.com/nubabg/cinegrand-staging.git /tmp/staging
+
+          cp index.html /tmp/staging/
+          cp styles.css /tmp/staging/
+          cp script.js /tmp/staging/
+          cp favicon.svg /tmp/staging/
+
+          cd /tmp/staging
+          git add .
+          git diff --staged --quiet || git commit -m "Sync from ${{ github.ref_name }}"
+          git push
+
+      - name: Enable GitHub Pages (first run only)
+        env:
+          PAT: ${{ secrets.STAGING_PAT }}
+        run: |
+          curl -s -X POST \
+            -H "Authorization: token ${PAT}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/nubabg/cinegrand-staging/pages \
+            -d '{"source":{"branch":"main","path":"/"}}' || true
