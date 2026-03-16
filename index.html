@@ -523,6 +523,8 @@
       /* ── Access Control ── */
       const ACCESS_ALLOWED_IPS = ["62.176.97.58", "130.204.143.95", "149.102.239.74"];
       const QR_SESSION_KEY = "cg_qr_access";
+      const QR_MODE_KEY = "cg_qr_mode";       /* маркира сесията като QR-достъп */
+      const QR_SESSION_TTL_MS = 45 * 60 * 1000; /* 45 минути */
       const QR_COOLDOWN_KEY = "cg_qr_cooldown";
       const QR_COOLDOWN_MS = 10 * 60 * 1000; /* 10 минути */
 
@@ -570,11 +572,17 @@
           const type = params.get("type") || "";
           const loc = params.get("location") || "";
           if (getQRCooldownRemaining(type, loc) > 0) return false;
-          sessionStorage.setItem(QR_SESSION_KEY, "1");
+          sessionStorage.setItem(QR_SESSION_KEY, String(Date.now()));
+          sessionStorage.setItem(QR_MODE_KEY, "1");
           return true;
         }
-        /* Сесия — вече е влязъл чрез QR в тази сесия */
-        if (sessionStorage.getItem(QR_SESSION_KEY) === "1") return true;
+        /* Сесия — вече е влязъл чрез QR в тази сесия, проверка за изтичане */
+        const sessionTs = parseInt(sessionStorage.getItem(QR_SESSION_KEY) || "0", 10);
+        if (sessionTs) {
+          if (Date.now() - sessionTs < QR_SESSION_TTL_MS) return true;
+          sessionStorage.removeItem(QR_SESSION_KEY);
+          sessionStorage.removeItem(QR_MODE_KEY);
+        }
         /* IP проверка — офис компютри */
         try {
           const res = await fetch("https://api.ipify.org?format=json");
@@ -875,10 +883,14 @@
             showToast("\u26a0 \u0417\u0430\u043f\u0438\u0441\u044c\u0442 \u0435 \u0437\u0430\u043f\u0430\u0437\u0435\u043d \u043b\u043e\u043a\u0430\u043b\u043d\u043e. Sheets sync \u043d\u0435\u0443\u0441\u043f\u0435\u0448\u0435\u043d: " + (syncResult.error || "\u043d\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043d\u0430 \u0433\u0440\u0435\u0448\u043a\u0430"), "error");
           }
         }
-        if (state.openedFromQR) {
+        if (sessionStorage.getItem(QR_MODE_KEY) === "1") {
           setQRCooldown(state.inspectionType, state.location);
           state.openedFromQR = false;
-          setTimeout(() => { sessionStorage.removeItem(QR_SESSION_KEY); window.location.replace("https://www.google.com/"); }, 1200);
+          setTimeout(() => {
+            sessionStorage.removeItem(QR_SESSION_KEY);
+            sessionStorage.removeItem(QR_MODE_KEY);
+            window.location.replace("https://www.google.com/");
+          }, 1200);
           return;
         }
         state.screen = "home";
@@ -1468,6 +1480,16 @@
           }
         }
         render();
+        /* Периодична проверка за изтекла QR сесия (всяка минута) */
+        setInterval(function() {
+          if (sessionStorage.getItem(QR_MODE_KEY) !== "1") return;
+          const sessionTs = parseInt(sessionStorage.getItem(QR_SESSION_KEY) || "0", 10);
+          if (!sessionTs || Date.now() - sessionTs >= QR_SESSION_TTL_MS) {
+            sessionStorage.removeItem(QR_SESSION_KEY);
+            sessionStorage.removeItem(QR_MODE_KEY);
+            window.location.replace("https://www.google.com/");
+          }
+        }, 60 * 1000);
       });
     </script>
   </body>
