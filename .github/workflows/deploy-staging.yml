@@ -25,6 +25,7 @@ jobs:
           cp styles.css /tmp/staging/
           cp script.js /tmp/staging/
           cp favicon.svg /tmp/staging/
+          cp charts.html /tmp/staging/
 
           cd /tmp/staging
           git add .
