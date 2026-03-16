@@ -480,11 +480,8 @@
       /* ── Constants ── */
       const HALLS = ["Зала 1", "Зала 2", "Зала 3", "Зала 4", "Зала 5", "Зала 6"];
       const BATHROOMS = [
-        "Дамска тоалетна - Партер",
-        "Мъжка тоалетна - Партер",
-        "Дамска тоалетна - Етаж 1",
-        "Мъжка тоалетна - Етаж 1",
-        "Персонална тоалетна",
+        "Дамска тоалетна",
+        "Мъжка тоалетна",
       ];
 
       const HALL_ITEMS = [
@@ -547,6 +544,38 @@
         } catch (_) {}
       }
 
+      /* ── Geolocation Access Control ── */
+      const CINEMA_LAT = 42.678351;
+      const CINEMA_LNG = 23.320035;
+      const CINEMA_RADIUS_M = 500;
+      const GEO_RECHECK_MS = 5 * 60 * 1000; /* Проверка на локация всеки 5 минути */
+
+      function distanceMeters(lat1, lon1, lat2, lon2) {
+        const R = 6371000;
+        const φ1 = lat1 * Math.PI / 180, φ2 = lat2 * Math.PI / 180;
+        const Δφ = (lat2 - lat1) * Math.PI / 180;
+        const Δλ = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                  Math.cos(φ1) * Math.cos(φ2) *
+                  Math.sin(Δλ/2) * Math.sin(Δλ/2);
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      }
+
+      function getGeolocation() {
+        return new Promise((resolve) => {
+          if (!navigator.geolocation) { resolve(null); return; }
+          navigator.geolocation.getCurrentPosition(
+            (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+            () => resolve(null),
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+          );
+        });
+      }
+
+      function isNearCinema(lat, lng) {
+        return distanceMeters(lat, lng, CINEMA_LAT, CINEMA_LNG) <= CINEMA_RADIUS_M;
+      }
+
       function showAccessDenied() {
         document.getElementById("app").innerHTML = `
           <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;">
@@ -563,7 +592,23 @@
           <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;">
             <div style="text-align:center;">
               <div style="width:42px;height:42px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--gold);animation:spin .8s linear infinite;margin:0 auto 16px;"></div>
-              <div style="color:var(--muted);font-size:13px;">Проверка на достъп…</div>
+              <div id="loading-text" style="color:var(--muted);font-size:13px;">Проверка на достъп…</div>
+            </div>
+          </div>`;
+      }
+
+      function updateLoadingText(text) {
+        const el = document.getElementById("loading-text");
+        if (el) el.textContent = text;
+      }
+
+      function showOutsideCinema() {
+        document.getElementById("app").innerHTML = `
+          <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;">
+            <div style="text-align:center;max-width:400px;">
+              <div style="width:72px;height:72px;border-radius:50%;background:rgba(239,91,91,.15);border:1px solid rgba(239,91,91,.3);display:flex;align-items:center;justify-content:center;margin:0 auto 24px;font-size:32px;">📍</div>
+              <div style="font-family:'Oswald',sans-serif;font-size:22px;font-weight:700;letter-spacing:.06em;margin-bottom:12px;">ИЗВЪН ЛОКАЦИЯТА</div>
+              <div style="color:var(--muted);font-size:14px;line-height:1.6;">Трябва да се намирате в <strong style="color:var(--text);">Cine Grand Park Center</strong>, за да използвате системата.</div>
             </div>
           </div>`;
       }
@@ -575,6 +620,10 @@
           const type = params.get("type") || "";
           const loc = params.get("location") || "";
           if (getQRCooldownRemaining(type, loc) > 0) return false;
+          /* Геолокация — трябва да е в киното */
+          updateLoadingText("Проверка на локация…");
+          const pos = await getGeolocation();
+          if (!pos || !isNearCinema(pos.lat, pos.lng)) return "outside";
           sessionStorage.setItem(QR_SESSION_KEY, String(Date.now()));
           sessionStorage.setItem(QR_MODE_KEY, "1");
           sessionStorage.setItem(QR_TYPE_KEY, type);
@@ -584,13 +633,19 @@
         /* Сесия — вече е влязъл чрез QR в тази сесия, проверка за изтичане */
         const sessionTs = parseInt(sessionStorage.getItem(QR_SESSION_KEY) || "0", 10);
         if (sessionTs) {
-          if (Date.now() - sessionTs < QR_SESSION_TTL_MS) return true;
+          if (Date.now() - sessionTs < QR_SESSION_TTL_MS) {
+            /* Геолокация при reload на QR сесия */
+            updateLoadingText("Проверка на локация…");
+            const pos = await getGeolocation();
+            if (!pos || !isNearCinema(pos.lat, pos.lng)) return "outside";
+            return true;
+          }
           sessionStorage.removeItem(QR_SESSION_KEY);
           sessionStorage.removeItem(QR_MODE_KEY);
           sessionStorage.removeItem(QR_TYPE_KEY);
           sessionStorage.removeItem(QR_LOC_KEY);
         }
-        /* IP проверка — офис компютри */
+        /* IP проверка — офис компютри (без геолокация) */
         try {
           const res = await fetch("https://api.ipify.org?format=json");
           const { ip } = await res.json();
@@ -602,8 +657,8 @@
       /* Само тези локации се показват в QR модала */
       const QR_LOCATIONS = [
         ...HALLS.map((loc) => ({ type: "hall", location: loc, icon: "🎬" })),
-        { type: "bathroom", location: "Дамска тоалетна - Партер", icon: "🚿" },
-        { type: "bathroom", location: "Мъжка тоалетна - Партер", icon: "🚿" },
+        { type: "bathroom", location: "Дамска тоалетна", icon: "🚿" },
+        { type: "bathroom", location: "Мъжка тоалетна", icon: "🚿" },
       ];
 
       const CONFIGS = {
@@ -1432,6 +1487,7 @@
           localStorage.removeItem(STORAGE_KEYS.sync);
           Object.assign(state, { showDeleteModal: false, deletePass: "", deleteErr: "", screen: "home" });
           showToast("Всички локални записи са изтрити.");
+          render();
           return;
         }
 
@@ -1474,6 +1530,7 @@
       cleanupOldRecords();
       showAccessLoading();
       checkAccess().then((allowed) => {
+        if (allowed === "outside") { showOutsideCinema(); return; }
         if (!allowed) { showAccessDenied(); return; }
         /* Обработи URL параметри от QR сканиране */
         const search = window.location.search || "";
@@ -1513,6 +1570,18 @@
             window.location.replace("https://www.google.com/");
           }
         }, 60 * 1000);
+        /* Периодична проверка на геолокация за QR сесии (всеки 5 минути) */
+        setInterval(async function() {
+          if (sessionStorage.getItem(QR_MODE_KEY) !== "1") return;
+          const pos = await getGeolocation();
+          if (!pos || !isNearCinema(pos.lat, pos.lng)) {
+            sessionStorage.removeItem(QR_SESSION_KEY);
+            sessionStorage.removeItem(QR_MODE_KEY);
+            sessionStorage.removeItem(QR_TYPE_KEY);
+            sessionStorage.removeItem(QR_LOC_KEY);
+            window.location.replace("https://www.google.com/");
+          }
+        }, GEO_RECHECK_MS);
       });
     </script>
   </body>
