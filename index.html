@@ -480,11 +480,8 @@
       /* ── Constants ── */
       const HALLS = ["Зала 1", "Зала 2", "Зала 3", "Зала 4", "Зала 5", "Зала 6"];
       const BATHROOMS = [
-        "Дамска тоалетна - Партер",
-        "Мъжка тоалетна - Партер",
-        "Дамска тоалетна - Етаж 1",
-        "Мъжка тоалетна - Етаж 1",
-        "Персонална тоалетна",
+        "Дамска тоалетна",
+        "Мъжка тоалетна",
       ];
 
       const HALL_ITEMS = [
@@ -660,8 +657,8 @@
       /* Само тези локации се показват в QR модала */
       const QR_LOCATIONS = [
         ...HALLS.map((loc) => ({ type: "hall", location: loc, icon: "🎬" })),
-        { type: "bathroom", location: "Дамска тоалетна - Партер", icon: "🚿" },
-        { type: "bathroom", location: "Мъжка тоалетна - Партер", icon: "🚿" },
+        { type: "bathroom", location: "Дамска тоалетна", icon: "🚿" },
+        { type: "bathroom", location: "Мъжка тоалетна", icon: "🚿" },
       ];
 
       const CONFIGS = {
