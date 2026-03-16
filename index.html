@@ -50,8 +50,8 @@
         --panel-2: #18212c;
         --panel-3: #0f141b;
         --border: #263140;
-        --gold: #c8a756;
-        --gold-2: #ebcb78;
+        --gold: #d4600a;
+        --gold-2: #f07d20;
         --text: #f5f7fb;
         --muted: #9ba8b9;
         --muted-2: #6d7a8c;
@@ -68,7 +68,7 @@
         margin: 0;
         overscroll-behavior: none;
         background:
-          radial-gradient(circle at top left, rgba(200,167,86,.14), transparent 24%),
+          radial-gradient(circle at top left, rgba(212,96,10,.14), transparent 24%),
           radial-gradient(circle at top right, rgba(98,169,255,.10), transparent 20%),
           linear-gradient(180deg, var(--bg) 0%, #05070a 100%);
         color: var(--text);
@@ -117,7 +117,7 @@
       .topbar {
         display: flex; justify-content: space-between; align-items: center;
         gap: 16px; padding: 16px 18px;
-        border: 1px solid rgba(200,167,86,.18); border-radius: 20px;
+        border: 1px solid rgba(212,96,10,.18); border-radius: 20px;
         background: linear-gradient(180deg, rgba(19,24,33,.96) 0%, rgba(10,14,20,.96) 100%);
         box-shadow: var(--shadow); backdrop-filter: blur(14px);
       }
@@ -168,8 +168,8 @@
       .nav-btn:hover { color: var(--text); background: rgba(255,255,255,.04); }
       .nav-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
       .nav-btn.state {
-        color: var(--gold-2); border-color: rgba(200,167,86,.26);
-        background: rgba(200,167,86,.10);
+        color: var(--gold-2); border-color: rgba(212,96,10,.26);
+        background: rgba(212,96,10,.10);
       }
 
       .page { padding: 8px 0 24px; }
@@ -184,9 +184,9 @@
       }
       .panel-soft {
         background:
-          linear-gradient(135deg, rgba(200,167,86,.18), rgba(98,169,255,.08)),
+          linear-gradient(135deg, rgba(212,96,10,.18), rgba(98,169,255,.08)),
           linear-gradient(180deg, rgba(24,33,44,.98), rgba(15,20,27,.98));
-        border-color: rgba(200,167,86,.24);
+        border-color: rgba(212,96,10,.24);
       }
 
       .hero-title, .section-title {
@@ -221,7 +221,7 @@
       }
       .hero-orbit::before, .hero-orbit::after {
         content: ""; position: absolute; border-radius: 50%;
-        border: 1px solid rgba(200,167,86,.28);
+        border: 1px solid rgba(212,96,10,.28);
       }
       .hero-orbit::before { width: 180px; height: 180px; }
       .hero-orbit::after { width: 240px; height: 240px; opacity: .55; }
@@ -232,7 +232,7 @@
         background: linear-gradient(135deg, var(--gold), var(--gold-2));
         color: #17120a; font-family: "Oswald", sans-serif;
         font-size: 46px; font-weight: 700;
-        box-shadow: 0 18px 40px rgba(200,167,86,.18);
+        box-shadow: 0 18px 40px rgba(212,96,10,.18);
       }
       .hero-metrics {
         display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -298,8 +298,8 @@
         padding: 12px 14px;
       }
       .field input:focus, .field select:focus, .field textarea:focus {
-        outline: none; border-color: rgba(200,167,86,.45);
-        box-shadow: 0 0 0 3px rgba(200,167,86,.12);
+        outline: none; border-color: rgba(212,96,10,.45);
+        box-shadow: 0 0 0 3px rgba(212,96,10,.12);
       }
 
       .items { display: grid; gap: 10px; }
@@ -307,7 +307,7 @@
         display: grid; grid-template-columns: 1fr 240px;
         gap: 16px; align-items: center;
         background: rgba(255,255,255,.02); border: 1px solid rgba(255,255,255,.06);
-        border-left: 4px solid rgba(200,167,86,.24); border-radius: 16px;
+        border-left: 4px solid rgba(212,96,10,.24); border-radius: 16px;
         padding: 14px 16px; transition: background .2s ease, border-color .2s ease;
       }
       .item-row.clean { border-left-color: var(--green); background: rgba(45,204,112,.08); }
@@ -357,7 +357,7 @@
         padding: 8px 12px; cursor: pointer;
         transition: background .15s ease, color .15s ease;
       }
-      .tab.active { color: var(--gold-2); border-color: rgba(200,167,86,.28); background: rgba(200,167,86,.10); }
+      .tab.active { color: var(--gold-2); border-color: rgba(212,96,10,.28); background: rgba(212,96,10,.10); }
 
       .bars { display: grid; gap: 10px; }
       .bar-label { display: flex; justify-content: space-between; margin-bottom: 6px; gap: 10px; }
