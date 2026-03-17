@@ -2280,12 +2280,15 @@
         }
       });
 
-      /* ── Release lock on page close ── */
+      /* ── Prevent closing the page + release lock if they force-close ── */
       function _releaseLockOnExit() {
         const sid = state.currentSessionId || sessionStorage.getItem(LOCK_SESSION_KEY);
         if (sid) releaseLockBeacon(sid);
       }
-      window.addEventListener("beforeunload", _releaseLockOnExit);
+      window.addEventListener("beforeunload", (e) => {
+        e.preventDefault();
+        e.returnValue = "";
+      });
       window.addEventListener("pagehide", (e) => { if (!e.persisted) _releaseLockOnExit(); });
 
       /* ── Kick user out if they leave/minimize during inspection ── */
