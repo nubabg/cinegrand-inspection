@@ -427,6 +427,43 @@
       @media (max-width: 900px) {
         .item-row { grid-template-columns: 1fr; }
       }
+      /* ── Bloom Background Effect ── */
+      .bloom-layer {
+        position: fixed; inset: 0;
+        pointer-events: none; z-index: 0; overflow: hidden;
+      }
+      .bloom-orb {
+        position: absolute; border-radius: 50%;
+        filter: blur(100px);
+        animation: bloomPulse 10s ease-in-out infinite;
+        will-change: opacity, transform;
+      }
+      .bloom-orb--gold {
+        width: 50vw; height: 50vw; top: -10%; left: -8%;
+        background: radial-gradient(circle, rgba(200,120,24,.18), transparent 70%);
+        animation-duration: 11s; animation-delay: 0s;
+      }
+      .bloom-orb--blue {
+        width: 40vw; height: 40vw; top: 15%; right: -8%;
+        background: radial-gradient(circle, rgba(98,169,255,.12), transparent 70%);
+        animation-duration: 13s; animation-delay: -4s;
+      }
+      .bloom-orb--red {
+        width: 35vw; height: 35vw; bottom: 10%; left: 25%;
+        background: radial-gradient(circle, rgba(239,91,91,.08), transparent 70%);
+        animation-duration: 15s; animation-delay: -7s;
+      }
+      .bloom-orb--gold2 {
+        width: 28vw; height: 28vw; bottom: 20%; right: 5%;
+        background: radial-gradient(circle, rgba(200,120,24,.10), transparent 70%);
+        animation-duration: 12s; animation-delay: -2s;
+      }
+      @keyframes bloomPulse {
+        0%   { opacity: 0.4; transform: scale(1); }
+        50%  { opacity: 0.85; transform: scale(1.1); }
+        100% { opacity: 0.4; transform: scale(1); }
+      }
+
       @media print {
         .app-shell, .broom-fun { display: none !important; }
         #qr-modal-backdrop { position: static !important; background: #fff !important; padding: 20px !important; width: 100% !important; min-height: 100vh !important; }
@@ -435,6 +472,12 @@
     </style>
   </head>
   <body>
+    <div class="bloom-layer" aria-hidden="true">
+      <span class="bloom-orb bloom-orb--gold"></span>
+      <span class="bloom-orb bloom-orb--blue"></span>
+      <span class="bloom-orb bloom-orb--red"></span>
+      <span class="bloom-orb bloom-orb--gold2"></span>
+    </div>
     <div id="app"></div>
     <div class="broom-fun" aria-hidden="true">
       <span class="broom-dust"></span><span class="broom-dust"></span><span class="broom-dust"></span>
@@ -1262,11 +1305,39 @@
         document.addEventListener("keydown", onKeyDown);
       }
 
+      function parseCSV(text) {
+        const lines = text.trim().split("\n");
+        if (lines.length < 2) return [];
+        const rows = [];
+        for (let i = 1; i < lines.length; i++) {
+          const cols = [];
+          let cur = "", inQ = false;
+          for (let j = 0; j < lines[i].length; j++) {
+            const ch = lines[i][j];
+            if (ch === '"') { inQ = !inQ; continue; }
+            if (ch === ',' && !inQ) { cols.push(cur.trim()); cur = ""; continue; }
+            cur += ch;
+          }
+          cols.push(cur.trim());
+          if (cols.length < 5) continue;
+          rows.push({
+            date: cols[1] || "",
+            type: cols[2] || "",
+            location: (cols[2] || "").includes(" - ") ? cols[2].split(" - ").slice(1).join(" - ") : (cols[2] || ""),
+            inspector: cols[3] || "",
+            status: cols[4] || "",
+            issues: cols[5] || "",
+          });
+        }
+        return rows;
+      }
+
       function render() {
         const content =
           state.screen === "home" ? renderHome() :
           state.screen === "inspection" ? renderInspection() :
-          renderHistory();
+          state.screen === "history" ? renderHistory() :
+          renderStats();
         app.innerHTML = renderShell(content) + renderModals();
         bindInputs();
         if (state.showDeleteModal) setupModalFocusTrap();
@@ -1291,9 +1362,11 @@
         const action = btn.dataset.action;
 
         /* Navigation — blocked for QR-only sessions */
-        if (isQROnlySession() && (action === "go-home" || action === "go-history" || action === "open-qr" || action === "start-inspection")) return;
+        if (isQROnlySession() && (action === "go-home" || action === "go-history" || action === "go-stats" || action === "open-qr" || action === "start-inspection")) return;
         if (action === "go-home") { state.screen = "home"; render(); return; }
         if (action === "go-history") { state.screen = "history"; render(); return; }
+        if (action === "go-stats") { state.screen = "stats"; render(); return; }
+
 
         /* Inspection item status — targeted update, no full re-render */
         if (action === "set-item") {
