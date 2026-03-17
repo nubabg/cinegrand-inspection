@@ -2272,13 +2272,29 @@
         }
       });
 
-      /* ── Release lock ONLY on actual page close (not on background/tab switch) ── */
+      /* ── Release lock on page close ── */
       function _releaseLockOnExit() {
         const sid = state.currentSessionId || sessionStorage.getItem(LOCK_SESSION_KEY);
         if (sid) releaseLockBeacon(sid);
       }
       window.addEventListener("beforeunload", _releaseLockOnExit);
       window.addEventListener("pagehide", (e) => { if (!e.persisted) _releaseLockOnExit(); });
+
+      /* ── Kick user out if they leave/minimize during inspection ── */
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState !== "hidden") return;
+        if (state.screen !== "inspection") return;
+        const sid = state.currentSessionId || sessionStorage.getItem(LOCK_SESSION_KEY);
+        if (sid) releaseLockBeacon(sid);
+        state.currentSessionId = null;
+        _lockAcquiredAt = 0;
+        sessionStorage.removeItem(LOCK_SESSION_KEY);
+        sessionStorage.removeItem(QR_SESSION_KEY);
+        sessionStorage.removeItem(QR_MODE_KEY);
+        sessionStorage.removeItem(QR_TYPE_KEY);
+        sessionStorage.removeItem(QR_LOC_KEY);
+        window.location.replace("https://google.com");
+      });
 
       /* ── Initial Render ── */
       cleanupOldRecords();
