@@ -2291,10 +2291,13 @@
       });
       window.addEventListener("pagehide", (e) => { if (!e.persisted) _releaseLockOnExit(); });
 
-      /* ── Kick user out if they leave/minimize during inspection ── */
+      /* ── Kick user out if they leave/minimize during inspection (mobile only) ── */
+      const _isMobileDevice = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+        || ("ontouchstart" in window && navigator.maxTouchPoints > 1 && window.innerWidth <= 1024);
       document.addEventListener("visibilitychange", () => {
         if (document.visibilityState !== "hidden") return;
         if (state.screen !== "inspection") return;
+        if (!_isMobileDevice) return;
         const sid = state.currentSessionId || sessionStorage.getItem(LOCK_SESSION_KEY);
         if (sid) releaseLockBeacon(sid);
         state.currentSessionId = null;
