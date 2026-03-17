@@ -942,7 +942,14 @@
           const res = await fetch("https://api.ipify.org?format=json");
           const { ip } = await res.json();
           isWhitelistedIP = ACCESS_ALLOWED_IPS.includes(ip);
-        } catch (_) {}
+        } catch (_) {
+          /* Fallback: опитай втори IP сервис ако първият не отговори */
+          try {
+            const res2 = await fetch("https://api.my-ip.io/v2/ip.json");
+            const data2 = await res2.json();
+            if (data2 && data2.ip) isWhitelistedIP = ACCESS_ALLOWED_IPS.includes(data2.ip);
+          } catch (_2) {}
+        }
         sessionStorage.setItem(LOCK_WHITELISTED_KEY, isWhitelistedIP ? "1" : "0");
 
         const params = new URLSearchParams(window.location.search || (window.location.hash.startsWith("#") ? window.location.hash.slice(1) : ""));
@@ -950,7 +957,8 @@
         if (params.get("open") === "inspection") {
           const type = params.get("type") || "";
           const loc = params.get("location") || "";
-          if (getQRCooldownRemaining(type, loc) > 0) return false;
+          /* Whitelisted IP-та пропускат cooldown — могат да сканират без ограничение */
+          if (!isWhitelistedIP && getQRCooldownRemaining(type, loc) > 0) return false;
           if (!isWhitelistedIP) {
             /* Геолокация — трябва да е в киното (само за не-whitelisted IP) */
             updateLoadingText("Проверка на локация…");
