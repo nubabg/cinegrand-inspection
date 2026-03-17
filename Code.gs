@@ -13,6 +13,7 @@ function doPost(e) {
     if (data.action === "acquireLock") return handleAcquireLock_(data);
     if (data.action === "releaseLock") return handleReleaseLock_(data);
     if (data.action === "acquireLockFirstFree") return handleAcquireLockFirstFree_(data);
+    if (data.action === "checkLock") return handleCheckLock_(data);
 
     var record = data.record;
     if (!record || typeof record !== 'object') {
