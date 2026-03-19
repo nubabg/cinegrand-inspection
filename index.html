@@ -2075,7 +2075,7 @@
 
           <div class="panel" style="margin-bottom:16px;">
             <div class="grid cards-2">
-              <div class="field"><label>Локация *${!state.currentSessionId && !isQROnlySession() ? ' <span style="color:var(--red);font-size:11px;">(няма заключване)</span>' : ""}</label><select id="location-select" ${isQROnlySession() ? "disabled" : ""}>${config.locations.map((l) => `<option value="${l}" ${l === state.location ? "selected" : ""}>${l}</option>`).join("")}</select></div>
+              <div class="field"><label>Локация</label><div style="min-height:48px;display:flex;align-items:center;padding:12px 14px;border-radius:14px;border:1px solid rgba(200,120,24,.38);background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));color:var(--text);font-weight:700;box-shadow:inset 0 0 0 1px rgba(200,120,24,.08);">${escapeHtml(state.location || '—')}</div><div style="margin-top:6px;color:var(--muted);font-size:12px;">Локацията е заключена за текущата проверка и не може да се сменя.</div></div>
               <div class="field"><label>Проверяващ *</label><input id="inspector-input" value="${escapeHtml(state.inspector)}" placeholder="Пълно име…" />${state.showValidation && !state.inspector.trim() ? `<div style="color:var(--red);font-size:12px;">Задължително поле</div>` : state.showValidation && !/^[\u0400-\u04FF ]+$/.test(state.inspector.trim()) ? `<div style="color:var(--red);font-size:12px;">Само кирилица, без специални символи</div>` : ""}</div>
             </div>
             <div class="muted" style="font-size:13px;">Дата и час: ${fmt(new Date().toISOString())}</div>
@@ -2223,8 +2223,11 @@
         const title = isHall ? "Избор на Зала" : "Избор на Тоалетна";
         return `
           <div style="padding:24px;max-width:480px;margin:0 auto;">
-            <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">
-              <button data-action="go-home" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;padding:4px 8px;border-radius:8px;transition:background .15s;" onmouseover="this.style.background='rgba(255,255,255,.06)'" onmouseout="this.style.background='none'">←</button>
+            <div style="display:flex;align-items:center;gap:14px;margin-bottom:24px;">
+              <button data-action="go-home" aria-label="Назад към началото" style="display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg, rgba(200,120,24,.22), rgba(200,120,24,.08));border:1px solid rgba(200,120,24,.55);box-shadow:0 0 0 1px rgba(200,120,24,.18), 0 10px 24px rgba(0,0,0,.28);color:var(--gold);cursor:pointer;font-size:14px;font-weight:700;letter-spacing:.04em;padding:10px 14px;border-radius:999px;transition:transform .15s ease,background .15s ease,border-color .15s ease,box-shadow .15s ease;" onmouseover="this.style.background='linear-gradient(135deg, rgba(200,120,24,.32), rgba(200,120,24,.14))';this.style.borderColor='rgba(245,158,11,.9)';this.style.boxShadow='0 0 0 1px rgba(245,158,11,.22), 0 14px 28px rgba(0,0,0,.34)';this.style.transform='translateX(-2px)'" onmouseout="this.style.background='linear-gradient(135deg, rgba(200,120,24,.22), rgba(200,120,24,.08))';this.style.borderColor='rgba(200,120,24,.55)';this.style.boxShadow='0 0 0 1px rgba(200,120,24,.18), 0 10px 24px rgba(0,0,0,.28)';this.style.transform='translateX(0)'">
+                <span style="font-size:20px;line-height:1;">←</span>
+                <span>Назад</span>
+              </button>
               <h2 style="font-family:'Oswald',sans-serif;font-size:20px;font-weight:700;letter-spacing:.06em;margin:0;">${title}</h2>
             </div>
             <div style="color:var(--muted);font-size:13px;margin-bottom:20px;">Избери ${isHall ? "залата" : "тоалетната"}, която ще проверяваш:</div>
@@ -2282,31 +2285,6 @@
       function bindInputs() {
         const el = (id) => document.getElementById(id);
         const bind = (id, event, fn) => { const e = el(id); if (e) e["on" + event] = fn; };
-        bind("location-select", "change", async (e) => {
-          const newLoc = e.target.value;
-          const oldLoc = state.location;
-          if (newLoc === oldLoc) return;
-          if (_lockBusy) { e.target.value = oldLoc; return; }
-          if (!isQROnlySession()) {
-            const oldSid = state.currentSessionId;
-            const sessionId = generateSessionId();
-            const lockResult = await acquireLock(state.inspectionType, newLoc, sessionId);
-            if (!lockResult.success) {
-              const locName = escapeHtml(newLoc);
-              const msg = lockResult.minutesLeft
-                ? locName + " се проверява в момента. Опитайте след ~" + lockResult.minutesLeft + " мин."
-                : locName + " се проверява. Изберете друга локация.";
-              showToast(msg, "error");
-              e.target.value = oldLoc;
-              return;
-            }
-            if (oldSid) await releaseLock(oldSid);
-            state.currentSessionId = sessionId;
-            _lockAcquiredAt = Date.now();
-            sessionStorage.setItem(LOCK_SESSION_KEY, sessionId);
-          }
-          state.location = newLoc;
-        });
         bind("inspector-input", "input", (e) => { const filtered = e.target.value.replace(/[^\u0400-\u04FF ]/g, ""); e.target.value = filtered; state.inspector = filtered; });
         bind("notes-input", "input", (e) => { state.notes = e.target.value; });
         bind("delete-pass-input", "input", (e) => { state.deletePass = e.target.value; state.deleteErr = ""; });
