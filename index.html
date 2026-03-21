@@ -232,22 +232,29 @@
       .card-pick:hover { transform: translateY(-4px); box-shadow: 0 24px 48px rgba(0,0,0,.4); }
 
       .card-head {
-        padding: 22px 22px 28px; min-height: 240px; position: relative;
+        padding: 16px 18px 20px; min-height: 160px; position: relative;
         display: flex; flex-direction: column; justify-content: flex-end;
       }
       .card-text-icon {
-        position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+        position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
         font-family: "Oswald", sans-serif; font-weight: 700;
-        font-size: 44px; letter-spacing: .06em; text-transform: uppercase;
+        font-size: 36px; letter-spacing: .06em; text-transform: uppercase;
         background: linear-gradient(135deg, var(--gold), var(--gold-2));
         -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         background-clip: text; opacity: .32; pointer-events: none;
-        line-height: 1.1; text-align: center; max-width: 160px;
+        line-height: 1.1; text-align: center; max-width: 130px;
       }
 
+      .btn-back {
+        background: rgba(12,7,0,.88); border: 1px solid rgba(201,162,39,.38);
+        border-radius: 999px; color: var(--gold); padding: 7px 14px 7px 10px;
+        font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;
+        transition: background .15s, border-color .15s; line-height: 1;
+      }
+      .btn-back:hover { background: rgba(201,162,39,.1); border-color: rgba(201,162,39,.65); }
 
       .card-body {
-        padding: 18px 20px 20px;
+        padding: 14px 16px 16px;
         background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
       }
 
@@ -713,6 +720,41 @@
         #qr-modal-backdrop { position: static !important; background: #fff !important; padding: 20px !important; width: 100% !important; min-height: 100vh !important; }
         .qr-modal { box-shadow: none !important; border: 1px solid #ddd !important; max-width: 100% !important; }
       }
+
+      /* ── Google Reviews ── */
+      .cg-reviews-wrap { padding: 24px 0 8px; }
+      .cg-reviews-kicker { text-transform: uppercase; letter-spacing: 4px; font-size: 11px; color: var(--gold); font-weight: 600; margin-bottom: 6px; }
+      .cg-reviews-heading { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 14px; }
+      .cg-overall { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
+      .cg-overall-num { font-size: 36px; font-weight: 700; color: var(--gold); line-height: 1; }
+      .cg-overall-stars { color: var(--gold); font-size: 18px; }
+      .cg-overall-count { color: var(--muted); font-size: 13px; }
+      .cg-reviews-grid { display: grid; gap: 12px; }
+      .cg-review-card {
+        background: var(--panel); border: 1px solid rgba(200,120,24,.15);
+        border-radius: 12px; padding: 16px 18px; position: relative; overflow: hidden;
+        opacity: 0; transform: translateY(10px);
+        transition: background .2s, border-color .2s;
+        animation: cgFadeUp .4s forwards;
+      }
+      .cg-review-card:hover { background: var(--panel-2); border-color: rgba(200,120,24,.35); }
+      .cg-quote-deco { position: absolute; top: 6px; right: 12px; font-size: 54px; color: rgba(200,120,24,.07); font-family: Georgia,serif; line-height: 1; pointer-events: none; }
+      .cg-review-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+      .cg-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg,var(--gold),#7a4e0a); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #fff; flex-shrink: 0; }
+      .cg-author { font-weight: 600; font-size: 13px; color: var(--text); }
+      .cg-date { font-size: 11px; color: var(--muted); }
+      .cg-review-stars { color: var(--gold); font-size: 12px; margin-bottom: 6px; }
+      .cg-review-text { font-size: 13px; color: var(--muted); line-height: 1.55; }
+      .cg-reviews-link { display: inline-block; margin-top: 14px; color: var(--gold); font-size: 12px; text-decoration: none; border-bottom: 1px solid rgba(200,120,24,.3); padding-bottom: 1px; }
+      .cg-reviews-link:hover { border-color: var(--gold); }
+      .cg-reviews-loading { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 13px; padding: 16px 0; }
+      .cg-spinner { width: 16px; height: 16px; border: 2px solid rgba(200,120,24,.2); border-top-color: var(--gold); border-radius: 50%; animation: cgSpin .8s linear infinite; }
+      @keyframes cgSpin { to { transform: rotate(360deg); } }
+      @keyframes cgFadeUp { to { opacity: 1; transform: translateY(0); } }
+      @media (max-width: 600px) {
+        .cg-reviews-heading { font-size: 17px; }
+        .cg-review-card { padding: 12px 14px; }
+      }
     </style>
   </head>
   <body>
@@ -734,10 +776,36 @@
 
       /* ── Constants ── */
       const HALLS = ["Зала 1", "Зала 2", "Зала 3", "Зала 4", "Зала 5", "Зала 6"];
+      const HALL_GOLD_ICON = `
+        <svg viewBox="0 0 96 96" width="40" height="40" aria-hidden="true">
+          <defs>
+            <clipPath id="clapClipSm">
+              <rect x="8" y="8" width="80" height="20"/>
+            </clipPath>
+          </defs>
+          <rect x="8" y="34" width="80" height="54" rx="5" fill="#1e1e1e" stroke="#505050" stroke-width="1.5"/>
+          <line x1="9" y1="48" x2="87" y2="48" stroke="#363636" stroke-width="1"/>
+          <line x1="9" y1="60" x2="87" y2="60" stroke="#363636" stroke-width="1"/>
+          <line x1="9" y1="72" x2="87" y2="72" stroke="#363636" stroke-width="1"/>
+          <line x1="30" y1="35" x2="30" y2="87" stroke="#363636" stroke-width="1"/>
+          <rect x="6" y="26" width="84" height="10" rx="2" fill="#282828" stroke="#505050" stroke-width="1.5"/>
+          <rect x="8" y="8" width="80" height="20" fill="#eeeeee"/>
+          <g clip-path="url(#clapClipSm)">
+            <polygon points="8,28 20,28 40,8 28,8" fill="#111111"/>
+            <polygon points="32,28 44,28 64,8 52,8" fill="#111111"/>
+            <polygon points="56,28 68,28 88,8 76,8" fill="#111111"/>
+            <polygon points="80,28 88,28 88,20" fill="#111111"/>
+          </g>
+          <rect x="8" y="8" width="80" height="20" fill="none" stroke="#333333" stroke-width="1.5"/>
+        </svg>`;
       const BATHROOMS = [
         "Дамска тоалетна",
         "Мъжка тоалетна",
       ];
+
+      /* ── Changing Room module constants ── */
+      const CHANGING_ROOM_SHEET_NAME = "Почистване съблекални";
+      const SHEETS_SPREADSHEET_ID = "17cuchNPS7ajySczy-Wc7eUlDFgAClaE8gsZrqCXAKcA";
 
       const HALL_ITEMS = [
         { id: "cup_holders", label: "Cup Holders", icon: "☕", desc: "Поставки за чаши" },
@@ -793,8 +861,10 @@
          след като deploy-неш Google Apps Script-а.
          Виж инструкциите в документа за настройка.
          ══════════════════════════════════════════════════ */
-      const SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzB9lp5istU4JVRtMpjCg_G_DuYRTqx24tcyXzBBEQR5D2cf1odX4mfBBNE-8xdSpzs9g/exec";
+      const SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxq3eE1B1UvvqDAJ-jHarX6IYRh3aZnKuzJOMdPszvWvQ-FG3cyiUJZP6MZ3nelSnfyVA/exec";
       const SHEETS_SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/17cuchNPS7ajySczy-Wc7eUlDFgAClaE8gsZrqCXAKcA/edit?usp=drive_web&ouid=105876940936518374708";
+      /* ── Shared secret — трябва да съвпада с TOKEN константата в Apps Script ── */
+      const SHEETS_SECRET_TOKEN = "cg-2025-secret-token";
 
       const QR_DEFAULT_URL = "https://cginspection.org/";
       const QR_REDIRECT_URL = "https://www.google.com/";
@@ -895,7 +965,7 @@
           const res = await fetch(SHEETS_WEB_APP_URL, {
             method: "POST",
             headers: { "Content-Type": "text/plain;charset=UTF-8" },
-            body: JSON.stringify({ action: "acquireLock", type, location, sessionId }),
+            body: JSON.stringify({ action: "acquireLock", type, location, sessionId, _token: SHEETS_SECRET_TOKEN }),
           });
           if (!res.ok) return { success: true, offline: true };
           try { return await res.json(); } catch (_) { return { success: true, offline: true }; }
@@ -911,7 +981,7 @@
           await fetch(SHEETS_WEB_APP_URL, {
             method: "POST",
             headers: { "Content-Type": "text/plain;charset=UTF-8" },
-            body: JSON.stringify({ action: "releaseLock", sessionId }),
+            body: JSON.stringify({ action: "releaseLock", sessionId, _token: SHEETS_SECRET_TOKEN }),
           });
         } catch (err) {
           console.warn("[Lock] releaseLock failed:", err.message);
@@ -920,7 +990,7 @@
 
       function releaseLockBeacon(sessionId) {
         if (!sessionId || !isSheetsConfigured()) return;
-        const payload = JSON.stringify({ action: "releaseLock", sessionId });
+        const payload = JSON.stringify({ action: "releaseLock", sessionId, _token: SHEETS_SECRET_TOKEN });
         try {
           fetch(SHEETS_WEB_APP_URL, {
             method: "POST",
@@ -1135,6 +1205,14 @@
         toast: null,
         openedFromQR: false,
         currentSessionId: null,
+        /* Changing room module */
+        crType: null,        /* "male" | "female" */
+        crData: null,        /* { dateStr, rowIndex, maleEntry, femaleEntry } */
+        crLoading: false,
+        crError: null,
+        crStep: "idle",      /* "idle" | "started" | "submitting" | "done" */
+        crName: "",
+        crNameErr: "",
       };
 
       try { state.records = JSON.parse(localStorage.getItem(STORAGE_KEYS.records) || "[]"); }
@@ -1256,7 +1334,7 @@
 
       async function sendToSheets(record) {
         if (!isSheetsConfigured()) return { success: false, error: "Sheets URL \u043d\u0435 \u0435 \u043a\u043e\u043d\u0444\u0438\u0433\u0443\u0440\u0438\u0440\u0430\u043d" };
-        const payload = JSON.stringify({ record });
+        const payload = JSON.stringify({ record, _token: SHEETS_SECRET_TOKEN });
 
         try {
           const response = await fetch(SHEETS_WEB_APP_URL, {
@@ -1331,7 +1409,7 @@
           const res = await fetch(SHEETS_WEB_APP_URL, {
             method: "POST",
             headers: { "Content-Type": "text/plain;charset=UTF-8" },
-            body: JSON.stringify({ action: "acquireLockFirstFree", type, locations, sessionId }),
+            body: JSON.stringify({ action: "acquireLockFirstFree", type, locations, sessionId, _token: SHEETS_SECRET_TOKEN }),
           });
           if (!res.ok) return { success: true, location: locations[0], offline: true };
           try { return await res.json(); } catch (_) { return { success: true, location: locations[0], offline: true }; }
@@ -1607,15 +1685,31 @@
                 <div class="panel card-pick" data-action="start-inspection" data-type="${key}">
                   <div class="card-head" style="background:linear-gradient(160deg, rgba(255,255,255,.03), rgba(0,0,0,.1)), radial-gradient(circle at top right, ${key === "hall" ? "rgba(201,162,39,.22)" : "rgba(96,165,250,.20)"}, transparent 40%);">
                     <span class="card-text-icon">${key === "hall" ? "КИНО ЗАЛА" : "WC"}</span>
-                    <div style="font-size:28px;font-weight:700;position:relative;z-index:1;">${cfg.shortTitle}</div>
+                    <div style="font-size:22px;font-weight:700;position:relative;z-index:1;">${cfg.shortTitle}</div>
                     <div class="muted" style="position:relative;z-index:1;">${key === "hall" ? "Зали 1–6" : "Тоалетни"}</div>
                   </div>
                   <div class="card-body">
                     <div class="tag-list">${cfg.tags.map((t) => `<span class="tag">${t}</span>`).join("")}</div>
                     <div class="btn btn-gold" style="text-align:center;">Започни проверка</div>
                   </div>
-                </div>`).join("")}</div>
+                </div>`).join("")}
+                <div class="panel card-pick" data-action="start-changing-room" style="grid-column:1/-1;">
+                  <div class="card-head" style="background:linear-gradient(160deg, rgba(255,255,255,.03), rgba(0,0,0,.1)), radial-gradient(circle at top right, rgba(139,92,246,.22), transparent 40%);">
+                    <span class="card-text-icon" style="font-size:18px;max-width:220px;opacity:.55;letter-spacing:.04em;">СЪБЛЕКАЛНИЯ</span>
+                    <div style="font-size:22px;font-weight:700;position:relative;z-index:1;">Почистване на съблекалня</div>
+                    <div class="muted" style="position:relative;z-index:1;">Мъжка / Женска</div>
+                  </div>
+                  <div class="card-body">
+                    <div class="tag-list"><span class="tag">График</span><span class="tag">Отчет</span><span class="tag">Почистване</span></div>
+                    <div class="btn btn-gold" style="text-align:center;">Отчети почистване</div>
+                  </div>
+                </div>
+              </div>
             </div>
+          </div>
+
+          <div id="cg-reviews-section" class="cg-reviews-wrap">
+            <div class="cg-reviews-loading"><div class="cg-spinner"></div><span>Зареждане на ревюта...</span></div>
           </div>
 
         </div>`;
@@ -1672,8 +1766,9 @@
             <div class="toolbar">
               <div>
                 <h3 class="section-title" style="margin:0;">Данни</h3>
-                <div class="muted" style="font-size:13px;margin-top:4px;">Данни от Google Sheets — актуални при презареждане на страницата</div>
+                <div class="muted" style="font-size:13px;margin-top:4px;">Данни от Google Sheets</div>
               </div>
+              <button class="btn btn-secondary" id="charts-refresh-btn" onclick="refreshChartsData()">⟳ Обнови</button>
             </div>
           </div>
           <div id="charts-container">
@@ -1711,58 +1806,30 @@
       }
 
       async function fetchSheetsData() {
-        const SHEET_ID = '17cuchNPS7ajySczy-Wc7eUlDFgAClaE8gsZrqCXAKcA';
-        const cacheBust = '_cb=' + Date.now();
-
-        async function tryGviz() {
-          const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&gid=0&${cacheBust}`;
-          const res = await fetch(url);
-          if (!res.ok) throw new Error('HTTP ' + res.status);
-          const text = await res.text();
-          const start = text.indexOf('{');
-          const end   = text.lastIndexOf('}');
-          if (start === -1 || end === -1) throw new Error('Неочакван формат');
-          const json = JSON.parse(text.slice(start, end + 1));
-          if (!json.table) throw new Error('Липсва table');
-          const cols = json.table.cols.map(c => (c.label || c.id || '').trim());
-          return (json.table.rows || []).map(row => {
-            if (!row || !row.c) return null;
-            const obj = {};
-            cols.forEach((col, i) => {
-              const cell = row.c[i];
-              obj[col] = cell ? (cell.f != null ? String(cell.f) : cell.v != null ? String(cell.v) : '') : '';
-            });
-            return obj;
-          }).filter(r => r && Object.values(r).some(v => v !== ''));
-        }
-
-        async function tryCsv() {
-          const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0&${cacheBust}`;
-          const res = await fetch(url);
-          if (!res.ok) throw new Error('HTTP ' + res.status);
-          return parseCSV(await res.text());
-        }
-
-        /* Опит 1: gviz, Опит 2: gviz retry, Опит 3: CSV */
-        for (let attempt = 0; attempt < 2; attempt++) {
-          try { return await tryGviz(); } catch (e) {
-            console.warn('[Charts] gviz опит ' + (attempt + 1) + ':', e.message);
-            if (attempt === 0) await new Promise(r => setTimeout(r, 500));
-          }
-        }
-        try { return await tryCsv(); } catch (e) {
-          console.warn('[Charts] CSV:', e.message);
-          throw e;
-        }
+        const url = SHEETS_WEB_APP_URL + '?action=getInfo&_token=' + encodeURIComponent(SHEETS_SECRET_TOKEN) + '&_cb=' + Date.now();
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const json = await res.json();
+        if (!json.success) throw new Error(json.error || 'Error');
+        const data = json.data; // 2D array: row 0 = headers, rest = data
+        if (!data || data.length < 2) return [];
+        const headers = data[0].map(h => String(h || '').trim());
+        return data.slice(1).map(row => {
+          const obj = {};
+          headers.forEach((h, i) => { obj[h] = String(row[i] != null ? row[i] : ''); });
+          return obj;
+        }).filter(r => Object.values(r).some(v => v !== ''));
       }
 
-      /* Парсва дата от различни формати */
+      /* Парсва дата от различни формати (включително bg-BG: "21.03.2026, 14:35") */
       function parseChartDate(str) {
         if (!str) return null;
-        let m = str.match(/(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})/);
-        if (m) return new Date(+m[3], +m[2]-1, +m[1]);
-        m = str.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
-        if (m) return new Date(+m[1], +m[2]-1, +m[3]);
+        // dd.mm.yyyy[,] HH:MM[:SS]  — формат от bg-BG locale (запетая или интервал след датата)
+        let m = str.match(/(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})(?:[,\s]+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+        if (m) return new Date(+m[3], +m[2]-1, +m[1], +(m[4]||0), +(m[5]||0), +(m[6]||0));
+        // yyyy-mm-dd[T ]HH:MM[:SS]
+        m = str.match(/(\d{4})-(\d{1,2})-(\d{1,2})(?:[T\s](\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+        if (m) return new Date(+m[1], +m[2]-1, +m[3], +(m[4]||0), +(m[5]||0), +(m[6]||0));
         const d = new Date(str);
         return isNaN(d) ? null : d;
       }
@@ -1773,6 +1840,15 @@
       let _chartsLoading = false;
       let _cachedChartRows = null;
       let _chartsFetchVersion = 0;
+
+      async function refreshChartsData() {
+        const btn = document.getElementById('charts-refresh-btn');
+        if (btn) { btn.disabled = true; btn.textContent = 'Зарежда…'; }
+        _cachedChartRows = null;
+        _chartsLoading = false;
+        await initChartsScreen(false);
+        if (btn) { btn.disabled = false; btn.textContent = '⟳ Обнови'; }
+      }
 
       async function initChartsScreen(skipFetch) {
         if (_chartsLoading && !skipFetch) return;
@@ -1906,22 +1982,32 @@
           return (ma+da).localeCompare(mb+db);
         }).slice(-30);
 
-        /* Часово разпределение */
+        /* Часово разпределение — само последните 24 часа */
+        const now24h = new Date();
+        const cutoff24h = new Date(now24h.getTime() - 24 * 60 * 60 * 1000);
+        const byHour24 = {};
+        normalized.forEach(r => {
+          if (r.date && r.date >= cutoff24h && r.hour !== null) {
+            const hKey = String(r.hour).padStart(2,'0') + ':00';
+            byHour24[hKey] = (byHour24[hKey] || 0) + 1;
+          }
+        });
         const hourLabels = [], hourData = [];
         for (let h = 0; h < 24; h++) {
           const hk = String(h).padStart(2,'0') + ':00';
           hourLabels.push(hk);
-          hourData.push(byHour[hk] || 0);
+          hourData.push(byHour24[hk] || 0);
         }
 
         const inspEntries = Object.entries(byInspector).sort((a,b) => b[1]-a[1]);
         const issEntries  = Object.entries(byIssue).sort((a,b) => b[1]-a[1]).slice(0,10);
         const locEntries  = Object.entries(byLocation).sort((a,b) => b[1]-a[1]);
 
-        const maxDay = Math.max(1, ...dayKeys.map(k => byDay[k] || 0));
+        const maxDay  = Math.max(1, ...dayKeys.map(k => byDay[k] || 0));
         const maxInsp = Math.max(1, inspEntries[0]?.[1] || 1);
-        const maxLoc = Math.max(1, ...locEntries.map(([,v]) => v));
+        const maxLoc  = Math.max(1, ...locEntries.map(([,v]) => v));
         const maxHour = Math.max(1, ...hourData);
+        const maxIss  = Math.max(1, issEntries[0]?.[1] || 1);
         const lastDay = dayKeys.length ? dayKeys[dayKeys.length - 1] : '—';
         const lastDayCount = lastDay !== '—' ? (byDay[lastDay] || 0) : 0;
         const totalIssues = issEntries.reduce((s, [,v]) => s + v, 0);
@@ -1992,7 +2078,6 @@
               <div class="chart-wrap" style="min-height:240px;">
                 ${issEntries.length ? issEntries.map(([name, count], i) => {
                   const pctOfTotal = totalIssues ? Math.round(count/totalIssues*100) : 0;
-                  const maxIss = Math.max(1, ...issEntries.map(([,v]) => v));
                   const severity = count >= maxIss * 0.7 ? 'high' : count >= maxIss * 0.3 ? 'med' : 'low';
                   const barPct = Math.round(count/maxIss*100);
                   return `<div class="issue-item" title="${escapeHtml(name)}: ${count} пъти (${pctOfTotal}% от всички проблеми)"><span class="issue-severity ${severity}"></span><span style="flex:1;">${escapeHtml(name)}</span><span class="issue-pct">${pctOfTotal}%</span><span class="issue-count">${count}</span><div class="charts-bar-bg" style="width:80px;height:6px;"><div class="charts-bar-fill charts-bar-fill--red" style="width:${barPct}%;"></div></div></div>`;
@@ -2014,12 +2099,12 @@
             </div>
             <div class="chart-card card-time">
               <div class="chart-title">Активност по часове</div>
-              <div class="chart-subtitle">Разпределение в денонощието (0–23 ч)</div>
+              <div class="chart-subtitle">Последните 24 часа по часови диапазон (0–23 ч)</div>
               <div class="chart-wrap" style="min-height:240px;">
                 <div class="hourly-histogram">${hourLabels.map((label, i) => {
                   const v = hourData[i] || 0;
                   const barH = maxHour ? Math.max(4, Math.round(160 * v / maxHour)) : 0;
-                  const peak = maxHour && v === Math.max(...hourData) && v > 0;
+                  const peak = v > 0 && v === maxHour;
                   return `<div class="hourly-col" title="${label}: ${v} проверки"><div class="hourly-bar-track"><div class="hourly-bar-fill" style="height:${barH}px;${peak ? 'background:var(--gold);box-shadow:0 0 8px rgba(200,120,24,.5);' : ''}"></div></div>${v > 0 ? `<span class="hourly-value">${v}</span>` : ''}</div>`;
                 }).join('')}</div>
                 <div class="heatmap-legend"><span>00</span><span>06</span><span>12</span><span>18</span><span>23</span></div>
@@ -2075,7 +2160,7 @@
 
           <div class="panel" style="margin-bottom:16px;">
             <div class="grid cards-2">
-              <div class="field"><label>Локация</label><div style="min-height:48px;display:flex;align-items:center;padding:12px 14px;border-radius:14px;border:1px solid rgba(200,120,24,.38);background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));color:var(--text);font-weight:700;box-shadow:inset 0 0 0 1px rgba(200,120,24,.08);">${escapeHtml(state.location || '—')}</div><div style="margin-top:6px;color:var(--muted);font-size:12px;">Локацията е заключена за текущата проверка и не може да се сменя.</div></div>
+              <div class="field"><label>Локация *${!state.currentSessionId && !isQROnlySession() ? ' <span style="color:var(--red);font-size:11px;">(няма заключване)</span>' : ""}</label><select id="location-select" ${isQROnlySession() ? "disabled" : ""}>${config.locations.map((l) => `<option value="${l}" ${l === state.location ? "selected" : ""}>${l}</option>`).join("")}</select></div>
               <div class="field"><label>Проверяващ *</label><input id="inspector-input" value="${escapeHtml(state.inspector)}" placeholder="Пълно име…" />${state.showValidation && !state.inspector.trim() ? `<div style="color:var(--red);font-size:12px;">Задължително поле</div>` : state.showValidation && !/^[\u0400-\u04FF ]+$/.test(state.inspector.trim()) ? `<div style="color:var(--red);font-size:12px;">Само кирилица, без специални символи</div>` : ""}</div>
             </div>
             <div class="muted" style="font-size:13px;">Дата и час: ${fmt(new Date().toISOString())}</div>
@@ -2153,7 +2238,7 @@
           </div>`;
         }
         if (state.showQRModal) html += renderQRModal();
-        if (state.toast) html += `<div class="toast ${state.toast.type}" role="status" aria-live="polite">${state.toast.msg}</div>`;
+        if (state.toast) html += `<div class="toast ${escapeHtml(state.toast.type)}" role="status" aria-live="polite">${escapeHtml(state.toast.msg)}</div>`;
         return html;
       }
 
@@ -2216,28 +2301,62 @@
       }
 
 
+      function decorateHallSelectionIcons() {
+        if (state.screen !== "select-hall" || state.inspectionType !== "hall") return;
+        document.querySelectorAll('[data-action="select-hall-location"] > div:first-child').forEach((iconWrap) => {
+          if (iconWrap.dataset.goldApplied === "1") return;
+          iconWrap.innerHTML = `<span style="display:flex;justify-content:center;align-items:center;pointer-events:none;">${HALL_GOLD_ICON}</span>`;
+          iconWrap.style.display = "flex";
+          iconWrap.style.justifyContent = "center";
+          iconWrap.style.alignItems = "center";
+          iconWrap.style.minHeight = "46px";
+          iconWrap.style.marginBottom = "8px";
+          iconWrap.style.filter = "drop-shadow(0 3px 8px rgba(0,0,0,.4))";
+          iconWrap.style.pointerEvents = "none";
+          iconWrap.dataset.goldApplied = "1";
+        });
+      }
+
       function renderHallSelect() {
         const config = getConfig(state.inspectionType);
         const isHall = state.inspectionType === "hall";
-        const icon = isHall ? "🎬" : "🚿";
         const title = isHall ? "Избор на Зала" : "Избор на Тоалетна";
+        const hallIcon = `
+          <svg viewBox="0 0 128 128" width="52" height="52" aria-hidden="true">
+            <defs>
+              <clipPath id="clapClipLg">
+                <rect x="10" y="10" width="108" height="26"/>
+              </clipPath>
+            </defs>
+            <rect x="10" y="45" width="108" height="73" rx="6" fill="#1e1e1e" stroke="#505050" stroke-width="2"/>
+            <line x1="11" y1="61" x2="117" y2="61" stroke="#363636" stroke-width="1.2"/>
+            <line x1="11" y1="77" x2="117" y2="77" stroke="#363636" stroke-width="1.2"/>
+            <line x1="11" y1="93" x2="117" y2="93" stroke="#363636" stroke-width="1.2"/>
+            <line x1="40" y1="46" x2="40" y2="117" stroke="#363636" stroke-width="1.2"/>
+            <rect x="8" y="34" width="112" height="13" rx="3" fill="#282828" stroke="#505050" stroke-width="2"/>
+            <rect x="10" y="10" width="108" height="26" fill="#eeeeee"/>
+            <g clip-path="url(#clapClipLg)">
+              <polygon points="10,36 26,36 52,10 36,10" fill="#111111"/>
+              <polygon points="42,36 58,36 84,10 68,10" fill="#111111"/>
+              <polygon points="74,36 90,36 116,10 100,10" fill="#111111"/>
+              <polygon points="106,36 118,36 118,24" fill="#111111"/>
+            </g>
+            <rect x="10" y="10" width="108" height="26" fill="none" stroke="#333333" stroke-width="2"/>
+          </svg>`;
         return `
           <div style="padding:24px;max-width:480px;margin:0 auto;">
-            <div style="display:flex;align-items:center;gap:14px;margin-bottom:24px;">
-              <button data-action="go-home" aria-label="Назад към началото" style="display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg, rgba(200,120,24,.22), rgba(200,120,24,.08));border:1px solid rgba(200,120,24,.55);box-shadow:0 0 0 1px rgba(200,120,24,.18), 0 10px 24px rgba(0,0,0,.28);color:var(--gold);cursor:pointer;font-size:14px;font-weight:700;letter-spacing:.04em;padding:10px 14px;border-radius:999px;transition:transform .15s ease,background .15s ease,border-color .15s ease,box-shadow .15s ease;" onmouseover="this.style.background='linear-gradient(135deg, rgba(200,120,24,.32), rgba(200,120,24,.14))';this.style.borderColor='rgba(245,158,11,.9)';this.style.boxShadow='0 0 0 1px rgba(245,158,11,.22), 0 14px 28px rgba(0,0,0,.34)';this.style.transform='translateX(-2px)'" onmouseout="this.style.background='linear-gradient(135deg, rgba(200,120,24,.22), rgba(200,120,24,.08))';this.style.borderColor='rgba(200,120,24,.55)';this.style.boxShadow='0 0 0 1px rgba(200,120,24,.18), 0 10px 24px rgba(0,0,0,.28)';this.style.transform='translateX(0)'">
-                <span style="font-size:20px;line-height:1;">←</span>
-                <span>Назад</span>
-              </button>
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">
+              <button class="btn-back" data-action="go-home">← Назад</button>
               <h2 style="font-family:'Oswald',sans-serif;font-size:20px;font-weight:700;letter-spacing:.06em;margin:0;">${title}</h2>
             </div>
             <div style="color:var(--muted);font-size:13px;margin-bottom:20px;">Избери ${isHall ? "залата" : "тоалетната"}, която ще проверяваш:</div>
             <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;">
               ${config.locations.map((loc) => `
                 <button data-action="select-hall-location" data-location="${escapeHtml(loc)}"
-                  style="background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:14px;padding:20px 12px;cursor:pointer;text-align:center;color:var(--text);font-size:14px;font-weight:600;transition:background .15s,border-color .15s;"
+                  style="background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:14px;padding:18px 12px 16px;cursor:pointer;text-align:center;color:var(--text);font-size:14px;font-weight:600;transition:background .15s,border-color .15s,transform .15s;"
                   onmouseover="this.style.background='rgba(255,255,255,.08)';this.style.borderColor='var(--gold)'"
                   onmouseout="this.style.background='rgba(255,255,255,.04)';this.style.borderColor='var(--border)'">
-                  <div style="font-size:28px;margin-bottom:8px;">${icon}</div>
+                  <div style="display:flex;justify-content:center;align-items:center;min-height:58px;margin-bottom:8px;filter:drop-shadow(0 4px 10px rgba(0,0,0,.4));">${isHall ? hallIcon : '<span style="font-size:30px;">🚿</span>'}</div>
                   <div>${escapeHtml(loc)}</div>
                 </button>
               `).join("")}
@@ -2262,6 +2381,310 @@
         if (state.showDeleteModal) setupModalFocusTrap();
       }
 
+      /* ════════════════════════════════════════════════════════
+         CHANGING ROOM MODULE — helpers, fetch, submit, render
+         ════════════════════════════════════════════════════════ */
+
+      /* Parse "DD.MM.YYYY" (or "DD.MM.YYYY - Den") → Date (midnight local) */
+      function crParseDate(str) {
+        if (!str) return null;
+        const m = str.match(/(\d{2})\.(\d{2})\.(\d{4})/);
+        if (!m) return null;
+        return new Date(parseInt(m[3]), parseInt(m[2]) - 1, parseInt(m[1]));
+      }
+
+      /* Format Date → "DD.MM.YYYY" */
+      function crFmtDate(d) {
+        if (!d) return "";
+        const pad = (n) => String(n).padStart(2, "0");
+        return pad(d.getDate()) + "." + pad(d.getMonth() + 1) + "." + d.getFullYear();
+      }
+
+      /* Today at midnight local */
+      function crToday() {
+        const t = new Date();
+        t.setHours(0, 0, 0, 0);
+        return t;
+      }
+
+      /* Fetch all rows from "Почистване съблекални" sheet via gviz */
+      async function fetchChangingRoomData() {
+        state.crLoading = true;
+        state.crError = null;
+        state.crData = null;
+        render();
+        try {
+          const url = SHEETS_WEB_APP_URL + '?action=getChangingRooms&_token=' + encodeURIComponent(SHEETS_SECRET_TOKEN) + '&_cb=' + Date.now();
+          const resp = await fetch(url, { cache: "no-store" });
+          if (!resp.ok) throw new Error("HTTP " + resp.status);
+          const json = await resp.json();
+          if (!json.success) throw new Error(json.error || "Error");
+          /* 2D array: row 0 = header, rest = data rows */
+          const rows = json.data || [];
+
+          const today = crToday();
+          const futureRows = [];
+          let found = null;
+
+          for (let i = 0; i < rows.length; i++) {
+            const cells  = rows[i];
+            const dateStr = String(cells[0] != null ? cells[0] : "");
+            const d = crParseDate(dateStr);
+            if (!d) continue;
+            if (d >= today) {
+              const row = {
+                dateStr:     dateStr,
+                date:        d,
+                sheetRow:    i + 1,
+                maleEntry:   String(cells[1] != null ? cells[1] : "").trim(),
+                femaleEntry: String(cells[2] != null ? cells[2] : "").trim(),
+              };
+              futureRows.push(row);
+              if (!found) found = row;
+            }
+          }
+
+          if (found) {
+            found.allRows = futureRows; /* attach schedule for preview */
+          }
+          state.crData = found; /* null = no future date */
+        } catch (err) {
+          state.crError = "Грешка при връзка с таблицата. Опитайте отново.";
+        }
+        state.crLoading = false;
+        render();
+      }
+
+      /* Write name to Sheets via Apps Script */
+      async function submitChangingRoom() {
+        const name = state.crName.trim();
+        if (!name) { state.crNameErr = "Въведете вашето име."; render(); return; }
+        if (!/^[\u0400-\u04FF ]+$/.test(name)) { state.crNameErr = "Само кирилица."; render(); return; }
+        if (!state.crData) return;
+
+        const col = state.crType === "male" ? "B" : "C";
+        const alreadyFilled = state.crType === "male" ? state.crData.maleEntry : state.crData.femaleEntry;
+        if (alreadyFilled) { showToast("Вече е отчетено за тази дата.", "error"); return; }
+
+        state.crStep = "submitting";
+        render();
+        try {
+          const payload = {
+            action: "updateChangingRoom",
+            sheet: CHANGING_ROOM_SHEET_NAME,
+            dateStr: state.crData.dateStr,
+            col: col,
+            row: state.crData.sheetRow,
+            name: name,
+            _token: SHEETS_SECRET_TOKEN,
+          };
+          let ok = false;
+          const r = await fetch(SHEETS_WEB_APP_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=UTF-8" },
+            body: JSON.stringify(payload),
+          });
+          const j = await r.json().catch(() => ({}));
+          ok = j.success === true;
+          if (ok) {
+            /* Update local mirror */
+            if (state.crType === "male") state.crData.maleEntry = name;
+            else state.crData.femaleEntry = name;
+            state.crStep = "done";
+            state.crName = "";
+            showToast("Записано успешно!", "success");
+          } else {
+            throw new Error("server error");
+          }
+        } catch (_) {
+          state.crStep = "started";
+          showToast("Грешка при запис. Опитайте отново.", "error");
+        }
+        render();
+      }
+
+      /* ── Render: select Мъжка / Женска ── */
+      function renderChangingRoomSelect() {
+        return `
+          <div style="padding:14px 16px;max-width:480px;margin:0 auto;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+              <button class="btn-back" data-action="go-home">← Назад</button>
+              <h2 style="font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;letter-spacing:.06em;margin:0;">Избор на Съблекалня</h2>
+            </div>
+            <div style="color:var(--muted);font-size:12px;margin-bottom:12px;">Избери съблекалнята, която ще почистваш:</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+              <button data-action="select-cr-type" data-crtype="male"
+                style="background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:12px;padding:16px 10px 14px;cursor:pointer;text-align:center;color:var(--text);font-size:14px;font-weight:600;transition:background .15s,border-color .15s;"
+                onmouseover="this.style.background='rgba(255,255,255,.08)';this.style.borderColor='var(--gold)'"
+                onmouseout="this.style.background='rgba(255,255,255,.04)';this.style.borderColor='var(--border)'">
+                <div style="font-size:28px;margin-bottom:8px;">🚹</div>
+                <div>Мъжка съблекалня</div>
+              </button>
+              <button data-action="select-cr-type" data-crtype="female"
+                style="background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:12px;padding:16px 10px 14px;cursor:pointer;text-align:center;color:var(--text);font-size:14px;font-weight:600;transition:background .15s,border-color .15s;"
+                onmouseover="this.style.background='rgba(255,255,255,.08)';this.style.borderColor='var(--gold)'"
+                onmouseout="this.style.background='rgba(255,255,255,.04)';this.style.borderColor='var(--border)'">
+                <div style="font-size:28px;margin-bottom:8px;">🚺</div>
+                <div>Женска съблекалня</div>
+              </button>
+            </div>
+          </div>`;
+      }
+
+      /* ── Render: detail view for selected changing room ── */
+      function renderChangingRoomDetail() {
+        const typeLabel = state.crType === "male" ? "Мъжка съблекалня" : "Женска съблекалня";
+        const typeIcon  = state.crType === "male" ? "🚹" : "🚺";
+
+        /* Loading */
+        if (state.crLoading) {
+          return `
+            <div style="padding:14px 16px;max-width:480px;margin:0 auto;">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+                <button class="btn-back" data-action="cr-back-select">← Назад</button>
+                <h2 style="font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;letter-spacing:.06em;margin:0;">${typeIcon} ${typeLabel}</h2>
+              </div>
+              <div style="text-align:center;padding:32px 0;color:var(--muted);">
+                <div style="width:28px;height:28px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--gold);animation:spin .8s linear infinite;margin:0 auto 12px;"></div>
+                Зареждане на график…
+              </div>
+            </div>`;
+        }
+
+        /* Error */
+        if (state.crError) {
+          return `
+            <div style="padding:14px 16px;max-width:480px;margin:0 auto;">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+                <button class="btn-back" data-action="cr-back-select">← Назад</button>
+                <h2 style="font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;letter-spacing:.06em;margin:0;">${typeIcon} ${typeLabel}</h2>
+              </div>
+              <div style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:12px 16px;color:#f87171;font-size:13px;margin-bottom:12px;">
+                ⚠ ${escapeHtml(state.crError)}
+              </div>
+              <button class="btn btn-outline" data-action="cr-reload" style="width:100%;">Опитай отново</button>
+            </div>`;
+        }
+
+        /* No future date */
+        if (!state.crData) {
+          return `
+            <div style="padding:14px 16px;max-width:480px;margin:0 auto;">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+                <button class="btn-back" data-action="cr-back-select">← Назад</button>
+                <h2 style="font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;letter-spacing:.06em;margin:0;">${typeIcon} ${typeLabel}</h2>
+              </div>
+              <div style="background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center;color:var(--muted);">
+                <div style="font-size:26px;margin-bottom:8px;">📅</div>
+                <div style="font-size:14px;">Няма планирано почистване</div>
+              </div>
+            </div>`;
+        }
+
+        const { dateStr, date, maleEntry, femaleEntry } = state.crData;
+        const today        = crToday();
+        const isToday      = date.getTime() === today.getTime();
+        const myEntry      = state.crType === "male" ? maleEntry : femaleEntry;
+        const alreadyDone  = Boolean(myEntry);
+
+        /* Status pill */
+        let statusPill = "";
+        if (alreadyDone) {
+          statusPill = `<span style="display:inline-block;background:rgba(34,197,94,.12);color:#4ade80;border:1px solid rgba(34,197,94,.3);border-radius:20px;padding:4px 14px;font-size:12px;font-weight:600;">✓ Изпълнено</span>`;
+        } else if (isToday) {
+          statusPill = `<span style="display:inline-block;background:rgba(201,162,39,.12);color:var(--gold);border:1px solid rgba(201,162,39,.3);border-radius:20px;padding:4px 14px;font-size:12px;font-weight:600;">⬤ Предстои днес</span>`;
+        } else {
+          statusPill = `<span style="display:inline-block;background:rgba(255,255,255,.06);color:var(--muted);border:1px solid var(--border);border-radius:20px;padding:4px 14px;font-size:12px;font-weight:600;">Предстоящо</span>`;
+        }
+
+        /* Action area */
+        let actionArea = "";
+        if (alreadyDone) {
+          actionArea = `
+            <div style="background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:11px 14px;color:var(--muted);font-size:13px;">
+              ✓ Почистването е отчетено от: <strong style="color:var(--text);">${escapeHtml(myEntry)}</strong>
+            </div>`;
+        } else if (!isToday) {
+          actionArea = `
+            <div style="background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--muted);font-size:12px;text-align:center;">
+              Може да се отчита само в деня на почистването.
+            </div>`;
+        } else if (state.crStep === "idle") {
+          actionArea = `
+            <button class="btn btn-gold" data-action="cr-start" style="width:100%;font-size:14px;padding:12px;">
+              Започни почистване
+            </button>`;
+        } else if (state.crStep === "started") {
+          actionArea = `
+            <div style="background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:10px;padding:14px;">
+              <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">Въведи твоето име:</div>
+              <input id="cr-name-input" type="text" value="${escapeHtml(state.crName)}"
+                placeholder="Само на кирилица"
+                style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.05);border:1px solid ${state.crNameErr ? "rgba(239,68,68,.6)" : "var(--border)"};border-radius:8px;padding:8px 10px;color:var(--text);font-size:14px;outline:none;margin-bottom:${state.crNameErr ? "5px" : "10px"};">
+              ${state.crNameErr ? `<div style="color:#f87171;font-size:11px;margin-bottom:8px;">${escapeHtml(state.crNameErr)}</div>` : ""}
+              <button class="btn btn-gold" data-action="cr-submit" style="width:100%;font-size:14px;padding:11px;">
+                Завърши и запиши
+              </button>
+            </div>`;
+        } else if (state.crStep === "submitting") {
+          actionArea = `
+            <div style="text-align:center;padding:16px;color:var(--muted);font-size:13px;">
+              <div style="width:24px;height:24px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--gold);animation:spin .8s linear infinite;margin:0 auto 10px;"></div>
+              Записване…
+            </div>`;
+        } else if (state.crStep === "done") {
+          actionArea = `
+            <div style="background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:11px 14px;color:var(--muted);font-size:13px;text-align:center;">
+              ✓ Записано успешно!
+            </div>`;
+        }
+
+        /* Schedule preview — all future rows (loaded from crData.allRows if available) */
+        const scheduleSection = state.crData.allRows && state.crData.allRows.length > 1 ? `
+          <div style="margin-top:14px;">
+            <div style="font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;">График (само четене)</div>
+            <div style="background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+              <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                <thead><tr style="background:rgba(255,255,255,.04);">
+                  <th style="padding:6px 10px;text-align:left;color:var(--muted);font-weight:600;">Дата</th>
+                  <th style="padding:6px 10px;text-align:left;color:var(--muted);font-weight:600;">🚹 Мъжка</th>
+                  <th style="padding:6px 10px;text-align:left;color:var(--muted);font-weight:600;">🚺 Женска</th>
+                </tr></thead>
+                <tbody>
+                  ${state.crData.allRows.map((r, idx) => `
+                    <tr style="border-top:1px solid var(--border);${idx === 0 ? "background:rgba(201,162,39,.06);" : ""}">
+                      <td style="padding:6px 10px;color:${idx === 0 ? "var(--gold)" : "var(--text)"};">${escapeHtml(r.dateStr)}</td>
+                      <td style="padding:6px 10px;color:var(--muted);">${r.maleEntry ? "✓ " + escapeHtml(r.maleEntry) : "—"}</td>
+                      <td style="padding:6px 10px;color:var(--muted);">${r.femaleEntry ? "✓ " + escapeHtml(r.femaleEntry) : "—"}</td>
+                    </tr>`).join("")}
+                </tbody>
+              </table>
+            </div>
+          </div>` : "";
+
+        return `
+          <div style="padding:14px 16px;max-width:480px;margin:0 auto;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+              <button class="btn-back" data-action="cr-back-select">← Назад</button>
+              <h2 style="font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;letter-spacing:.06em;margin:0;">${typeIcon} ${typeLabel}</h2>
+            </div>
+
+            <!-- Date card -->
+            <div style="background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:12px;">
+              <div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px;">Следващо почистване</div>
+              <div style="font-size:20px;font-weight:700;font-family:'Oswald',sans-serif;letter-spacing:.04em;margin-bottom:8px;">${escapeHtml(dateStr)}</div>
+              ${statusPill}
+            </div>
+
+            <!-- Action area -->
+            ${actionArea}
+
+            ${scheduleSection}
+          </div>`;
+      }
+
+      /* ════════════════════════════════════════════════════════ */
+
       function render() {
         const content =
           state.screen === "home" ? renderHome() :
@@ -2270,28 +2693,63 @@
           state.screen === "inspection" ? renderInspection() :
           state.screen === "history" ? renderHistory() :
           state.screen === "charts" ? renderCharts() :
+          state.screen === "select-cr" ? renderChangingRoomSelect() :
+          state.screen === "cr-detail" ? renderChangingRoomDetail() :
           renderHome();
         app.innerHTML = renderShell(content);
         updateModals();
         bindInputs();
+        decorateHallSelectionIcons();
         /* Charts: HTML визуализации (без Chart.js) — синхронно от кеш */
         if (state.screen === "charts" && _cachedChartRows && _cachedChartRows.length > 0) {
           const c = document.getElementById('charts-container');
           if (c) buildChartsFromData(c, _cachedChartRows);
         }
         applyPerfMode();
+        if (state.screen === "home" && typeof cgUpdateReviews === 'function') cgUpdateReviews();
       }
 
       function bindInputs() {
         const el = (id) => document.getElementById(id);
         const bind = (id, event, fn) => { const e = el(id); if (e) e["on" + event] = fn; };
+        bind("location-select", "change", async (e) => {
+          const newLoc = e.target.value;
+          const oldLoc = state.location;
+          if (newLoc === oldLoc) return;
+          if (_lockBusy) { e.target.value = oldLoc; return; }
+          if (!isQROnlySession()) {
+            const oldSid = state.currentSessionId;
+            const sessionId = generateSessionId();
+            const lockResult = await acquireLock(state.inspectionType, newLoc, sessionId);
+            if (!lockResult.success) {
+              const locName = escapeHtml(newLoc);
+              const msg = lockResult.minutesLeft
+                ? locName + " се проверява в момента. Опитайте след ~" + lockResult.minutesLeft + " мин."
+                : locName + " се проверява. Изберете друга локация.";
+              showToast(msg, "error");
+              e.target.value = oldLoc;
+              return;
+            }
+            if (oldSid) await releaseLock(oldSid);
+            state.currentSessionId = sessionId;
+            _lockAcquiredAt = Date.now();
+            sessionStorage.setItem(LOCK_SESSION_KEY, sessionId);
+          }
+          state.location = newLoc;
+        });
         bind("inspector-input", "input", (e) => { const filtered = e.target.value.replace(/[^\u0400-\u04FF ]/g, ""); e.target.value = filtered; state.inspector = filtered; });
         bind("notes-input", "input", (e) => { state.notes = e.target.value; });
         bind("delete-pass-input", "input", (e) => { state.deletePass = e.target.value; state.deleteErr = ""; });
         bind("export-range-select", "change", (e) => { state.exportRange = e.target.value; render(); });
         bind("history-type-filter", "change", (e) => { state.historyTypeFilter = e.target.value; render(); });
         bind("history-location-filter", "change", (e) => { state.historyLocationFilter = e.target.value; render(); });
-}
+        bind("cr-name-input", "input", (e) => {
+          const filtered = e.target.value.replace(/[^\u0400-\u04FF ]/g, "");
+          e.target.value = filtered;
+          state.crName = filtered;
+          state.crNameErr = "";
+        });
+      }
 
       /* ── Event Delegation ── */
       document.addEventListener("click", async (e) => {
@@ -2310,6 +2768,56 @@
           applyPerfMode();
           return;
         }
+        /* ── Changing Room module ── */
+        if (action === "start-changing-room") {
+          state.screen = "select-cr";
+          state.crType = null;
+          state.crData = null;
+          state.crError = null;
+          state.crStep = "idle";
+          state.crName = "";
+          state.crNameErr = "";
+          render();
+          return;
+        }
+        if (action === "select-cr-type") {
+          state.crType = btn.dataset.crtype; /* "male" | "female" */
+          state.crStep = "idle";
+          state.crName = "";
+          state.crNameErr = "";
+          state.screen = "cr-detail";
+          fetchChangingRoomData(); /* async — will re-render when done */
+          return;
+        }
+        if (action === "cr-back-select") {
+          state.screen = "select-cr";
+          state.crData = null;
+          state.crError = null;
+          state.crStep = "idle";
+          render();
+          return;
+        }
+        if (action === "cr-reload") {
+          fetchChangingRoomData();
+          return;
+        }
+        if (action === "cr-start") {
+          state.crStep = "started";
+          state.crName = "";
+          state.crNameErr = "";
+          render();
+          /* Auto-focus the name input */
+          setTimeout(() => { const el = document.getElementById("cr-name-input"); if (el) el.focus(); }, 50);
+          return;
+        }
+        if (action === "cr-submit") {
+          /* Read the live input value before submitting */
+          const inp = document.getElementById("cr-name-input");
+          if (inp) state.crName = inp.value;
+          submitChangingRoom();
+          return;
+        }
+
         if (action === "go-home") { cleanupSessionLock(); state.screen = "home"; render(); return; }
         if (action === "go-history") { state.screen = "history"; render(); return; }
         if (action === "go-charts") {
@@ -2551,6 +3059,151 @@
       });
       } /* end getAccessBlock check */
 
+    </script>
+
+    <!-- Google Reviews (Places API New — REST) -->
+    <script>
+      (function() {
+        var API_KEY  = 'AIzaSyAHkDc75iMBlaL-yahzQxzg1xgKhIBItbs';
+        var PLACE_ID = 'ChIJSwfBtwaFqkARCbgjdIFdbVY';
+        var MAPS_URL = 'https://www.google.com/maps/place/?q=place_id:' + PLACE_ID;
+        var LS_KEY   = 'cg_reviews_v3';
+        var _memCache = null;
+        var _loading  = false;
+
+        /* ── Sofia timezone helpers ── */
+        function toSofiaDate(ms) {
+          return new Date(new Date(ms).toLocaleString('en-US', { timeZone: 'Europe/Sofia' }));
+        }
+        function lastRefreshPointBefore(nowMs) {
+          var s    = toSofiaDate(nowMs);
+          var h    = s.getHours();
+          var base = new Date(s); base.setHours(0, 0, 0, 0);
+          var r;
+          if (h >= 18)      { r = new Date(base); r.setHours(18); }
+          else if (h >= 12) { r = new Date(base); r.setHours(12); }
+          else              { r = new Date(base); r.setDate(r.getDate() - 1); r.setHours(18); }
+          var shift = toSofiaDate(nowMs).getTime() - nowMs;
+          return r.getTime() - shift;
+        }
+        function isCacheValid(entry) {
+          if (!entry || !entry.cachedAt || !entry.place) return false;
+          return entry.cachedAt >= lastRefreshPointBefore(Date.now());
+        }
+
+        /* ── localStorage ── */
+        function lsLoad() {
+          try { return JSON.parse(localStorage.getItem(LS_KEY)); } catch(e) { return null; }
+        }
+        function lsSave(place) {
+          try { localStorage.setItem(LS_KEY, JSON.stringify({ place: place, cachedAt: Date.now() })); } catch(e) {}
+        }
+
+        /* ── Rendering ── */
+        function stars(n) { n = Math.round(n); return '★'.repeat(n) + '☆'.repeat(5 - n); }
+        function initials(name) {
+          if (!name) return '?';
+          var p = name.trim().split(/\s+/);
+          return p.length === 1 ? p[0][0].toUpperCase() : (p[0][0] + p[p.length-1][0]).toUpperCase();
+        }
+        function esc(s) { return (s || '').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+        function buildHtml(place) {
+          /* New API fields: publishTime (ISO), authorAttribution.displayName, text.text */
+          var reviews = (place.reviews || [])
+            .slice()
+            .sort(function(a, b) {
+              return new Date(b.publishTime).getTime() - new Date(a.publishTime).getTime();
+            })
+            .slice(0, 5);
+
+          var overallHtml = place.rating
+            ? '<div class="cg-overall">'
+              + '<div class="cg-overall-num">' + (+place.rating).toFixed(1) + '</div>'
+              + '<div><div class="cg-overall-stars">' + stars(place.rating) + '</div>'
+              + (place.userRatingCount ? '<div class="cg-overall-count">' + place.userRatingCount + ' ревюта в Google</div>' : '')
+              + '</div></div>'
+            : '';
+
+          var cardsHtml = reviews.map(function(r, i) {
+            var name  = esc(r.authorAttribution && r.authorAttribution.displayName || '');
+            var text  = esc(r.text && r.text.text || '');
+            var date  = r.relativePublishTimeDescription || '';
+            var delay = ((i + 1) * 0.1).toFixed(1) + 's';
+            return '<div class="cg-review-card" style="animation-delay:' + delay + '">'
+              + '<div class="cg-quote-deco">\u201c</div>'
+              + '<div class="cg-review-header">'
+              + '<div class="cg-avatar">' + initials(name) + '</div>'
+              + '<div><div class="cg-author">' + name + '</div>'
+              + '<div class="cg-date">' + date + '</div></div></div>'
+              + '<div class="cg-review-stars">' + stars(r.rating) + '</div>'
+              + (text ? '<div class="cg-review-text">' + text + '</div>' : '')
+              + '</div>';
+          }).join('');
+
+          return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">'
+            + '<div class="cg-reviews-kicker" style="margin-bottom:0;">GOOGLE REVIEWS</div>'
+            + '<button onclick="cgManualRefresh()" title="Ръчно обновяване" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:14px;padding:2px 4px;line-height:1;opacity:.6;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.6">&#x21BB;</button>'
+            + '</div>'
+            + '<div class="cg-reviews-heading">Какво казват нашите гости</div>'
+            + overallHtml
+            + '<div class="cg-reviews-grid">' + cardsHtml + '</div>'
+            + '<a class="cg-reviews-link" href="' + MAPS_URL + '" target="_blank" rel="noopener">Виж всички ревюта в Google \u2197</a>';
+        }
+
+        function inject(html) {
+          var el = document.getElementById('cg-reviews-section');
+          if (el) el.innerHTML = html;
+        }
+
+        /* ── Fetch from new Places REST API ── */
+        function fetchAndRender() {
+          if (_loading) return;
+          _loading = true;
+          fetch('https://places.googleapis.com/v1/places/' + PLACE_ID + '?languageCode=bg', {
+            headers: {
+              'X-Goog-Api-Key': API_KEY,
+              'X-Goog-FieldMask': 'rating,userRatingCount,reviews'
+            }
+          })
+          .then(function(res) { return res.json(); })
+          .then(function(data) {
+            _loading = false;
+            lsSave(data);
+            _memCache = buildHtml(data);
+            inject(_memCache);
+          })
+          .catch(function() {
+            _loading = false;
+            inject('<div style="color:var(--muted);font-size:13px;padding:8px 0;">Ревютата не могат да бъдат заредени в момента.</div>');
+          });
+        }
+
+        /* Called by render() every time home screen is shown */
+        window.cgUpdateReviews = function() {
+          if (_memCache) { inject(_memCache); return; }
+          var entry = lsLoad();
+          if (isCacheValid(entry)) {
+            _memCache = buildHtml(entry.place);
+            inject(_memCache);
+            return;
+          }
+          fetchAndRender();
+        };
+
+        /* Manual refresh button — asks for password first */
+        window.cgManualRefresh = function() {
+          var pass = prompt('Въведете парола за ръчно обновяване:');
+          if (pass === null) return; // cancelled
+          if (pass !== '1232911041644') {
+            alert('Грешна парола.');
+            return;
+          }
+          _memCache = null;
+          inject('<div class="cg-reviews-loading"><div class="cg-spinner"></div><span>Обновяване...</span></div>');
+          fetchAndRender();
+        };
+      })();
     </script>
   </body>
 </html>
