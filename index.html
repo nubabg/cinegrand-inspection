@@ -94,53 +94,184 @@
       .topbar-nav { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
       .topbar-meta { display: flex; gap: 10px; align-items: center; color: var(--muted); white-space: nowrap; }
 
+      /* === SEARCH BAR === */
+      .search-wrap { position: relative; display: flex; align-items: center; }
+      .search-btn-icon {
+        display: flex; align-items: center; justify-content: center;
+        width: 36px; height: 36px; border-radius: 50%;
+        border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.04);
+        color: var(--muted); cursor: pointer; transition: background .2s, color .2s, transform .15s;
+        flex-shrink: 0;
+      }
+      .search-btn-icon:hover { background: rgba(255,255,255,.08); color: var(--text); transform: translateY(-1px); }
+      .search-btn-icon svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+      /* Expanded search — fixed, centered at the top */
+      .search-field-wrap {
+        position: fixed;
+        top: 74px;
+        left: 50%; transform: translateX(-50%);
+        width: min(520px, calc(100vw - 40px));
+        z-index: 300;
+        display: none;
+      }
+      .search-field-wrap.open { display: block; }
+      .search-field-inner {
+        display: flex; align-items: center; gap: 8px;
+        border: 1px solid rgba(200,120,24,.3); border-radius: 999px;
+        background: linear-gradient(180deg, rgba(22,28,38,.98) 0%, rgba(12,16,22,.98) 100%);
+        backdrop-filter: blur(20px);
+        box-shadow: 0 8px 40px rgba(0,0,0,.6), 0 0 0 1px rgba(200,120,24,.08);
+      }
+      .search-icon-inner { margin-left: 14px; color: var(--muted); flex-shrink: 0; }
+      .search-icon-inner svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+      .search-input {
+        flex: 1; background: transparent; border: none; outline: none;
+        color: var(--text); font-size: 14px; height: 44px;
+        caret-color: var(--gold);
+      }
+      .search-input::placeholder { color: var(--muted); }
+      .search-clear {
+        display: flex; align-items: center; justify-content: center;
+        width: 30px; height: 30px; border-radius: 50%; margin-right: 6px;
+        border: none; background: transparent; cursor: pointer; color: var(--muted);
+        transition: background .15s, color .15s, transform .15s;
+        flex-shrink: 0;
+      }
+      .search-clear:hover { background: rgba(255,255,255,.08); color: var(--text); transform: scale(1.1); }
+      .search-clear svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+      .search-dropdown {
+        position: absolute; top: calc(100% + 8px); left: 0; right: 0;
+        background: linear-gradient(180deg, rgba(19,24,33,.99) 0%, rgba(10,14,20,.99) 100%);
+        border: 1px solid rgba(200,120,24,.2); border-radius: 16px;
+        box-shadow: 0 12px 40px rgba(0,0,0,.6); overflow: hidden;
+        z-index: 301;
+      }
+      .search-item {
+        display: flex; align-items: center; gap: 12px;
+        padding: 12px 16px; cursor: pointer;
+        transition: background .15s; border-bottom: 1px solid rgba(255,255,255,.04);
+      }
+      .search-item:last-child { border-bottom: none; }
+      .search-item:hover, .search-item.focused { background: rgba(200,120,24,.1); }
+      .search-item-icon { font-size: 20px; flex-shrink: 0; width: 32px; text-align: center; }
+      .search-item-label { font-size: 14px; font-weight: 600; color: var(--text); }
+      .search-item-sub { font-size: 12px; color: var(--muted); margin-top: 1px; }
+      .search-item-arrow { margin-left: auto; color: var(--muted); font-size: 16px; }
+      .search-no-results { padding: 16px; text-align: center; color: var(--muted); font-size: 13px; }
+
       .meta-chip {
         padding: 8px 12px; border-radius: 999px;
         background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.06);
         font-size: 12px;
       }
 
+      /* === BUTTON SYSTEM — INTERACTIVE 2026 === */
       .btn {
-        border: 1px solid transparent; border-radius: 14px;
-        padding: 10px 14px; cursor: pointer;
-        transition: transform .16s ease, border-color .16s ease, background .16s ease;
+        border: 1px solid transparent; border-radius: 20px;
+        padding: 11px 18px; cursor: pointer;
+        position: relative; overflow: hidden; isolation: isolate;
+        font-weight: 600; font-size: 14px; letter-spacing: .02em;
+        transition: transform .24s cubic-bezier(.34,1.56,.64,1),
+                    box-shadow .22s ease, border-color .22s ease, background .22s ease;
       }
-      .btn:hover, .nav-btn:hover, .status-btn:hover, .tab:hover { transform: translateY(-1px); }
+      .btn::before {
+        content: ""; position: absolute; inset: 0; border-radius: inherit;
+        transform: scaleX(0); transform-origin: left;
+        transition: transform .32s cubic-bezier(.34,1.2,.64,1);
+        z-index: -1; pointer-events: none;
+      }
+      .btn:hover { transform: translateY(-2px) scale(1.02); }
+      .btn:hover::before { transform: scaleX(1); }
+      .btn:active { transform: scale(.96); transition-duration: .1s; }
+      .nav-btn:hover, .status-btn:hover, .tab:hover { transform: translateY(-1px); }
 
       .btn-gold {
         background: linear-gradient(135deg, var(--gold), var(--gold-2));
         color: #15110b; font-weight: 700;
         border-color: rgba(0,0,0,.15);
         outline: 2px solid transparent; outline-offset: 2px;
+        box-shadow: 0 4px 18px rgba(200,120,24,.24), inset 0 1px 0 rgba(255,255,255,.32);
+      }
+      .btn-gold::before { background: rgba(255,255,255,.16); }
+      .btn-gold:hover {
+        box-shadow: 0 8px 28px rgba(200,120,24,.46), 0 0 0 1px rgba(235,160,48,.38),
+                    inset 0 1px 0 rgba(255,255,255,.32);
       }
       .btn-gold:focus-visible { outline-color: var(--gold-2); }
       .btn-outline {
-        background: rgba(255,255,255,.03); color: var(--text);
-        border-color: rgba(255,255,255,.1);
+        background: rgba(255,255,255,.04); color: var(--text);
+        border-color: rgba(255,255,255,.12);
+        box-shadow: 0 2px 8px rgba(0,0,0,.18);
       }
+      .btn-outline::before { background: rgba(255,255,255,.05); }
+      .btn-outline:hover { border-color: rgba(255,255,255,.26); box-shadow: 0 6px 20px rgba(0,0,0,.3); }
       .btn-outline:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
       .btn-green {
         background: rgba(45,204,112,.12); color: var(--green);
-        border-color: rgba(45,204,112,.24);
+        border-color: rgba(45,204,112,.28);
+        box-shadow: 0 2px 12px rgba(45,204,112,.12);
       }
+      .btn-green::before { background: rgba(45,204,112,.1); }
+      .btn-green:hover { box-shadow: 0 6px 22px rgba(45,204,112,.26); border-color: rgba(45,204,112,.5); }
       .btn-green:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
       .btn-red {
         background: rgba(239,91,91,.12); color: var(--red);
-        border-color: rgba(239,91,91,.24);
+        border-color: rgba(239,91,91,.28);
+        box-shadow: 0 2px 12px rgba(239,91,91,.12);
       }
+      .btn-red::before { background: rgba(239,91,91,.1); }
+      .btn-red:hover { box-shadow: 0 6px 22px rgba(239,91,91,.26); border-color: rgba(239,91,91,.5); }
       .btn-red:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
+      .btn-secondary {
+        background: rgba(98,169,255,.1); color: var(--blue);
+        border-color: rgba(98,169,255,.22);
+        box-shadow: 0 2px 10px rgba(98,169,255,.1);
+      }
+      .btn-secondary::before { background: rgba(98,169,255,.08); }
+      .btn-secondary:hover { box-shadow: 0 6px 20px rgba(98,169,255,.22); border-color: rgba(98,169,255,.44); }
       .nav-btn {
         background: transparent; border: 1px solid transparent;
-        color: var(--muted); border-radius: 12px; padding: 10px 12px;
+        color: var(--muted); border-radius: 14px; padding: 10px 14px;
         font-family: "Oswald", sans-serif; font-size: 14px; font-weight: 500;
         text-transform: uppercase; letter-spacing: .04em; cursor: pointer;
+        position: relative; overflow: visible; isolation: isolate;
+        transition: color .2s ease, background .2s ease, border-color .2s ease,
+                    box-shadow .2s ease, transform .22s cubic-bezier(.34,1.56,.64,1);
       }
-      .nav-btn:hover { color: var(--text); background: rgba(255,255,255,.04); }
+      .nav-btn::before {
+        content: ""; position: absolute; inset: 0; border-radius: inherit;
+        background: rgba(200,120,24,.06); transform: scaleX(0); transform-origin: left;
+        transition: transform .28s cubic-bezier(.34,1.2,.64,1);
+        z-index: -1; pointer-events: none;
+      }
+      /* Tubelight lamp bar */
+      .nav-btn::after {
+        content: "";
+        position: absolute; top: -2px; left: 50%;
+        transform: translateX(-50%) scaleX(0);
+        transform-origin: center;
+        width: 30px; height: 3px;
+        background: var(--gold);
+        border-radius: 0 0 4px 4px;
+        opacity: 0;
+        transition: transform .32s cubic-bezier(.34,1.56,.64,1), opacity .2s ease;
+        pointer-events: none; z-index: 2;
+        box-shadow:
+          0 0 6px 2px rgba(200,120,24,.75),
+          0 4px 14px 5px rgba(200,120,24,.3),
+          0 10px 28px 10px rgba(200,120,24,.12);
+      }
+      .nav-btn:hover { color: var(--text); background: rgba(255,255,255,.04); transform: translateY(-1px); }
+      .nav-btn:hover::before { transform: scaleX(1); }
+      .nav-btn:hover::after { transform: translateX(-50%) scaleX(.5); opacity: .35; }
+      .nav-btn:active { transform: scale(.96); transition-duration: .08s; }
       .nav-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
       .nav-btn.state {
-        color: var(--gold-2); border-color: rgba(200,120,24,.26);
-        background: rgba(200,120,24,.10);
+        color: var(--gold-2); border-color: rgba(200,120,24,.22);
+        background: rgba(200,120,24,.08);
       }
+      .nav-btn.state::before { transform: scaleX(1); }
+      .nav-btn.state::after { transform: translateX(-50%) scaleX(1); opacity: 1; }
       .nav-btn.cooldown { opacity: 0.7; cursor: not-allowed; pointer-events: none; }
 
       .page { padding: 8px 0 24px; }
@@ -247,11 +378,25 @@
 
       .btn-back {
         background: rgba(12,7,0,.88); border: 1px solid rgba(201,162,39,.38);
-        border-radius: 999px; color: var(--gold); padding: 7px 14px 7px 10px;
+        border-radius: 999px; color: var(--gold); padding: 8px 16px 8px 12px;
         font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;
-        transition: background .15s, border-color .15s; line-height: 1;
+        position: relative; overflow: hidden; isolation: isolate;
+        transition: background .2s ease, border-color .2s ease, box-shadow .2s ease,
+                    transform .22s cubic-bezier(.34,1.56,.64,1);
+        line-height: 1; box-shadow: 0 2px 10px rgba(201,162,39,.12);
       }
-      .btn-back:hover { background: rgba(201,162,39,.1); border-color: rgba(201,162,39,.65); }
+      .btn-back::before {
+        content: ""; position: absolute; inset: 0; border-radius: inherit;
+        background: rgba(201,162,39,.08); transform: scaleX(0); transform-origin: left;
+        transition: transform .28s cubic-bezier(.34,1.2,.64,1);
+        z-index: -1; pointer-events: none;
+      }
+      .btn-back:hover {
+        background: rgba(201,162,39,.1); border-color: rgba(201,162,39,.65);
+        transform: translateY(-1px); box-shadow: 0 6px 20px rgba(201,162,39,.22);
+      }
+      .btn-back:hover::before { transform: scaleX(1); }
+      .btn-back:active { transform: scale(.96); transition-duration: .08s; }
 
       .card-body {
         padding: 14px 16px 16px;
@@ -294,15 +439,33 @@
       .item-title { font-weight: 700; margin-bottom: 4px; }
       .status-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
       .status-btn {
-        border: 1px solid rgba(255,255,255,.08); border-radius: 14px;
-        padding: 12px 8px; cursor: pointer;
-        background: rgba(255,255,255,.03); color: var(--text);
-        font-family: "Oswald", sans-serif; letter-spacing: .05em;
-        transition: background .15s ease, border-color .15s ease, transform .1s ease;
+        border: 1px solid rgba(255,255,255,.1); border-radius: 18px;
+        padding: 13px 10px; cursor: pointer;
+        background: rgba(255,255,255,.04); color: var(--text);
+        font-family: "Oswald", sans-serif; letter-spacing: .06em;
+        position: relative; overflow: hidden; isolation: isolate;
+        transition: background .2s ease, border-color .2s ease, box-shadow .2s ease,
+                    transform .2s cubic-bezier(.34,1.56,.64,1);
       }
-      .status-btn:active { transform: scale(.96); }
-      .status-btn.active.clean { background: linear-gradient(135deg, var(--green), var(--green-dark)); border-color: var(--green); }
-      .status-btn.active.dirty { background: linear-gradient(135deg, var(--red), var(--red-dark)); border-color: var(--red); }
+      .status-btn::before {
+        content: ""; position: absolute; inset: 0; border-radius: inherit;
+        opacity: 0; transition: opacity .2s ease; z-index: -1; pointer-events: none;
+      }
+      .status-btn[data-value="clean"]::before { background: rgba(45,204,112,.1); }
+      .status-btn[data-value="dirty"]::before { background: rgba(239,91,91,.1); }
+      .status-btn:hover { transform: translateY(-1px); }
+      .status-btn:hover::before { opacity: 1; }
+      .status-btn[data-value="clean"]:hover { border-color: rgba(45,204,112,.32); }
+      .status-btn[data-value="dirty"]:hover { border-color: rgba(239,91,91,.32); }
+      .status-btn:active { transform: scale(.96); transition-duration: .08s; }
+      .status-btn.active.clean {
+        background: linear-gradient(135deg, var(--green), var(--green-dark)); border-color: var(--green);
+        box-shadow: 0 4px 18px rgba(45,204,112,.28), inset 0 1px 0 rgba(255,255,255,.18);
+      }
+      .status-btn.active.dirty {
+        background: linear-gradient(135deg, var(--red), var(--red-dark)); border-color: var(--red);
+        box-shadow: 0 4px 18px rgba(239,91,91,.28), inset 0 1px 0 rgba(255,255,255,.15);
+      }
 
       .toolbar {
         display: flex; flex-wrap: wrap; justify-content: space-between;
@@ -445,11 +608,7 @@
         display: flex; align-items: center; justify-content: center;
         gap: 14px; padding: 80px 20px; color: var(--muted); font-size: 15px;
       }
-      .charts-loading .spinner {
-        width: 36px; height: 36px; border-radius: 50%;
-        border: 3px solid var(--border); border-top-color: var(--gold);
-        animation: spin .8s linear infinite;
-      }
+      .charts-loading .spinner { display: none; } /* replaced by bouncing dots */
       .charts-stat-row {
         display: grid; grid-template-columns: repeat(4, 1fr);
         gap: 12px; margin-bottom: 20px;
@@ -704,13 +863,18 @@
       body.low-perf .card-pick { transition: none; }
       body.low-perf .card-pick:hover { transform: none; box-shadow: var(--shadow); }
       body.low-perf .btn, body.low-perf .nav-btn, body.low-perf .status-btn, body.low-perf .tab { transition: none; }
+      body.low-perf .btn::before, body.low-perf .nav-btn::before, body.low-perf .status-btn::before, body.low-perf .btn-back::before { transition: none; }
       body.low-perf .btn:hover, body.low-perf .nav-btn:hover, body.low-perf .status-btn:hover, body.low-perf .tab:hover { transform: none; }
+      body.low-perf .btn:hover::before, body.low-perf .nav-btn:hover::before, body.low-perf .status-btn:hover::before { transform: none; opacity: 0; }
       body.low-perf .modal { animation: none; }
       body.low-perf .modal-backdrop { animation: none; }
       body.low-perf .toast { animation: none; }
       body.low-perf .item-row { transition: none; }
       body.low-perf .bar-fill { transition: none; }
       body.low-perf .progress > div { transition: none; }
+      body.low-perf .hero-orbit { display: none; }
+      .cg-fx-switch { border-color: rgba(52,211,153,.25) !important; }
+      body.low-perf .cg-fx-switch { border-color: rgba(255,255,255,.08) !important; }
       body.low-perf {
         background: var(--bg) !important;
       }
@@ -750,11 +914,94 @@
       .cg-reviews-loading { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 13px; padding: 16px 0; }
       .cg-spinner { width: 16px; height: 16px; border: 2px solid rgba(200,120,24,.2); border-top-color: var(--gold); border-radius: 50%; animation: cgSpin .8s linear infinite; }
       @keyframes cgSpin { to { transform: rotate(360deg); } }
+
+      /* ── Bouncing Dots Loader ── */
+      .cg-bounce-dots { display: flex; gap: 7px; align-items: center; justify-content: center; }
+      .cg-bounce-dots span {
+        display: block; width: 10px; height: 10px; border-radius: 50%;
+        background: var(--gold);
+        animation: cgBounce .6s ease-in-out infinite;
+      }
+      .cg-bounce-dots span:nth-child(2) { animation-delay: .2s; }
+      .cg-bounce-dots span:nth-child(3) { animation-delay: .4s; }
+      @keyframes cgBounce {
+        0%, 100% { transform: translateY(0); }
+        50%       { transform: translateY(-14px); }
+      }
+      /* Large — used in full-screen lock/loading overlay */
+      .cg-bounce-dots.lg span { width: 14px; height: 14px; }
+      /* Small — used inline next to text */
+      .cg-bounce-dots.sm span { width: 8px; height: 8px; }
+      .cg-bounce-dots.sm { gap: 5px; }
+      .cg-bounce-dots.sm span:nth-child(1),
+      .cg-bounce-dots.sm span:nth-child(2),
+      .cg-bounce-dots.sm span:nth-child(3) { animation: cgBounceSm .6s ease-in-out infinite; }
+      .cg-bounce-dots.sm span:nth-child(2) { animation-delay: .2s; }
+      .cg-bounce-dots.sm span:nth-child(3) { animation-delay: .4s; }
+      @keyframes cgBounceSm {
+        0%, 100% { transform: translateY(0); }
+        50%       { transform: translateY(-7px); }
+      }
       @keyframes cgFadeUp { to { opacity: 1; transform: translateY(0); } }
       @media (max-width: 600px) {
         .cg-reviews-heading { font-size: 17px; }
         .cg-review-card { padding: 12px 14px; }
       }
+
+      /* ── Cinematic Effects Switch ── */
+      .cg-fx-switch {
+        display: flex; align-items: center; gap: 8px;
+        padding: 6px 10px; border-radius: 14px;
+        background: rgba(39,39,42,.55); border: 1px solid rgba(255,255,255,.08);
+        backdrop-filter: blur(8px); cursor: pointer;
+        user-select: none; flex-shrink: 0;
+      }
+      .cg-fx-switch:hover { border-color: rgba(255,255,255,.16); }
+      .cg-fx-label {
+        font-size: 10px; font-weight: 700; letter-spacing: .08em;
+        transition: color .3s;
+      }
+      .cg-fx-label-off { color: rgba(155,168,185,.25); }
+      .cg-fx-label-on  {
+        color: #34d399;
+        text-shadow: 0 0 8px rgba(52,211,153,.5);
+      }
+      /* when low-perf is active, flip label colors */
+      body.low-perf .cg-fx-label-off { color: rgba(155,168,185,.5); }
+      body.low-perf .cg-fx-label-on  {
+        color: rgba(155,168,185,.25);
+        text-shadow: none;
+      }
+      .cg-fx-track {
+        position: relative; width: 44px; height: 24px; border-radius: 999px;
+        background: #064e3b; transition: background .3s;
+        flex-shrink: 0;
+      }
+      body.low-perf .cg-fx-track { background: #27272a; }
+      .cg-fx-thumb {
+        position: absolute; top: 3px; left: 3px;
+        width: 18px; height: 18px; border-radius: 50%;
+        background: #34d399;
+        box-shadow: 0 0 8px rgba(52,211,153,.45);
+        border: 1px solid rgba(255,255,255,.1);
+        transition: transform .25s cubic-bezier(.34,1.56,.64,1), background .3s, box-shadow .3s;
+        transform: translateX(20px);
+      }
+      .cg-fx-thumb::after {
+        content: ''; position: absolute; top: 3px; left: 4px;
+        width: 7px; height: 4px;
+        background: rgba(255,255,255,.25); border-radius: 999px;
+        filter: blur(1px);
+      }
+      body.low-perf .cg-fx-thumb {
+        transform: translateX(0);
+        background: #52525b;
+        box-shadow: none;
+        transition: none;
+      }
+      body.low-perf .cg-fx-track { transition: none; }
+      body.low-perf .cg-fx-label { transition: none; }
+
     </style>
   </head>
   <body>
@@ -850,8 +1097,6 @@
       function applyPerfMode() {
         const on = localStorage.getItem(PERF_KEY) === "1";
         document.body.classList.toggle("low-perf", on);
-        const btn = document.querySelector("[data-action='toggle-perf']");
-        if (btn) btn.style.opacity = on ? "1" : "0.5";
       }
       applyPerfMode();
       const LOCAL_RETENTION_DAYS = 7; /* Локални записи се пазят 7 дни */
@@ -1075,7 +1320,7 @@
         document.getElementById("app").innerHTML = `
           <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;">
             <div style="text-align:center;">
-              <div style="width:42px;height:42px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--gold);animation:spin .8s linear infinite;margin:0 auto 16px;"></div>
+              <div class="cg-bounce-dots lg" style="margin:0 auto 20px;"><span></span><span></span><span></span></div>
               <div id="loading-text" style="color:var(--muted);font-size:13px;">Проверка на достъп…</div>
             </div>
           </div>`;
@@ -1629,7 +1874,24 @@
               <div class="topbar-meta">
                 <span class="meta-chip">Парк Център София</span>
                 <span class="meta-chip">Контрол на хигиена</span>
-                <button class="btn btn-outline" style="padding:8px 11px;font-size:13px;" data-action="toggle-perf" title="Включи/изключи ефекти за по-добра производителност" aria-label="Режим на производителност">⚡</button>
+                <div class="search-wrap" id="search-wrap">
+                  <button class="search-btn-icon" id="search-open-btn" type="button" aria-label="Отвори търсене" title="Търси функция">
+                    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  </button>
+                  <div class="search-field-wrap" id="search-field-wrap">
+                    <div class="search-field-inner">
+                      <span class="search-icon-inner"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+                      <input class="search-input" id="search-input" type="text" placeholder="Търси функция..." autocomplete="off" aria-label="Търси функция" />
+                      <button class="search-clear" id="search-clear" type="button" aria-label="Изчисти търсенето"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+                    </div>
+                    <div class="search-dropdown" id="search-dropdown" style="display:none;"></div>
+                  </div>
+                </div>
+                <div class="cg-fx-switch" data-action="toggle-perf" title="Включи/изключи визуални ефекти" role="switch" aria-label="Визуални ефекти">
+                  <span class="cg-fx-label cg-fx-label-off">OFF</span>
+                  <div class="cg-fx-track"><div class="cg-fx-thumb"></div></div>
+                  <span class="cg-fx-label cg-fx-label-on">ON</span>
+                </div>
               </div>
             </div>
           </div>`;
@@ -1709,7 +1971,7 @@
           </div>
 
           <div id="cg-reviews-section" class="cg-reviews-wrap">
-            <div class="cg-reviews-loading"><div class="cg-spinner"></div><span>Зареждане на ревюта...</span></div>
+            <div class="cg-reviews-loading"><div class="cg-bounce-dots sm"><span></span><span></span><span></span></div><span>Зареждане на ревюта...</span></div>
           </div>
 
         </div>`;
@@ -1772,7 +2034,7 @@
             </div>
           </div>
           <div id="charts-container">
-            <div class="charts-loading"><div class="spinner"></div><span>Зарежда от Sheets…</span></div>
+            <div class="charts-loading"><div class="cg-bounce-dots" style="margin-right:4px;"><span></span><span></span><span></span></div><span>Зарежда от Sheets…</span></div>
           </div>
         </div>`;
       }
@@ -1881,7 +2143,7 @@
 
         /* Don't destroy charts during loading — keep them visible */
         if (!_cachedChartRows) {
-          container.innerHTML = '<div class="charts-loading"><div class="spinner"></div><span>Зарежда от Sheets…</span></div>';
+          container.innerHTML = '<div class="charts-loading"><div class="cg-bounce-dots" style="margin-right:4px;"><span></span><span></span><span></span></div><span>Зарежда от Sheets…</span></div>';
         }
 
         let rows;
@@ -2368,7 +2630,7 @@
         return `
           <div style="min-height:60vh;display:flex;align-items:center;justify-content:center;padding:24px;">
             <div style="text-align:center;">
-              <div style="width:52px;height:52px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--gold);animation:spin .8s linear infinite;margin:0 auto 20px;"></div>
+              <div class="cg-bounce-dots lg" style="margin:0 auto 24px;"><span></span><span></span><span></span></div>
               <div style="font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;letter-spacing:.06em;margin-bottom:8px;">Заключване на ${escapeHtml(state.location)}…</div>
               <div style="color:var(--muted);font-size:13px;">Моля изчакайте</div>
             </div>
@@ -2545,7 +2807,7 @@
                 <h2 style="font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;letter-spacing:.06em;margin:0;">${typeIcon} ${typeLabel}</h2>
               </div>
               <div style="text-align:center;padding:32px 0;color:var(--muted);">
-                <div style="width:28px;height:28px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--gold);animation:spin .8s linear infinite;margin:0 auto 12px;"></div>
+                <div class="cg-bounce-dots" style="margin:0 auto 14px;"><span></span><span></span><span></span></div>
                 Зареждане на график…
               </div>
             </div>`;
@@ -2629,7 +2891,7 @@
         } else if (state.crStep === "submitting") {
           actionArea = `
             <div style="text-align:center;padding:16px;color:var(--muted);font-size:13px;">
-              <div style="width:24px;height:24px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--gold);animation:spin .8s linear infinite;margin:0 auto 10px;"></div>
+              <div class="cg-bounce-dots sm" style="margin:0 auto 10px;"><span></span><span></span><span></span></div>
               Записване…
             </div>`;
         } else if (state.crStep === "done") {
@@ -2707,6 +2969,130 @@
         }
         applyPerfMode();
         if (state.screen === "home" && typeof cgUpdateReviews === 'function') cgUpdateReviews();
+        initSearchBar();
+      }
+
+      /* ── Search Bar ── */
+      const SEARCH_ITEMS = [
+        { icon: "🎬", label: "Проверка на зали", sub: "Кинозала — Зали 1–6", action: "start-inspection", type: "hall" },
+        { icon: "🚿", label: "Проверка на тоалетни", sub: "Санитарен Възел — WC", action: "start-inspection", type: "bathroom" },
+        { icon: "👗", label: "Почистване на съблекалня", sub: "Мъжка / Женска съблекалня", action: "start-changing-room" },
+        { icon: "📊", label: "Данни и статистики", sub: "Графики от Sheets", action: "go-charts" },
+        { icon: "🏠", label: "Начало", sub: "Главен екран", action: "go-home" },
+        { icon: "🔗", label: "QR кодове", sub: "Генерирай и принтирай QR", action: "open-qr" },
+      ];
+
+      let _searchBarInited = false;
+      function initSearchBar() {
+        const openBtn = document.getElementById("search-open-btn");
+        const fieldWrap = document.getElementById("search-field-wrap");
+        const input = document.getElementById("search-input");
+        const clearBtn = document.getElementById("search-clear");
+        const dropdown = document.getElementById("search-dropdown");
+        if (!openBtn || !fieldWrap || !input || !clearBtn || !dropdown) return;
+
+        let focusedIdx = -1;
+
+        function openSearch() {
+          fieldWrap.classList.add("open");
+          openBtn.style.display = "none";
+          input.focus();
+          showResults(input.value);
+        }
+
+        function closeSearch() {
+          fieldWrap.classList.remove("open");
+          openBtn.style.display = "";
+          input.value = "";
+          dropdown.style.display = "none";
+          focusedIdx = -1;
+        }
+
+        function showResults(q) {
+          const query = q.trim().toLowerCase();
+          const items = query
+            ? SEARCH_ITEMS.filter(i =>
+                i.label.toLowerCase().includes(query) ||
+                (i.sub && i.sub.toLowerCase().includes(query))
+              )
+            : SEARCH_ITEMS;
+          focusedIdx = -1;
+          if (items.length === 0) {
+            dropdown.innerHTML = `<div class="search-no-results">Няма намерени резултати</div>`;
+          } else {
+            dropdown.innerHTML = items.map((item, idx) => `
+              <div class="search-item" data-idx="${idx}" data-search-action="${item.action}" ${item.type ? `data-search-type="${item.type}"` : ""} role="option" tabindex="-1">
+                <span class="search-item-icon">${item.icon}</span>
+                <div>
+                  <div class="search-item-label">${item.label}</div>
+                  <div class="search-item-sub">${item.sub || ""}</div>
+                </div>
+                <span class="search-item-arrow">›</span>
+              </div>`).join("");
+            dropdown.querySelectorAll(".search-item").forEach(el => {
+              el.addEventListener("mousedown", (e) => {
+                e.preventDefault();
+                triggerSearchAction(el.dataset.searchAction, el.dataset.searchType);
+              });
+            });
+          }
+          dropdown.style.display = "block";
+        }
+
+        function dispatchAction(action, type) {
+          /* Create a fake element and dispatch a real click so the global listener handles it */
+          const fake = document.createElement("button");
+          fake.dataset.action = action;
+          if (type) fake.dataset.type = type;
+          fake.style.display = "none";
+          document.body.appendChild(fake);
+          fake.click();
+          document.body.removeChild(fake);
+        }
+
+        function triggerSearchAction(action, type) {
+          closeSearch();
+          dispatchAction(action, type || "");
+        }
+
+        function moveFocus(dir) {
+          const items = dropdown.querySelectorAll(".search-item");
+          if (!items.length) return;
+          items[focusedIdx]?.classList.remove("focused");
+          focusedIdx = (focusedIdx + dir + items.length) % items.length;
+          items[focusedIdx]?.classList.add("focused");
+          items[focusedIdx]?.scrollIntoView({ block: "nearest" });
+        }
+
+        openBtn.addEventListener("click", openSearch);
+        clearBtn.addEventListener("click", closeSearch);
+        input.addEventListener("input", () => showResults(input.value));
+        input.addEventListener("keydown", (e) => {
+          if (e.key === "ArrowDown") { e.preventDefault(); moveFocus(1); }
+          else if (e.key === "ArrowUp") { e.preventDefault(); moveFocus(-1); }
+          else if (e.key === "Enter") {
+            e.preventDefault();
+            const focused = dropdown.querySelector(".search-item.focused");
+            const target = focused || dropdown.querySelector(".search-item");
+            if (target) triggerSearchAction(target.dataset.searchAction, target.dataset.searchType);
+          }
+          else if (e.key === "Escape") closeSearch();
+        });
+
+        if (!_searchBarInited) {
+          _searchBarInited = true;
+          document.addEventListener("mousedown", (e) => {
+            if (!document.getElementById("search-wrap")?.contains(e.target)) {
+              const iw = document.getElementById("search-field-wrap");
+              if (iw && iw.classList.contains("open")) {
+                iw.classList.remove("open");
+                document.getElementById("search-open-btn").style.display = "";
+                document.getElementById("search-input").value = "";
+                document.getElementById("search-dropdown").style.display = "none";
+              }
+            }
+          });
+        }
       }
 
       function bindInputs() {
@@ -3200,7 +3586,7 @@
             return;
           }
           _memCache = null;
-          inject('<div class="cg-reviews-loading"><div class="cg-spinner"></div><span>Обновяване...</span></div>');
+          inject('<div class="cg-reviews-loading"><div class="cg-bounce-dots sm"><span></span><span></span><span></span></div><span>Обновяване...</span></div>');
           fetchAndRender();
         };
       })();
