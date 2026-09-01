@@ -418,7 +418,7 @@
       .field input, .field select, .field textarea {
         width: 100%; background: var(--panel-3); color: var(--text);
         border: 1px solid rgba(255,255,255,.08); border-radius: 14px;
-        padding: 12px 14px;
+        padding: 12px 14px; direction: ltr; unicode-bidi: plaintext;
       }
       .field input:focus, .field select:focus, .field textarea:focus {
         outline: none; border-color: rgba(200,120,24,.45);
@@ -872,6 +872,11 @@
       body.low-perf .item-row { transition: none; }
       body.low-perf .bar-fill { transition: none; }
       body.low-perf .progress > div { transition: none; }
+      body.low-perf .progress > div::after { animation: none; display: none; }
+      body.low-perf .item-row:hover { transform: none; box-shadow: none; }
+      body.low-perf .toast { backdrop-filter: none; }
+      body.low-perf .modal-backdrop { backdrop-filter: none; }
+      body.low-perf .card-pick:hover::after { opacity: 0; }
       body.low-perf .hero-orbit { display: none; }
       .cg-fx-switch { border-color: rgba(52,211,153,.25) !important; }
       body.low-perf .cg-fx-switch { border-color: rgba(255,255,255,.08) !important; }
@@ -1192,6 +1197,255 @@
       .day-cal-trigger.has-range { border-color:rgba(200,120,24,.6); color:var(--gold); }
       .day-cal-max-note { font-size:10px; color:var(--muted); margin-top:4px; text-align:center; }
 
+      /* ════════════════════════════════════════════════════════════
+         ✨ VISUAL POLISH LAYER — добавено, без да чупи съществуващото
+         ════════════════════════════════════════════════════════════ */
+
+      /* По-чист рендеринг на текста */
+      html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; }
+
+      /* Маркиране на текст в марковите цветове */
+      ::selection { background: rgba(200,120,24,.32); color: #fff; }
+      ::-moz-selection { background: rgba(200,120,24,.32); color: #fff; }
+
+      /* Изящни скролбари в тон с тъмната тема */
+      * { scrollbar-width: thin; scrollbar-color: rgba(200,120,24,.35) transparent; }
+      ::-webkit-scrollbar { width: 10px; height: 10px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb {
+        background: linear-gradient(180deg, rgba(200,120,24,.45), rgba(200,120,24,.25));
+        border-radius: 999px; border: 2px solid transparent; background-clip: padding-box;
+      }
+      ::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, rgba(235,160,48,.7), rgba(200,120,24,.45)); background-clip: padding-box; }
+
+      /* Леко "повдигане" на панелите при hover — фина дълбочина */
+      .panel { transition: border-color .25s ease, box-shadow .25s ease, transform .25s ease; }
+
+      /* Карти за избор — по-плавно и с топъл glow */
+      .card-pick { will-change: transform; }
+      .card-pick::after {
+        content: ""; position: absolute; inset: 0; border-radius: inherit;
+        box-shadow: 0 0 0 1px rgba(200,120,24,0) inset; opacity: 0;
+        transition: opacity .3s ease; pointer-events: none;
+      }
+      .card-pick:hover::after { opacity: 1; box-shadow: 0 0 0 1px rgba(200,120,24,.35) inset, 0 0 40px rgba(200,120,24,.08) inset; }
+
+      /* Полета — по-жив hover + плавен преход */
+      .field input, .field select, .field textarea {
+        transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+      }
+      .field input:hover:not(:focus), .field select:hover:not(:focus), .field textarea:hover:not(:focus) {
+        border-color: rgba(255,255,255,.18); background: rgba(255,255,255,.015);
+      }
+      .field textarea { resize: vertical; min-height: 64px; line-height: 1.5; }
+
+      /* Pills — фин контур за повече дефиниция */
+      .pill.ok  { box-shadow: inset 0 0 0 1px rgba(45,204,112,.28); }
+      .pill.bad { box-shadow: inset 0 0 0 1px rgba(239,91,91,.28); }
+      .pill { letter-spacing: .02em; }
+
+      /* Meta-chip — лек градиент */
+      .meta-chip {
+        background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+        transition: border-color .2s ease, color .2s ease;
+      }
+      .meta-chip:hover { border-color: rgba(255,255,255,.14); }
+
+      /* Progress bar — топъл блясък + анимиран shimmer */
+      .progress { box-shadow: inset 0 1px 2px rgba(0,0,0,.3); }
+      .progress > div {
+        position: relative; overflow: hidden;
+        box-shadow: 0 0 12px rgba(200,120,24,.45);
+      }
+      .progress > div::after {
+        content: ""; position: absolute; inset: 0;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,.45), transparent);
+        transform: translateX(-100%);
+        animation: progShimmer 2.2s ease-in-out infinite;
+      }
+      @keyframes progShimmer { 0% { transform: translateX(-100%); } 60%, 100% { transform: translateX(220%); } }
+
+      /* Toasts — стъклен ефект + икона-цвят */
+      .toast {
+        backdrop-filter: blur(12px);
+        display: flex; align-items: center; gap: 10px;
+        font-weight: 600; max-width: min(380px, calc(100vw - 40px));
+        border-radius: 14px;
+      }
+      .toast::before {
+        content: ""; width: 8px; height: 8px; border-radius: 50%;
+        flex-shrink: 0; box-shadow: 0 0 8px currentColor;
+      }
+      .toast.success { color: #d6ffe6; }
+      .toast.success::before { background: var(--green); color: var(--green); }
+      .toast.error { color: #ffe0e0; }
+      .toast.error::before { background: var(--red); color: var(--red); }
+
+      /* Модали — по-мек backdrop с blur */
+      .modal-backdrop { backdrop-filter: blur(4px); }
+
+      /* Item rows — фин ховър glow по левия акцент */
+      .item-row { transition: background .2s ease, border-color .2s ease, transform .15s ease, box-shadow .2s ease; }
+      .item-row:hover { transform: translateX(2px); box-shadow: -4px 0 16px -8px rgba(200,120,24,.3); }
+      .item-row.clean:hover { box-shadow: -4px 0 16px -8px rgba(45,204,112,.4); }
+      .item-row.dirty:hover { box-shadow: -4px 0 16px -8px rgba(239,91,91,.4); }
+
+      /* Home hero title — изящен бял→сив градиент (само на началната страница,
+         за да не засегне заглавията с емоджи на другите екрани) */
+      .hero-copy .hero-title {
+        background: linear-gradient(180deg, #ffffff, #c6d2e0);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      /* Tag pills — лек hover */
+      .tag { transition: border-color .2s ease, color .2s ease, background .2s ease; }
+      .tag:hover { border-color: rgba(200,120,24,.3); color: var(--gold-2); }
+
+      /* Datalist input — стрелка-индикатор за падащ списък */
+      input[list] { background-image:
+        linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+        linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+        background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%;
+        background-size: 5px 5px, 5px 5px; background-repeat: no-repeat;
+        padding-right: 34px;
+      }
+
+      /* Достъпност — уважавай "по-малко движение" */
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+          animation-duration: .001ms !important; animation-iteration-count: 1 !important;
+          transition-duration: .001ms !important; scroll-behavior: auto !important;
+        }
+      }
+
+      /* ── Мигащ alert индикатор за просрочени проверки ── */
+      .cg-overdue-alert {
+        position: absolute; top: -7px; right: -7px;
+        width: 22px; height: 22px; border-radius: 50%;
+        background: linear-gradient(135deg, #ef4444, #b91c1c);
+        color: #fff; font-weight: 900; font-size: 14px;
+        display: flex; align-items: center; justify-content: center;
+        font-family: "Oswald", sans-serif;
+        box-shadow: 0 0 0 2px var(--panel),
+                    0 4px 10px rgba(239,68,68,.5),
+                    0 0 14px rgba(239,68,68,.6);
+        animation: overduePulse 1.1s ease-in-out infinite;
+        z-index: 2; pointer-events: none;
+      }
+      .cg-overdue-alert.warn {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        box-shadow: 0 0 0 2px var(--panel),
+                    0 4px 10px rgba(245,158,11,.4),
+                    0 0 12px rgba(245,158,11,.5);
+        animation-duration: 1.6s;
+      }
+      @keyframes overduePulse {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50%      { transform: scale(1.18); opacity: .82; }
+      }
+      .cg-overdue-card {
+        animation: overdueCardGlow 2.2s ease-in-out infinite;
+      }
+      @keyframes overdueCardGlow {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
+        50%      { box-shadow: 0 0 24px -4px rgba(239,68,68,.35); }
+      }
+      body.low-perf .cg-overdue-alert { animation: none; }
+      body.low-perf .cg-overdue-card { animation: none; }
+
+      /* ── Свършила прожекция — модерна пулсираща карта (цветът е на залата) ── */
+      @keyframes cgEndedPulse {
+        0%, 100% { box-shadow: 0 0 0 0 var(--hall-glow, rgba(16,185,129,.5)), 0 6px 20px rgba(0,0,0,.35); }
+        50%      { box-shadow: 0 0 26px 5px var(--hall-glow, rgba(16,185,129,.5)), 0 6px 20px rgba(0,0,0,.35); }
+      }
+      .cg-ended-card { animation: cgEndedPulse 1.7s ease-in-out infinite; }
+      @keyframes cgCleanBadge {
+        0%, 100% { transform: scale(1); }
+        50%      { transform: scale(1.06); }
+      }
+      .cg-clean-badge { animation: cgCleanBadge 1.2s ease-in-out infinite; }
+      body.low-perf .cg-ended-card { animation: none; }
+      body.low-perf .cg-clean-badge { animation: none; }
+
+      /* ── Прогрес бар на течаща прожекция ── */
+      .cg-prog-track {
+        position: relative; height: 7px; border-radius: 999px; overflow: hidden;
+        background: rgba(255,255,255,.07);
+        box-shadow: inset 0 1px 2px rgba(0,0,0,.45);
+      }
+      .cg-prog-fill {
+        position: absolute; inset: 0 auto 0 0; border-radius: 999px;
+        background: linear-gradient(90deg, var(--p-from), var(--p-to));
+        box-shadow: 0 0 12px var(--p-glow);
+        transition: width .9s cubic-bezier(.4,0,.2,1);
+      }
+      /* Движещ се блясък — показва, че прожекцията тече в момента */
+      .cg-prog-fill::after {
+        content: ""; position: absolute; inset: 0;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent);
+        transform: translateX(-100%);
+        animation: cgProgShimmer 2.4s ease-in-out infinite;
+      }
+      @keyframes cgProgShimmer {
+        0% { transform: translateX(-100%); }
+        65%, 100% { transform: translateX(260%); }
+      }
+      /* Пулсиращо връхче в края на прогреса */
+      .cg-prog-head {
+        position: absolute; top: 50%; width: 9px; height: 9px; border-radius: 50%;
+        transform: translate(-50%, -50%);
+        background: var(--p-to);
+        box-shadow: 0 0 0 2px rgba(0,0,0,.35), 0 0 12px 2px var(--p-glow);
+        transition: left .9s cubic-bezier(.4,0,.2,1);
+        animation: cgProgHead 1.6s ease-in-out infinite;
+      }
+      @keyframes cgProgHead {
+        0%, 100% { box-shadow: 0 0 0 2px rgba(0,0,0,.35), 0 0 10px 1px var(--p-glow); }
+        50%      { box-shadow: 0 0 0 2px rgba(0,0,0,.35), 0 0 18px 5px var(--p-glow); }
+      }
+      body.low-perf .cg-prog-fill::after { animation: none; display: none; }
+      body.low-perf .cg-prog-head { animation: none; }
+
+      /* ── СЛЕДВАЩА прожекция — открояване на реда ── */
+      @keyframes cgNextGlow {
+        0%, 100% { box-shadow: 0 0 0 0 var(--n-glow), 0 8px 24px rgba(0,0,0,.4); }
+        50%      { box-shadow: 0 0 30px 4px var(--n-glow), 0 8px 24px rgba(0,0,0,.4); }
+      }
+      .cg-next-card { animation: cgNextGlow 2.6s ease-in-out infinite; }
+      @keyframes cgNextPill {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50%      { transform: scale(1.05); opacity: .92; }
+      }
+      .cg-next-pill { animation: cgNextPill 1.8s ease-in-out infinite; }
+      body.low-perf .cg-next-card { animation: none; }
+      body.low-perf .cg-next-pill { animation: none; }
+
+      /* Кликаема карта за зала — подсказва, че има детайли */
+      [data-action="open-hall-detail"]:hover {
+        background: rgba(255,255,255,.05) !important;
+        border-color: rgba(255,255,255,.18) !important;
+        transform: translateY(-2px);
+      }
+      [data-action="open-hall-detail"]:active { transform: scale(.99); }
+
+      /* ── Странични банери (PC) — 280×800, файлове в /banners/ ── */
+      .cg-side-banner {
+        display: none;
+        position: fixed; top: 50%; transform: translateY(-50%);
+        width: 280px; height: 800px; z-index: 4;
+        border-radius: 18px; overflow: hidden;
+        box-shadow: 0 18px 50px rgba(0,0,0,.45);
+      }
+      .cg-side-banner img { width: 100%; height: 100%; object-fit: cover; display: block; }
+      .cg-side-banner.left  { left: 20px; }
+      .cg-side-banner.right { right: 20px; }
+      /* Показват се само когато встрани от работната зона (1280px) има място */
+      @media (min-width: 1880px) {
+        .cg-side-banner.has-image { display: block; }
+      }
+      body.low-perf .cg-prog-fill, body.low-perf .cg-prog-head { transition: none; }
+
     </style>
   </head>
   <body>
@@ -1202,6 +1456,9 @@
       <span class="bloom-orb bloom-orb--gold2"></span>
       <span class="bloom-orb bloom-orb--purple"></span>
     </div>
+    <!-- Странични банери: смени файловете в /banners/ (виж banners/README.md) -->
+    <div class="cg-side-banner left" aria-hidden="true"><img data-src="banners/banner-left.png" alt="" /></div>
+    <div class="cg-side-banner right" aria-hidden="true"><img data-src="banners/banner-right.png" alt="" /></div>
     <div id="app"></div>
     <div id="modals"></div>
     <div class="broom-fun" aria-hidden="true">
@@ -1394,50 +1651,148 @@
         return _lockAcquiredAt > 0 && (Date.now() - _lockAcquiredAt >= LOCK_TIMEOUT_MS);
       }
 
-      async function acquireLock(type, location, sessionId) {
-        if (!isSheetsConfigured()) return { success: true };
+      /* fetch с твърд timeout — пази UI-а от увисване при бавен/мъртъв backend.
+         Хвърля грешка с name "AbortError" при изтичане. */
+      async function fetchWithTimeout(url, options, timeoutMs) {
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), timeoutMs || 12000);
         try {
-          const res = await fetch(SHEETS_WEB_APP_URL, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=UTF-8" },
-            body: JSON.stringify({ action: "acquireLock", type, location, sessionId, _token: SHEETS_SECRET_TOKEN }),
-          });
-          if (!res.ok) return { success: true, offline: true };
-          try { return await res.json(); } catch (_) { return { success: true, offline: true }; }
+          return await fetch(url, Object.assign({}, options, { signal: controller.signal }));
+        } finally {
+          clearTimeout(id);
+        }
+      }
+
+      /* Събужда Apps Script backend-а с лек GET, за да не е cold при следваща
+         операция. Fire-and-forget, throttle-нато веднъж на 60 сек. */
+      let _lastWarmup = 0;
+      function warmUpBackend() {
+        if (!isSheetsConfigured()) return;
+        const now = Date.now();
+        if (now - _lastWarmup < 60000) return;
+        _lastWarmup = now;
+        const url = SHEETS_WEB_APP_URL + "?action=getInfo&_token=" + encodeURIComponent(SHEETS_SECRET_TOKEN) + "&_warm=1&_cb=" + now;
+        fetchWithTimeout(url, { cache: "no-store" }, 20000).catch(() => {});
+      }
+
+      /* ══════════════════════════════════════════════════════════════
+         ЗАКЛЮЧВАНЕ ПРЕЗ ntfy.sh — надеждно, без Apps Script backend.
+         ntfy topic-ът служи като споделен журнал от lock/unlock събития.
+         Всяко устройство чете последните ~15 мин събития, за да определи
+         дали дадена зала е заключена от друг. Работи, защото ntfy е бърз и
+         надежден (използва се и за снимките).
+         ══════════════════════════════════════════════════════════════ */
+      const LOCK_NTFY_TOPIC = "cg-locks-cinegrand-v1";
+      const LOCK_TTL_MS = 12 * 60 * 1000;      // колко дълго важи lock без heartbeat
+      const LOCK_HEARTBEAT_MS = 4 * 60 * 1000; // презаписване докато залата е отворена
+      let _lockHeartbeatTimer = null;
+      let _heldLockKey = null;                 // "type|location" на текущо държания lock
+
+      function _lockKey(type, location) { return type + "|" + location; }
+
+      async function _fetchLockEvents() {
+        const url = NTFY_BASE + "/" + encodeURIComponent(LOCK_NTFY_TOPIC) + "/json?poll=1&since=15m";
+        const res = await fetchWithTimeout(url, { method: "GET", cache: "no-store" }, 10000);
+        if (!res.ok) throw new Error("ntfy HTTP " + res.status);
+        const text = await res.text();
+        const events = [];
+        for (const line of text.split("\n")) {
+          if (!line.trim()) continue;
+          try {
+            const d = JSON.parse(line);
+            if (!d || d.event !== "message" || !d.message) continue;
+            const ev = JSON.parse(d.message);
+            if (ev && ev.t && ev.l && ev.s && ev.a && ev.ts) events.push(ev);
+          } catch (_) {}
+        }
+        return events;
+      }
+
+      /* Определя текущия държател на lock за зала (или null).
+         При едновременно заключване печели най-малкият sessionId — детерминистично,
+         независимо от реда, така че всички устройства избират един и същ победител. */
+      function _computeLockHolder(events, type, location, nowTs) {
+        const key = _lockKey(type, location);
+        const active = new Map(); // sessionId -> ts на последния lock
+        const sorted = events.slice().sort((a, b) => a.ts - b.ts);
+        for (const ev of sorted) {
+          if (_lockKey(ev.t, ev.l) !== key) continue;
+          if (ev.a === "lock") {
+            if (nowTs - ev.ts <= LOCK_TTL_MS) active.set(ev.s, ev.ts);
+          } else if (ev.a === "unlock") {
+            active.delete(ev.s);
+          }
+        }
+        if (active.size === 0) return null;
+        let winner = null;
+        for (const s of active.keys()) { if (winner === null || s < winner) winner = s; }
+        return { s: winner, ts: active.get(winner) };
+      }
+
+      async function _publishLockEvent(type, location, sessionId, action) {
+        const msg = JSON.stringify({ t: type, l: location, s: sessionId, a: action, ts: Date.now() });
+        try {
+          await fetchWithTimeout(NTFY_BASE + "/" + encodeURIComponent(LOCK_NTFY_TOPIC), { method: "POST", body: msg }, 8000);
+          return true;
+        } catch (_) { return false; }
+      }
+
+      function _startLockHeartbeat(type, location, sessionId) {
+        _stopLockHeartbeat();
+        _lockHeartbeatTimer = setInterval(() => { _publishLockEvent(type, location, sessionId, "lock"); }, LOCK_HEARTBEAT_MS);
+      }
+      function _stopLockHeartbeat() {
+        if (_lockHeartbeatTimer) { clearInterval(_lockHeartbeatTimer); _lockHeartbeatTimer = null; }
+      }
+
+      async function acquireLock(type, location, sessionId) {
+        try {
+          const now = Date.now();
+          const events = await _fetchLockEvents();
+          const holder = _computeLockHolder(events, type, location, now);
+          if (holder && holder.s !== sessionId) {
+            const minsLeft = Math.max(1, Math.ceil((LOCK_TTL_MS - (now - holder.ts)) / 60000));
+            return { success: false, locked: true, minutesLeft: minsLeft, error: location + " вече се проверява. Опитайте след ~" + minsLeft + " мин." };
+          }
+          // Свободна — заяви lock
+          await _publishLockEvent(type, location, sessionId, "lock");
+          // Кратка проверка за едновременно заключване (race)
+          await new Promise(r => setTimeout(r, 1300));
+          const holder2 = _computeLockHolder(await _fetchLockEvents(), type, location, Date.now());
+          if (holder2 && holder2.s !== sessionId) {
+            return { success: false, locked: true, error: location + " беше заета от друг колега." };
+          }
+          // Държим lock-а — стартирай heartbeat докато залата е отворена
+          _heldLockKey = _lockKey(type, location);
+          _startLockHeartbeat(type, location, sessionId);
+          return { success: true };
         } catch (err) {
-          console.warn("[Lock] acquireLock failed:", err.message);
+          // ntfy недостъпен — best-effort (не блокирай работата)
+          console.warn("[ntfyLock] acquire failed:", err.message);
           return { success: true, offline: true };
         }
       }
 
       async function releaseLock(sessionId) {
-        if (!sessionId || !isSheetsConfigured()) return;
-        try {
-          await fetch(SHEETS_WEB_APP_URL, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=UTF-8" },
-            body: JSON.stringify({ action: "releaseLock", sessionId, _token: SHEETS_SECRET_TOKEN }),
-          });
-        } catch (err) {
-          console.warn("[Lock] releaseLock failed:", err.message);
-        }
+        _stopLockHeartbeat();
+        if (!sessionId || !_heldLockKey) { _heldLockKey = null; return; }
+        const parts = _heldLockKey.split("|");
+        _heldLockKey = null;
+        await _publishLockEvent(parts[0], parts[1], sessionId, "unlock");
       }
 
       function releaseLockBeacon(sessionId) {
-        if (!sessionId || !isSheetsConfigured()) return;
-        const payload = JSON.stringify({ action: "releaseLock", sessionId, _token: SHEETS_SECRET_TOKEN });
+        _stopLockHeartbeat();
+        if (!sessionId || !_heldLockKey) { _heldLockKey = null; return; }
+        const parts = _heldLockKey.split("|");
+        const msg = JSON.stringify({ t: parts[0], l: parts[1], s: sessionId, a: "unlock", ts: Date.now() });
+        _heldLockKey = null;
         try {
-          fetch(SHEETS_WEB_APP_URL, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=UTF-8" },
-            body: payload,
-            keepalive: true,
-          }).catch(() => {});
-        } catch (_) {}
-        try {
-          const blob = new Blob([payload], { type: "text/plain;charset=UTF-8" });
-          navigator.sendBeacon(SHEETS_WEB_APP_URL, blob);
-        } catch (_) {}
+          const blob = new Blob([msg], { type: "text/plain;charset=UTF-8" });
+          navigator.sendBeacon(NTFY_BASE + "/" + encodeURIComponent(LOCK_NTFY_TOPIC), blob);
+        } catch (_) {
+          try { fetch(NTFY_BASE + "/" + encodeURIComponent(LOCK_NTFY_TOPIC), { method: "POST", body: msg, keepalive: true }).catch(() => {}); } catch (_2) {}
+        }
       }
 
       function cleanupSessionLock() {
@@ -1449,18 +1804,55 @@
         sessionStorage.removeItem(LOCK_SESSION_KEY);
       }
 
-      function showLocationLocked(location, errorMsg) {
-        const msg = errorMsg
-          ? escapeHtml(errorMsg)
-          : (escapeHtml(location) + " вече се проверява от друг потребител. Опитайте след ~" + LOCK_TIMEOUT_MIN + " мин.");
+      /* Интерпретира резултата от acquireLock:
+         - locked === true → истинско заключване от друг потребител
+         - иначе (success:false без locked) → временна сървърна грешка
+           (Google Apps Script cold-start / претоварване / infra грешка) */
+      function interpretLockResult(lockResult, location) {
+        const realLock = !!(lockResult && lockResult.locked);
+        if (realLock) {
+          return {
+            transient: false,
+            message: lockResult.error
+              ? lockResult.error
+              : (location + " вече се проверява от друг потребител. Опитайте след ~" + LOCK_TIMEOUT_MIN + " мин."),
+            detail: "",
+          };
+        }
+        // Временна грешка — покажи разбираемо съобщение, а техническата
+        // (често английска Google грешка) само като дребен детайл.
+        return {
+          transient: true,
+          message: "Сървърът е временно натоварен и не успя да отговори навреме. Това не е реално заключване — просто натисни бутона за повторен опит.",
+          detail: lockResult && lockResult.error ? String(lockResult.error) : "",
+        };
+      }
+
+      function showLocationLocked(location, lockResult, opts) {
+        const type = opts && opts.type;
+        const info = interpretLockResult(lockResult && typeof lockResult === "object" ? lockResult : { error: lockResult }, location);
+        const transient = info.transient;
+        const title = transient ? "СЪРВЪРЪТ Е БАВЕН" : "ЛОКАЦИЯТА Е ЗАЕТА";
+        const icon = transient ? "⏱" : "🔒";
+        const ringColor = transient ? "245,158,11" : "239,91,91";
+        const retryBtn = transient && type && location
+          ? `<button id="cg-lock-retry" class="btn btn-gold" style="margin-top:20px;padding:12px 32px;font-size:15px;">↻ Опитай отново</button>
+             <button id="cg-lock-home" class="btn btn-outline" style="margin-top:10px;padding:10px 28px;font-size:14px;display:block;margin-left:auto;margin-right:auto;">Към началото</button>`
+          : `<button id="cg-lock-home" class="btn btn-outline" style="margin-top:20px;padding:10px 28px;font-size:14px;">Към началото</button>`;
         document.getElementById("app").innerHTML = `
           <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;">
-            <div style="text-align:center;max-width:400px;">
-              <div style="width:72px;height:72px;border-radius:50%;background:rgba(239,91,91,.15);border:1px solid rgba(239,91,91,.3);display:flex;align-items:center;justify-content:center;margin:0 auto 24px;font-size:32px;">🔒</div>
-              <div style="font-family:'Oswald',sans-serif;font-size:22px;font-weight:700;letter-spacing:.06em;margin-bottom:12px;">ЛОКАЦИЯТА Е ЗАЕТА</div>
-              <div style="color:var(--muted);font-size:14px;line-height:1.6;">${msg}</div>
+            <div style="text-align:center;max-width:460px;">
+              <div style="width:76px;height:76px;border-radius:50%;background:rgba(${ringColor},.15);border:1px solid rgba(${ringColor},.35);display:flex;align-items:center;justify-content:center;margin:0 auto 24px;font-size:34px;box-shadow:0 0 30px rgba(${ringColor},.2);">${icon}</div>
+              <div style="font-family:'Oswald',sans-serif;font-size:23px;font-weight:700;letter-spacing:.06em;margin-bottom:12px;">${title}</div>
+              <div style="color:var(--muted);font-size:14px;line-height:1.65;">${escapeHtml(info.message)}</div>
+              ${info.detail ? `<div style="color:var(--muted-2);font-size:11px;line-height:1.5;margin-top:10px;opacity:.7;">Техн. детайл: ${escapeHtml(info.detail).substring(0, 160)}</div>` : ""}
+              ${retryBtn}
             </div>
           </div>`;
+        const retryEl = document.getElementById("cg-lock-retry");
+        if (retryEl) retryEl.addEventListener("click", () => lockAndStart(type, location));
+        const homeEl = document.getElementById("cg-lock-home");
+        if (homeEl) homeEl.addEventListener("click", () => { state.screen = "home"; render(); });
       }
 
       /* ── Geolocation Access Control ── */
@@ -1536,13 +1928,13 @@
         /* IP проверка — whitelisted IP-та имат достъп отвсякъде */
         let isWhitelistedIP = false;
         try {
-          const res = await fetch("https://api.ipify.org?format=json");
+          const res = await fetchWithTimeout("https://api.ipify.org?format=json", {}, 6000);
           const { ip } = await res.json();
           isWhitelistedIP = ACCESS_ALLOWED_IPS.includes(ip);
         } catch (_) {
           /* Fallback: опитай втори IP сервис ако първият не отговори */
           try {
-            const res2 = await fetch("https://api.my-ip.io/v2/ip.json");
+            const res2 = await fetchWithTimeout("https://api.my-ip.io/v2/ip.json", {}, 6000);
             const data2 = await res2.json();
             if (data2 && data2.ip) isWhitelistedIP = ACCESS_ALLOWED_IPS.includes(data2.ip);
           } catch (_2) {}
@@ -1550,6 +1942,16 @@
         sessionStorage.setItem(LOCK_WHITELISTED_KEY, isWhitelistedIP ? "1" : "0");
 
         const params = new URLSearchParams(window.location.search || (window.location.hash.startsWith("#") ? window.location.hash.slice(1) : ""));
+        /* Phone-photo flow — отделна страница за качване на снимки от телефон чрез QR.
+           Без IP/cooldown/lock проверки; гео-проверката важи за не-whitelisted IP. */
+        if (params.get("phonephoto") === "1") {
+          if (!isWhitelistedIP) {
+            updateLoadingText("Проверка на локация…");
+            const pos = await getGeolocation();
+            if (!pos || !isNearCinema(pos.lat, pos.lng)) return "outside";
+          }
+          return true;
+        }
         /* QR достъп — URL съдържа QR параметри */
         if (params.get("open") === "inspection") {
           const type = params.get("type") || "";
@@ -1626,6 +2028,11 @@
         inspector: "",
         itemState: {},
         notes: "",
+        photoFiles: [],
+        photoPreviews: [],
+        photoError: "",
+        remotePhotoUrls: [],
+        pcSessionId: null,
         records: [],
         syncHistory: JSON.parse(localStorage.getItem(STORAGE_KEYS.sync) || "{}"),
         exportRange: "week",
@@ -1634,12 +2041,26 @@
         showValidation: false,
         showDeleteModal: false,
         showQRModal: false,
+        showPhonePhotoQRModal: false,
+        hallDetail: null,          /* име на локация → отворен детайлен изглед */
+        phonePhotoLoc: "",
+        phonePhotoType: "",
+        phonePhotoInspector: "",
+        phonePhotoBusy: false,
+        phonePhotoDone: false,
+        phonePhotoUploaded: 0,
+        phonePhotoTotal: 0,
+        phonePhotoPollStatus: "",
+        phonePhotoPollError: "",
+        phonePhotoStatus: "",
+        phonePhotoStatusKind: "",
         deletePass: "",
         deleteErr: "",
         showPassword: false,
         toast: null,
         openedFromQR: false,
         currentSessionId: null,
+        lockConfirmed: true,   /* true = сървърът потвърди заключването; false = best-effort без заключване */
         /* Changing room module */
         crType: null,        /* "male" | "female" */
         crData: null,        /* { dateStr, rowIndex, maleEntry, femaleEntry } */
@@ -1824,31 +2245,46 @@
           inspector: "",
           itemState: {},
           notes: "",
+          photoFiles: [],
+          photoPreviews: [],
+          photoError: "",
+          remotePhotoUrls: [],
+          pcSessionId: null,
           showValidation: false,
           screen: "inspection",
         });
+        stopPhonePhotoPolling();
         render();
       }
 
       function lockAndStart(type, location) {
+        // Показваме кратък „Заключване…" екран, докато ПОТВЪРДИМ заключването
+        // със сървъра ПРЕДИ да отворим формата. Така, ако друг вече проверява
+        // тази зала (напр. от PC), телефонът реално се блокира и обратно.
         state.screen = "locking";
         state.location = location;
         state.inspectionType = type;
         render();
-        setTimeout(() => { startInspectionWithLock(type, location); }, 2000);
+        setTimeout(() => { startInspectionWithLock(type, location); }, 150);
       }
 
       async function acquireLockFirstFree(type, locations, sessionId) {
         if (!isSheetsConfigured()) return { success: true, location: locations[0] };
         try {
-          const res = await fetch(SHEETS_WEB_APP_URL, {
+          const res = await fetchWithTimeout(SHEETS_WEB_APP_URL, {
             method: "POST",
             headers: { "Content-Type": "text/plain;charset=UTF-8" },
             body: JSON.stringify({ action: "acquireLockFirstFree", type, locations, sessionId, _token: SHEETS_SECRET_TOKEN }),
-          });
+          }, 12000);
           if (!res.ok) return { success: true, location: locations[0], offline: true };
           try { return await res.json(); } catch (_) { return { success: true, location: locations[0], offline: true }; }
         } catch (err) {
+          if (err && err.name === "AbortError") {
+            // Server too slow — don't hang the locking screen; proceed without
+            // a lock so the inspector can still work.
+            console.warn("[Lock] acquireLockFirstFree timed out — proceeding offline");
+            return { success: true, location: locations[0], offline: true };
+          }
           console.warn("[Lock] acquireLockFirstFree failed:", err.message);
           return { success: true, location: locations[0], offline: true };
         }
@@ -1870,9 +2306,16 @@
             const sessionId = generateSessionId();
             const lockResult = await acquireLock(type, locationOverride, sessionId);
             if (!lockResult.success) {
-              showLocationLocked(locationOverride, lockResult.error);
-              return false;
+              // САМО реално заключване от друг потребител спира инспектора.
+              if (lockResult.locked) {
+                showLocationLocked(locationOverride, lockResult, { type });
+                return false;
+              }
+              // Сървърна грешка / бавен backend → best-effort: продължаваме
+              // тихо, за да НЕ блокираме работата при рядка грешка.
+              console.warn("[Lock] server slow/error — proceeding без заключване:", lockResult.error);
             }
+            state.lockConfirmed = (lockResult.success === true && !lockResult.offline);
             state.currentSessionId = sessionId;
             _lockAcquiredAt = Date.now();
             sessionStorage.setItem(LOCK_SESSION_KEY, sessionId);
@@ -1889,9 +2332,11 @@
             }
             /* Сървърна грешка — пропусни lock, отвори формата */
             console.warn("[Lock] acquireLockFirstFree error:", result.error);
+            state.lockConfirmed = false;
             startInspection(type);
             return true;
           }
+          state.lockConfirmed = (result.success === true && !result.offline);
           state.currentSessionId = sessionId;
           _lockAcquiredAt = Date.now();
           sessionStorage.setItem(LOCK_SESSION_KEY, sessionId);
@@ -1900,6 +2345,1204 @@
         } finally {
           _lockBusy = false;
         }
+      }
+
+      /* ── Phone-photo live sync via ntfy.sh (no backend redeploy needed) ──
+         PC long-polls ntfy.sh JSON endpoint (more reliable than SSE across
+         browsers/networks); phone POSTs each uploaded photo URL to the same
+         topic. Topic = "cg-photos-{pcSessionId}". */
+      const NTFY_BASE = "https://ntfy.sh";
+      const BUILD_VERSION = "v.2026.08.22-rules-clean";
+
+      /* ══════════════════════════════════════════════════════════════
+         ЕЗИК (БГ / EN) — превод чрез речник, прилаган след всеки render.
+         Данните (Sheets, имена, локации) остават на български — превежда
+         се само видимият текст. Нови преводи се добавят в EN_EXACT /
+         EN_PATTERNS. Непреведени низове просто остават на български.
+         ══════════════════════════════════════════════════════════════ */
+      const LANG_KEY = "cg_lang";
+      let currentLang = (function(){ try { return localStorage.getItem(LANG_KEY) || "bg"; } catch(_) { return "bg"; } })();
+
+      const EN_EXACT = {
+        /* Topbar / nav */
+        "Начало": "Home", "QR кодове": "QR Codes", "🎬 Зали": "🎬 Halls", "📊 Данни": "📊 Data",
+        "Контрол на хигиена": "Hygiene Control", "Парк Център София": "Park Center Sofia",
+        /* Home */
+        "Контрол на Хигиената": "Hygiene Control",
+        "Чистата среда не е детайл, а стандарт. Постоянният контрол на хигиената гарантира качествена услуга и уважение към всеки клиент.":
+          "A clean environment is not a detail — it's a standard. Constant hygiene control guarantees quality service and respect for every customer.",
+        "Нова Проверка": "New Inspection",
+        "Избери типа на проверката и започни въвеждането.": "Choose the inspection type and start.",
+        "Кинозала": "Cinema Hall", "Тоалетни": "Restrooms", "Тоалетна": "Restroom",
+        "Зали 1–6": "Halls 1–6", "Започни проверка": "Start Inspection",
+        "Почистване на съблекалня": "Changing Room Cleaning", "Мъжка / Женска": "Male / Female",
+        "Отчети почистване": "Cleaning Reports",
+        "График": "Schedule", "Отчет": "Report", "Почистване": "Cleaning",
+        "＋ Добави важно съобщение": "＋ Add important announcement",
+        /* Статус на проверките */
+        "Статус на проверките": "Inspection Status",
+        "🎬 Кинозали": "🎬 Cinema Halls", "🚿 Тоалетни": "🚿 Restrooms",
+        "Няма данни": "No data", "— няма данни —": "— no data —", "никога": "never", "току-що": "just now",
+        "до 2ч": "under 2h", "2–4ч": "2–4h", "над 4ч": "over 4h",
+        "✅ свърши — провери залата": "✅ show ended — check the hall",
+        "● проблем": "● issue", "зареждам…": "loading…",
+        /* Зали таб */
+        "📋 Правила": "📋 Rules", "Правила за работа": "Work Rules",
+        "Файлът Rules.md е празен. Отвори го в GitHub и напиши правилата.":
+          "Rules.md is empty. Open it on GitHub and write the rules.",
+        "Зареждам правилата…": "Loading rules…",
+        "Статус на залите": "Hall Status",
+        "Прожекции на живо от киното — кога всяка зала се освобождава за проверка.":
+          "Live screenings from the cinema — when each hall becomes free for inspection.",
+        "← Начало": "← Home",
+        "Кога се освобождават залите": "When halls become free",
+        "на живо от киното": "live from the cinema",
+        "начало": "just started", "в ход": "in progress", "втора половина": "second half", "към края": "near the end",
+        "пълна": "full", "почти пълна": "filling up", "средно": "moderate", "празна": "empty",
+        "▶ СЛЕДВАЩА": "▶ UP NEXT", "всеки момент": "any moment now",
+        "няма данни": "no data",
+        "В момента няма текущи прожекции.": "No screenings are running right now.",
+        "В момента няма прожекции на таблото.": "No screenings on the board right now.",
+        "🔜 Следващи прожекции": "🔜 Upcoming screenings",
+        "✅ ПРОВЕРИ ЗАЛАТА": "✅ CHECK THE HALL", "ЗАЛА": "HALL",
+        "🎬 Свърши в": "🎬 Ended at", "Свършва": "Ends", "Започва": "Starts", "· току-що": "· just now",
+        "✅ свършила = провери залата дали е почистена (стои 5 мин) · 🎬 тече = скоро се освобождава · 🔜 предстои":
+          "✅ ended = check whether the hall is cleaned (stays 5 min) · 🎬 running = frees up soon · 🔜 upcoming",
+        /* Inspection screen */
+        "Проверка на кинозала": "Cinema Hall Inspection", "Проверка на тоалетна": "Restroom Inspection",
+        "Данните ще се изпратят автоматично към Google Sheets след запис.": "Data is sent to Google Sheets automatically after saving.",
+        "Локален запис в браузъра.": "Saved locally in the browser.",
+        "🔒 Залата е заключена за теб": "🔒 Hall is locked for you",
+        "🔓 Без заключване (сървърна грешка) — друг може да отвори същата зала": "🔓 No lock (server error) — someone else may open this hall",
+        "Локация": "Location", "(няма заключване)": "(no lock)", "Проверяващ": "Inspector",
+        "Започни да пишеш име…": "Start typing a name…", "Зареждам списъка с имена…": "Loading the names list…",
+        "Задължително поле": "Required field",
+        "Елементи на кинозалата": "Cinema hall items", "Елементи на тоалетната": "Restroom items",
+        "Всичко чисто": "All clean", "Всичко нечисто": "All dirty",
+        "✓ Чисто": "✓ Clean", "✗ Нечисто": "✗ Dirty",
+        "Маркирай всяка точка като Чисто или Нечисто преди да запишеш.": "Mark every item as Clean or Dirty before saving.",
+        "Седалки": "Seats", "Тапицерия и механизъм": "Upholstery & mechanism",
+        "Мокет": "Carpet", "Под и пътеки": "Floor & aisles",
+        "Подлакътници": "Armrests", "Повърхности": "Surfaces",
+        "Под (без мокет)": "Floor (no carpet)", "Твърди настилки": "Hard flooring",
+        "Зона до екрана": "Screen area", "Предна зона": "Front zone",
+        "Поставки за чаши": "Cup holders",
+        "Кошчета": "Bins", "Изпразване и дезинфекция": "Emptying & disinfection",
+        "Общо почистване": "General cleaning", "Всички повърхности": "All surfaces",
+        "Тоалетна хартия": "Toilet paper", "Зареждане": "Restocking",
+        "Сапун": "Soap", "Дозатори": "Dispensers", "Огледала": "Mirrors", "Без петна": "No stains",
+        "Под": "Floor", "Мокро почистване": "Wet cleaning", "Мивки": "Sinks", "Кран и мивка": "Tap & sink",
+        "Бележки": "Notes", "Допълнителни коментари…": "Additional comments…",
+        "Снимки при проблем (опционално, до 5)": "Photos on issue (optional, up to 5)",
+        "Може да изберете от 1 до 5 снимки наведнъж (Ctrl/Cmd + клик за избор на повече).": "You can select 1 to 5 photos at once (Ctrl/Cmd + click for more).",
+        "📱 Качи снимки от телефон (QR код)": "📱 Upload photos from phone (QR code)",
+        "Коментар към снимките": "Photo comment", "(по желание)": "(optional)",
+        "Описание на проблема и причина за снимките…": "Describe the issue and reason for the photos…",
+        "Запази и изпрати": "Save & send", "Запази": "Save",
+        /* Lock screens */
+        "ЛОКАЦИЯТА Е ЗАЕТА": "LOCATION IS BUSY", "СЪРВЪРЪТ Е БАВЕН": "SERVER IS SLOW",
+        "↻ Опитай отново": "↻ Try again", "Към началото": "Back to home",
+        "Сървърът е временно натоварен и не успя да отговори навреме. Това не е реално заключване — просто натисни бутона за повторен опит.":
+          "The server is temporarily busy and didn't respond in time. This is not a real lock — just press the retry button.",
+        /* Phone upload screen */
+        "Качване на снимки": "Upload photos",
+        "Изберете до 5 снимки от галерията": "Select up to 5 photos from the gallery",
+        "JPEG / PNG / WebP, максимум 10MB на файл.": "JPEG / PNG / WebP, max 10MB per file.",
+        "Описание на проблема…": "Describe the issue…",
+        "Изберете снимки": "Select photos", "Качване…": "Uploading…",
+        "🧪 Тест: изпрати сигнал към PC": "🧪 Test: send signal to PC",
+        "Снимките са качени успешно!": "Photos uploaded successfully!",
+        "✅ Готово (затвори страницата)": "✅ Done (close this page)",
+        "Качи още снимки": "Upload more photos",
+        /* Toasts / misc */
+        "✓ Синхронизирано с Google Sheets.": "✓ Synced with Google Sheets.",
+        "Виж история": "View history", "Последни проверки": "Recent inspections", "История на проверки": "Inspection history",
+      };
+
+      const EN_PATTERNS = [
+        [/^Зала (\d+)$/, "Hall $1"],
+        [/^✓ (\d+) скоро$/, "✓ $1 recent"], [/^◐ (\d+)$/, "◐ $1"],
+        [/^⚠ (\d+) просрочени$/, "⚠ $1 overdue"], [/^● (\d+) с проблем$/, "● $1 with issues"],
+        [/^(✓|◐|⚠) преди (\d+) (мин|ч|д)$/, (m, d, n, u) => `${d} ${n}${u === "мин" ? " min" : u === "ч" ? "h" : "d"} ago`],
+        [/преди (\d+) (мин|ч|д)/, (m, n, u) => `${n}${u === "мин" ? " min" : u === "ч" ? "h" : "d"} ago`],
+        [/^· след (\d+) мин( — скоро!)?$/, (m, n, s) => `· in ${n} min${s ? " — soon!" : ""}`],
+        [/^\((\d+) мин\)$/, "($1 min)"], [/^· (\d+) мин ·$/, "· $1 min ·"], [/^· (\d+) мин$/, "· $1 min"],
+        [/^(\d+) свободни места$/, "$1 seats available"],
+        [/^(\d+)\/(\d+) заети$/, "$1/$2 taken"],
+        [/^(\d+) свободни$/, "$1 free"],
+        [/^след (\d+) мин$/, "in $1 min"],
+        [/^Не се препоръчва за лица под (\d+)-годишна възраст$/, "Not recommended for persons under $1"],
+        [/^\/(\d+) попълнени$/, "/$1 filled"], [/^⚠ (\d+) проблема$/, "⚠ $1 issues"],
+        [/^Попълни всички полета \((\d+)\/(\d+)\)$/, "Fill in all fields ($1/$2)"],
+        [/^Избери от падащия списък \((\d+) разрешени имена\)$/, "Choose from the dropdown ($1 allowed names)"],
+        [/^Избери от падащия списък \((\d+) имена\)$/, "Choose from the dropdown ($1 names)"],
+        [/^Дата и час: (.+)$/, "Date & time: $1"],
+        [/^(\d+) символа$/, "$1 characters"],
+        [/^Качи (\d+) снимки$/, "Upload $1 photos"],
+        [/^Качване на снимка (\d+\/\d+)\.\.\.$/, "Uploading photo $1..."],
+        [/^Преглед на снимки от PC \((\d+)\):$/, "PC photo preview ($1):"],
+        [/^📱 Снимки получени от телефон \((\d+)\):$/, "📱 Photos received from phone ($1):"],
+        [/^(.+) вече се проверява\. Опитайте след ~(\d+) мин\.$/, "$1 is already being inspected. Try again in ~$2 min."],
+        [/^(.+) вече се проверява от друг потребител\. Опитайте след ~(\d+) мин\.$/, "$1 is already being inspected by another user. Try again in ~$2 min."],
+        [/^🎬 свършва (\d{1,2}:\d{2})/, "🎬 ends $1"],
+        [/^📊 Данни \((\d+)\)$/, "📊 Data ($1)"],
+        [/^Проверяващ \*$/, "Inspector *"], [/^Локация \*$/, "Location *"],
+      ];
+
+      function cgTranslateText(s) {
+        const t = s.trim();
+        if (!t) return null;
+        if (EN_EXACT[t] !== undefined) return s.replace(t, EN_EXACT[t]);
+        let out = s, hit = false;
+        for (const [re, rep] of EN_PATTERNS) {
+          if (re.test(out.trim())) { out = out.replace(re, rep); hit = true; }
+        }
+        return hit ? out : null;
+      }
+
+      function applyTranslation(root) {
+        if (currentLang !== "en" || !root) return;
+        try {
+          const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+          const nodes = [];
+          while (walker.nextNode()) nodes.push(walker.currentNode);
+          nodes.forEach((n) => { const r = cgTranslateText(n.nodeValue); if (r !== null) n.nodeValue = r; });
+          root.querySelectorAll("[placeholder],[title],[aria-label]").forEach((el) => {
+            ["placeholder", "title", "aria-label"].forEach((a) => {
+              const v = el.getAttribute(a); if (!v) return;
+              const r = cgTranslateText(v); if (r !== null) el.setAttribute(a, r);
+            });
+          });
+        } catch (err) { console.warn("[lang] translate error:", err); }
+      }
+
+      /* ── Cine Grand прожекции (Arena „next-clean" табло) ──
+         URL на Cloudflare Worker прокси (за да заобиколим CORS). Празно = функцията
+         е изключена. След deploy на Worker-а сложи неговия URL тук. */
+      const NEXTCLEAN_PROXY_URL = "https://cinegrand-nextclean.denis123291104.workers.dev";  // Cloudflare Worker прокси
+      let _nextCleanShows = [];        // [{hall, hallNum, movie, start, end, endsInMin, status}]
+      let _nextCleanFetchedAt = 0;
+      let _nextCleanBusy = false;
+      let _endedHallsSeen = {};        // hallNum -> {hall, hallNum, movie, end, ts} — за да задържим „свърши" поне 5 мин
+      const ENDED_STICKY_MS = 5 * 60 * 1000;
+
+      /* Уникален цвят на всяка зала — за разнообразие и красота. c=hex, g=RGB за glow. */
+      const HALL_COLORS = {
+        1: { c: "#fb7185", g: "251,113,133" }, // роза
+        2: { c: "#fbbf24", g: "251,191,36"  }, // кехлибар
+        3: { c: "#a78bfa", g: "167,139,250" }, // виолетово
+        4: { c: "#22d3ee", g: "34,211,238"  }, // циан
+        5: { c: "#f472b6", g: "244,114,182" }, // розово
+        6: { c: "#a3e635", g: "163,230,53"  }, // лайм
+      };
+      function hallColor(n) { return HALL_COLORS[n] || { c: "#94a3b8", g: "148,163,184" }; }
+
+      /* Връща залите, свършили в последните 5 мин (задържани дори таблото да ги е сменило). */
+      /* Прогрес на течаща прожекция: докъде е стигнала (0–100%).
+         Основава се на „остават N мин" от таблото (най-точното) + общата
+         дължина, изчислена от началния и крайния час (с пренос през полунощ).
+         Връща null, ако няма достатъчно данни. */
+      function _showProgress(s) {
+        const toMin = (t) => { const m = /^(\d{1,2}):(\d{2})$/.exec((t || "").trim()); return m ? (+m[1]) * 60 + (+m[2]) : null; };
+        const a = toMin(s.start), b = toMin(s.end);
+        if (a == null || b == null) return null;
+        let total = b - a;
+        if (total <= 0) total += 24 * 60;          // прожекция през полунощ
+        if (total <= 0 || total > 8 * 60) return null;
+        let elapsed;
+        if (s.endsInMin != null) {
+          elapsed = total - s.endsInMin;           // от таблото — най-точно
+        } else {
+          const d = new Date();
+          let cur = d.getHours() * 60 + d.getMinutes() - a;
+          if (cur < 0) cur += 24 * 60;
+          elapsed = cur;
+        }
+        const pct = Math.max(0, Math.min(100, Math.round((elapsed / total) * 100)));
+        // Фаза + цвят: начало (спокойно) → среда → финал (подготви се за проверка)
+        let phase, color, from, glow;
+        if (pct < 15)      { phase = "начало";        color = "#22d3ee"; from = "#0ea5b7"; glow = "rgba(34,211,238,.55)"; }
+        else if (pct < 55) { phase = "в ход";         color = "#60a5fa"; from = "#22d3ee"; glow = "rgba(96,165,250,.55)"; }
+        else if (pct < 85) { phase = "втора половина"; color = "#a78bfa"; from = "#60a5fa"; glow = "rgba(167,139,250,.55)"; }
+        else               { phase = "към края";      color = "#f59e0b"; from = "#a78bfa"; glow = "rgba(245,158,11,.6)";  }
+        return { pct, phase, color, from, glow };
+      }
+
+      function _recentlyEndedHalls() {
+        const now = Date.now();
+        return Object.keys(_endedHallsSeen).map((k) => _endedHallsSeen[k])
+          .filter((e) => now - e.ts <= ENDED_STICKY_MS)
+          .map((e) => Object.assign({}, e, { agoMin: Math.floor((now - e.ts) / 60000) }))
+          .sort((a, b) => a.ts - b.ts);
+      }
+
+      /* ── Втори борд: „next" — следващи прожекции с формат/места/време ──
+         Изисква Worker v2 (?board=next). Ако Worker-ът е стар (v1), функцията
+         тихо се изключва (проверка по X-CG-Worker хедъра). */
+      let _nextBoardShows = [];   // [{hallNum, hall, movie, format, seats, start, runtimeMin, warning}]
+      let _nextBoardSupported = null; // null=неизвестно, false=Worker v1 (без поддръжка)
+      let _nextBoardVersion = "";     // "v2" / "v3" — за подсказка при стар Worker
+      let _nextBoardBusy = false;
+
+      function parseNextBoardHtml(html) {
+        const out = [];
+        try {
+          const doc = new DOMParser().parseFromString(html, "text/html");
+          doc.querySelectorAll("tr.show, .show").forEach((tr) => {
+            const text = (tr.textContent || "").replace(/\s+/g, " ");
+            /* ЗАЩИТА: приемаме само елемент, който описва ЕДНА прожекция.
+               Ако хванем контейнер с няколко прожекции, regex-ите биха върнали
+               данните на първата за всички — по-добре да пропуснем реда. */
+            const hallHits = text.match(/Hall\s*\d+/gi) || [];
+            const seatHits = text.match(/\d+\s*available seats?/gi) || [];
+            if (hallHits.length !== 1 || seatHits.length > 1) return;
+
+            const h1 = tr.querySelector("h1");
+            let movie = (h1 ? h1.textContent : "").replace(/\s+/g, " ").trim();
+            // Формат: .format елемент или "- 2D" в заглавието
+            const fmtEl = tr.querySelector(".format");
+            let format = fmtEl ? fmtEl.textContent.replace(/[^0-9A-Za-z]/g, "").toUpperCase() : "";
+            if (!format) { const fm = movie.match(/-\s*(2D|3D|4DX|IMAX)\b/i); if (fm) format = fm[1].toUpperCase(); }
+            movie = movie.replace(/\s*-\s*(2D|3D|4DX|IMAX)\s*$/i, "").trim();
+            const hallNum = parseInt(hallHits[0].replace(/\D/g, ""), 10);
+            let seats = null;
+            if (seatHits.length === 1) seats = parseInt(seatHits[0].replace(/\D/g, ""), 10);
+            let runtimeMin = null;
+            const rtM = text.match(/(\d+)\s*min\b/i);
+            if (rtM) runtimeMin = parseInt(rtM[1], 10);
+            /* Начален час — само ако в реда има ТОЧНО един час; иначе не можем
+               да сме сигурни кой е началният и оставяме празно (без съпоставяне). */
+            let start = "";
+            const timeHits = text.match(/\b\d{1,2}:\d{2}\b/g) || [];
+            if (timeHits.length === 1) start = timeHits[0];
+            let warning = "";
+            const wEl = tr.querySelector(".warning");
+            if (wEl) warning = wEl.textContent.replace(/\s+/g, " ").trim();
+            if (hallNum && movie) out.push({ hallNum, hall: "Зала " + hallNum, movie, format, seats, start, runtimeMin, warning });
+          });
+        } catch (err) { console.warn("[nextboard] parse error:", err); }
+        if (out.length) console.log("[nextboard] parsed:", out.map((o) => `Зала ${o.hallNum} ${o.start} ${o.movie} → ${o.seats} свободни`).join(" | "));
+        return out;
+      }
+
+      /* Памет за местата: бордът „next" изброява само ПРЕДСТОЯЩИ прожекции.
+         Щом филмът тръгне, той изпада оттам и течащите редове биха останали
+         без брой зрители. Затова запомняме данните, докато прожекцията още е
+         предстояща, и ги ползваме след старта ѝ. */
+      const SEATS_MEMORY_KEY = "cg_seats_memory";
+      const SEATS_MEMORY_TTL_MS = 6 * 60 * 60 * 1000; // 6 часа
+      let _seatsMemory = (function () {
+        try { return JSON.parse(localStorage.getItem(SEATS_MEMORY_KEY) || "{}"); }
+        catch (_) { return {}; }
+      })();
+
+      function _seatsKey(hallNum, start) { return hallNum + "|" + start; }
+
+      function _rememberSeats(rows) {
+        const now = Date.now();
+        let changed = false;
+        (rows || []).forEach((n) => {
+          if (!n.hallNum || !n.start || n.seats == null) return;
+          _seatsMemory[_seatsKey(n.hallNum, n.start)] = {
+            seats: n.seats, movie: n.movie, format: n.format, runtimeMin: n.runtimeMin, ts: now,
+          };
+          changed = true;
+        });
+        // Изчистване на стари записи
+        Object.keys(_seatsMemory).forEach((k) => {
+          if (!_seatsMemory[k] || now - (_seatsMemory[k].ts || 0) > SEATS_MEMORY_TTL_MS) { delete _seatsMemory[k]; changed = true; }
+        });
+        if (changed) { try { localStorage.setItem(SEATS_MEMORY_KEY, JSON.stringify(_seatsMemory)); } catch (_) {} }
+      }
+
+      /* СТРОГО съпоставяне на прожекция от таблото с реда от втория борд:
+         еднаква зала И еднакъв начален час. Без съпоставяне по име на филм —
+         иначе повторна прожекция на същия филм в същата зала връща чужди данни.
+         Ако прожекцията вече не е в борда (защото е тръгнала) — ползваме паметта. */
+      function _matchBoardShow(s) {
+        if (!s || !s.start) return null;
+        const hits = _nextBoardShows.filter((n) => n.hallNum === s.hallNum && n.start && n.start === s.start);
+        if (hits.length === 1) return hits[0];
+        if (hits.length === 0) {
+          const mem = _seatsMemory[_seatsKey(s.hallNum, s.start)];
+          if (mem && mem.seats != null) {
+            return { hallNum: s.hallNum, start: s.start, movie: mem.movie, format: mem.format, seats: mem.seats, runtimeMin: mem.runtimeMin, fromMemory: true };
+          }
+        }
+        return null;   // при нееднозначност → нищо
+      }
+
+      async function fetchNextBoard() {
+        if (!NEXTCLEAN_PROXY_URL || _nextBoardSupported === false || _nextBoardBusy) return;
+        _nextBoardBusy = true;
+        try {
+          const res = await fetchWithTimeout(NEXTCLEAN_PROXY_URL + "?board=next&_cb=" + Date.now(), { cache: "no-store" }, 12000);
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          const wv = res.headers.get("X-CG-Worker");
+          if (!wv) {
+            // Worker v1 — връща next-clean независимо от параметъра. Изключи тихо.
+            _nextBoardSupported = false;
+            console.warn("[nextboard] Worker v1 — постави новия код от cloudflare-worker-nextclean.js за 'Следващи прожекции'.");
+            return;
+          }
+          _nextBoardVersion = wv;
+          _nextBoardSupported = true;
+          _nextBoardShows = parseNextBoardHtml(await res.text());
+          _rememberSeats(_nextBoardShows);
+          if (state.screen === "halls") render();
+        } catch (err) {
+          console.warn("[nextboard] fetch error:", err.message);
+        } finally {
+          _nextBoardBusy = false;
+        }
+      }
+
+      /* Парсва HTML-а на next-clean таблото → списък прожекции. */
+      function parseNextCleanHtml(html) {
+        const out = [];
+        try {
+          const doc = new DOMParser().parseFromString(html, "text/html");
+          doc.querySelectorAll("tr.show").forEach((tr) => {
+            const hallText = (tr.querySelector("td.hall")?.textContent || "").replace(/\s+/g, " ").trim(); // "Hall 3"
+            const hallNumM = hallText.match(/(\d+)/);
+            const hallNum = hallNumM ? parseInt(hallNumM[1], 10) : null;
+            const h1s = tr.querySelectorAll("td.align-middle h1");
+            const movie = (h1s[0]?.textContent || "").replace(/\s+/g, " ").trim();
+            const timeRange = (h1s[1]?.textContent || "").replace(/\s+/g, " ").trim(); // "13:15 - 15:30"
+            const parts = timeRange.split("-").map((s) => s.trim());
+            const start = parts[0] || "";
+            const end = parts[1] || "";
+            let endsInMin = null;
+            const seats = tr.querySelector("span.seats");
+            if (seats) { const m = seats.textContent.match(/(\d+)\s*minute/); if (m) endsInMin = parseInt(m[1], 10); }
+            let status = "gray";
+            const circle = tr.querySelector('[class*="circle-red"],[class*="circle-green"],[class*="circle-yellow"],[class*="circle-gray"]');
+            if (circle) {
+              if (circle.className.indexOf("circle-red") !== -1) status = "red";
+              else if (circle.className.indexOf("circle-green") !== -1) status = "green";
+              else if (circle.className.indexOf("circle-yellow") !== -1) status = "yellow";
+            }
+            if (hallNum) out.push({ hall: "Зала " + hallNum, hallNum, movie, start, end, endsInMin, status });
+          });
+        } catch (err) { console.warn("[nextclean] parse error:", err); }
+        return out;
+      }
+
+      async function fetchNextClean() {
+        if (!NEXTCLEAN_PROXY_URL) return;
+        if (_nextCleanBusy) return;
+        _nextCleanBusy = true;
+        try {
+          const res = await fetchWithTimeout(NEXTCLEAN_PROXY_URL + (NEXTCLEAN_PROXY_URL.indexOf("?") === -1 ? "?" : "&") + "_cb=" + Date.now(), { cache: "no-store" }, 12000);
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          const html = await res.text();
+          _nextCleanShows = parseNextCleanHtml(html);
+          _nextCleanFetchedAt = Date.now();
+          // Запомни свършилите зали (зелено) с време — за да ги задържим ≥5 мин
+          const now = Date.now();
+          _nextCleanShows.filter((s) => s.status === "green").forEach((s) => {
+            const prev = _endedHallsSeen[s.hallNum];
+            // Нов запис или различна прожекция → рестартирай таймера
+            if (!prev || prev.end !== s.end) {
+              _endedHallsSeen[s.hallNum] = { hall: s.hall, hallNum: s.hallNum, movie: s.movie, end: s.end, ts: now };
+            } else {
+              // Същата прожекция — обнови данните, запази оригиналното време
+              prev.movie = s.movie; prev.hall = s.hall;
+            }
+          });
+          // Изчисти изтеклите (>5 мин)
+          Object.keys(_endedHallsSeen).forEach((k) => { if (now - _endedHallsSeen[k].ts > ENDED_STICKY_MS) delete _endedHallsSeen[k]; });
+          if (state.screen === "home" || state.screen === "halls") render();
+        } catch (err) {
+          console.warn("[nextclean] fetch error:", err.message);
+        } finally {
+          _nextCleanBusy = false;
+        }
+      }
+
+      /* Връща текущо течащата прожекция за дадена зала (или null). */
+      function _currentShowForHall(hallNum) {
+        const running = _nextCleanShows.filter((s) => s.hallNum === hallNum && s.status === "red");
+        if (running.length === 0) return null;
+        // най-скоро свършващата
+        running.sort((a, b) => (a.endsInMin == null ? 9999 : a.endsInMin) - (b.endsInMin == null ? 9999 : b.endsInMin));
+        return running[0];
+      }
+
+      function renderNextCleanSection() {
+        if (!NEXTCLEAN_PROXY_URL) return "";
+        const hasData = _nextCleanShows.length > 0;
+
+        const hallBadge = (hc, num, forDark) => `<div style="width:54px;height:54px;border-radius:15px;background:${forDark ? `linear-gradient(135deg,${hc.c},rgba(${hc.g},.55))` : `rgba(${hc.g},.16)`};border:1px solid rgba(${hc.g},.45);display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;${forDark ? `box-shadow:0 4px 16px rgba(${hc.g},.45);` : ""}">
+            <span style="font-size:8.5px;font-weight:800;letter-spacing:.1em;color:${forDark ? 'rgba(0,0,0,.6)' : `rgba(${hc.g},.9)`};font-family:'Oswald',sans-serif;line-height:1;">ЗАЛА</span>
+            <span style="font-size:22px;font-weight:800;color:${forDark ? '#0a0a0a' : hc.c};font-family:'Oswald',sans-serif;line-height:1;margin-top:1px;">${num}</span>
+          </div>`;
+
+        /* Блок със зрителите. При липсващи данни показва „—", за да е ясно, че
+           няма информация, вместо блокът да изчезне и редът да изглежда различно. */
+        const occBlockFor = (o) => {
+          if (!o) {
+            return `<div style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:96px;padding:9px 12px;border-radius:14px;background:rgba(255,255,255,.03);border:1.5px dashed rgba(255,255,255,.14);" title="Няма данни за свободните места на тази прожекция">
+                <div style="display:flex;align-items:baseline;gap:3px;line-height:1;">
+                  <span style="font-size:13px;margin-right:2px;opacity:.5;">👥</span>
+                  <span style="font-size:26px;font-weight:800;color:#5b6878;font-family:'Oswald',sans-serif;">—</span>
+                </div>
+                <div style="font-size:9.5px;font-weight:800;color:#5b6878;letter-spacing:.09em;text-transform:uppercase;margin-top:4px;white-space:nowrap;">няма данни</div>
+              </div>`;
+          }
+          return `<div style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:96px;padding:9px 12px;border-radius:14px;background:linear-gradient(135deg,${o.color}2e,${o.color}12);border:1.5px solid ${o.color}77;box-shadow:0 0 16px ${o.color}33;" title="${o.taken} заети от ${o.cap} места · ${o.free} свободни">
+              <div style="display:flex;align-items:baseline;gap:3px;line-height:1;">
+                <span style="font-size:13px;margin-right:2px;">👥</span>
+                <span style="font-size:26px;font-weight:800;color:${o.color};font-family:'Oswald',sans-serif;">${o.taken}</span>
+                <span style="font-size:14px;font-weight:700;color:#8a97a8;font-family:'Oswald',sans-serif;">/${o.cap}</span>
+              </div>
+              <div style="font-size:9.5px;font-weight:800;color:${o.color};letter-spacing:.09em;text-transform:uppercase;margin-top:4px;white-space:nowrap;">${o.label}</div>
+              <div style="font-size:9px;color:#7c8ba0;margin-top:2px;white-space:nowrap;">${o.free} свободни</div>
+            </div>`;
+        };
+
+        const endedCard = (hallNum, movie, end, agoMin) => {
+          const hc = hallColor(hallNum);
+          return `<div class="cg-ended-card" style="--hall-glow:rgba(${hc.g},.5);display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:16px;background:linear-gradient(135deg,rgba(${hc.g},.2),rgba(255,255,255,.02));border:1px solid rgba(${hc.g},.45);">
+            ${hallBadge(hc, hallNum, true)}
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:14.5px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(movie)}</div>
+              <div style="font-size:12px;color:#fff;opacity:.9;margin-top:3px;">🎬 Свърши в <b>${escapeHtml(end)}</b>${agoMin > 0 ? ` · преди ${agoMin} мин` : " · току-що"}</div>
+            </div>
+            <div class="cg-clean-badge" style="flex-shrink:0;font-size:11.5px;font-weight:800;color:#04160e;background:linear-gradient(135deg,#34d399,#10b981);padding:9px 15px;border-radius:999px;letter-spacing:.03em;box-shadow:0 0 18px rgba(16,185,129,.55);white-space:nowrap;">✅ ПРОВЕРИ ЗАЛАТА</div>
+          </div>`;
+        };
+
+        /* 1:1 огледало на таблото — всеки ред от HTML-а, в същия ред. */
+        const now = Date.now();
+        const boardGreens = {};
+
+        /* Кои предстоящи прожекции тръгват най-скоро — за да ги откроим.
+           Минути до старта (с пренос през полунощ). */
+        const _minsUntil = (hhmm) => {
+          const m = /^(\d{1,2}):(\d{2})$/.exec((hhmm || "").trim());
+          if (!m) return null;
+          const d = new Date();
+          let diff = ((+m[1]) * 60 + (+m[2])) - (d.getHours() * 60 + d.getMinutes());
+          if (diff < -720) diff += 24 * 60;   // след полунощ
+          return diff;
+        };
+        const upcomingMins = _nextCleanShows
+          .filter((x) => x.status === "gray")
+          .map((x) => _minsUntil(x.start))
+          .filter((v) => v != null && v >= 0)
+          .sort((a, b) => a - b);
+        const nextMin = upcomingMins.length ? upcomingMins[0] : null;   // най-скорошният старт
+        const boardRows = _nextCleanShows.map((s) => {
+          const hc = hallColor(s.hallNum);
+          if (s.status === "green") {
+            boardGreens[s.hallNum] = true;
+            const seen = _endedHallsSeen[s.hallNum];
+            const agoMin = seen ? Math.floor((now - seen.ts) / 60000) : 0;
+            return endedCard(s.hallNum, s.movie, s.end, agoMin);
+          }
+          if (s.status === "red") {
+            const soon = s.endsInMin != null && s.endsInMin <= 15;
+            const subColor = soon ? "#f59e0b" : "#9fb2c8";
+            const p = _showProgress(s);
+            const rExtra = _matchBoardShow(s);
+            const rOcc = rExtra ? _occupancy(s.hallNum, rExtra.seats) : null;
+            return `<div style="display:flex;align-items:center;gap:14px;padding:12px 14px;border-radius:16px;background:linear-gradient(135deg,rgba(${hc.g},.09),rgba(255,255,255,.015));border:1px solid rgba(${hc.g},.28);border-left:4px solid ${hc.c};">
+              ${hallBadge(hc, s.hallNum, false)}
+              <div style="flex:1;min-width:0;">
+                <div style="display:flex;align-items:baseline;gap:8px;min-width:0;">
+                  <span style="font-size:14px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(s.movie)}</span>
+                  ${p ? `<span style="flex-shrink:0;font-size:10.5px;font-weight:800;color:${p.color};font-family:'Oswald',sans-serif;letter-spacing:.04em;">${p.pct}%</span>` : ""}
+                </div>
+                <div style="font-size:11.5px;color:${subColor};font-weight:600;margin-top:3px;">Свършва <b>${escapeHtml(s.end)}</b>${s.endsInMin != null ? ` · след ${s.endsInMin} мин` : ""}${soon ? " — скоро!" : ""}</div>
+                ${p ? `
+                <div style="margin-top:7px;">
+                  <div class="cg-prog-track" style="--p-from:${p.from};--p-to:${p.color};--p-glow:${p.glow};">
+                    <div class="cg-prog-fill" style="width:${p.pct}%;"></div>
+                    <div class="cg-prog-head" style="left:${p.pct}%;"></div>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;font-size:9.5px;color:#7c8ba0;letter-spacing:.03em;">
+                    <span>${escapeHtml(s.start || "")}</span>
+                    <span style="color:${p.color};font-weight:700;">${escapeHtml(p.phase)}</span>
+                    <span>${escapeHtml(s.end || "")}</span>
+                  </div>
+                </div>` : ""}
+              </div>
+              ${occBlockFor(rOcc)}
+            </div>`;
+          }
+          /* gray = предстояща — обогатена с формат/места от втория борд */
+          const extra = _matchBoardShow(s);
+          const bits = [];
+          if (s.start) bits.push(`Започва <b>${escapeHtml(s.start)}</b>`);
+          if (extra && extra.runtimeMin != null) bits.push(`${extra.runtimeMin} мин`);
+          const occ = extra ? _occupancy(s.hallNum, extra.seats) : null;
+          if (!occ && extra && extra.seats != null) {
+            bits.push(`<span style="color:#fbbf24;font-weight:700;">${extra.seats} свободни места</span>`);
+          }
+          /* Заетост — ЕДЪР блок вдясно (без лента, за да не се бърка с
+             прогрес бара на течащите прожекции). */
+          const occBlock = occBlockFor(occ);
+          /* Тази ли тръгва следваща? (може да са няколко в един и същ час) */
+          const mins = _minsUntil(s.start);
+          const isNext = nextMin != null && mins != null && mins === nextMin;
+          const cntTxt = mins == null ? "" : (mins <= 0 ? "всеки момент" : "след " + mins + " мин");
+          return `<div class="${isNext ? "cg-next-card" : ""}" style="${isNext ? `--n-glow:rgba(${hc.g},.5);` : ""}position:relative;display:flex;align-items:center;gap:14px;padding:${isNext ? "15px 16px" : "12px 14px"};border-radius:16px;background:${isNext ? `linear-gradient(135deg,rgba(${hc.g},.16),rgba(255,255,255,.02))` : "rgba(255,255,255,.02)"};border:${isNext ? `2px solid ${hc.c}` : `1px dashed rgba(${hc.g},.35)`};${isNext ? "" : "opacity:.72;"}">
+            ${isNext ? `<span class="cg-next-pill" style="position:absolute;top:-9px;left:14px;font-size:9.5px;font-weight:800;letter-spacing:.1em;color:#0a0a0a;background:linear-gradient(135deg,${hc.c},rgba(${hc.g},.75));padding:3px 10px;border-radius:999px;box-shadow:0 2px 10px rgba(${hc.g},.6);white-space:nowrap;">▶ СЛЕДВАЩА</span>` : ""}
+            ${hallBadge(hc, s.hallNum, isNext)}
+            <div style="flex:1;min-width:0;">
+              <div style="display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:wrap;">
+                <span style="font-size:${isNext ? "16px" : "14px"};font-weight:${isNext ? "800" : "600"};color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(s.movie)}</span>
+                ${extra && extra.format ? `<span style="flex-shrink:0;font-size:10px;font-weight:800;color:#0a0a0a;background:linear-gradient(135deg,#fde68a,#fbbf24);padding:2px 8px;border-radius:999px;letter-spacing:.06em;">${escapeHtml(extra.format)}</span>` : ""}
+                ${isNext ? "" : `<span style="flex-shrink:0;font-size:10px;color:#8a97a8;">🔜</span>`}
+              </div>
+              <div style="font-size:${isNext ? "12.5px" : "11.5px"};color:${isNext ? hc.c : "#9fb2c8"};font-weight:${isNext ? "700" : "600"};margin-top:3px;">${bits.join(" · ")}${cntTxt ? ` · <b>${cntTxt}</b>` : ""}</div>
+            </div>
+            ${occBlock}
+          </div>`;
+        }).join("");
+
+        /* Свършили зали, паднали от таблото, но още в 5-мин прозореца —
+           добавят се в края, за да не изчезне сигналът „провери залата". */
+        const stickyRows = _recentlyEndedHalls()
+          .filter((e) => !boardGreens[e.hallNum])
+          .map((e) => endedCard(e.hallNum, e.movie, e.end, e.agoMin))
+          .join("");
+
+        return `<div class="panel" style="margin-bottom:18px;padding:18px 20px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
+            <h3 style="font-size:15px;font-weight:700;color:#fff;margin:0;letter-spacing:.04em;display:flex;align-items:center;gap:8px;"><span style="font-size:17px;">🎬</span> Кога се освобождават залите</h3>
+            <span style="font-size:11px;color:#10b981;display:inline-flex;align-items:center;gap:5px;">${hasData ? '<span class="live-dot"></span> на живо от киното' : "зареждам…"}</span>
+          </div>
+          ${(boardRows || stickyRows) ? `<div style="display:grid;gap:10px;">${boardRows}${stickyRows}</div>`
+            : `<div style="font-size:13px;color:#888;padding:6px 2px;">В момента няма прожекции на таблото.</div>`}
+          ${_nextBoardSupported === false ? `<div style="font-size:10.5px;color:#f59e0b;margin-top:10px;">ℹ️ За места и 2D/3D формат обнови Cloudflare Worker-а с новия код от cloudflare-worker-nextclean.js в repo-то.</div>` : ""}
+          ${(_nextBoardSupported === true && _nextBoardVersion && _nextBoardVersion !== "v3") ? `<div style="font-size:10.5px;color:#f59e0b;margin-top:10px;">ℹ️ Част от прожекциите са без брой зрители, защото Worker-ът (${escapeHtml(_nextBoardVersion)}) чете само първите 10. Обнови го с новия код (v3) от cloudflare-worker-nextclean.js.</div>` : ""}
+          <div style="font-size:10.5px;color:#556;margin-top:12px;">✅ свършила = провери залата дали е почистена (стои 5 мин) · 🎬 тече = скоро се освобождава · 🔜 предстои</div>
+        </div>`;
+      }
+
+      /* Отделен екран „Зали" — статус на прожекциите + кога се освобождават. */
+      function renderHallsScreen() {
+        return `<div class="page">
+          <div class="toolbar">
+            <div>
+              <h1 class="hero-title" style="display:flex;align-items:center;gap:12px;"><span style="font-size:32px;">🎬</span> Статус на залите</h1>
+              <div class="muted">Прожекции на живо от киното — кога всяка зала се освобождава за проверка.</div>
+            </div>
+            <button class="btn btn-outline" data-action="go-home">← Начало</button>
+          </div>
+          ${renderNextCleanSection()}
+        </div>`;
+      }
+
+      /* ── Allowed inspector names — fetched from /Names.md in the repo ──
+         Поддръжката минава през този файл, не през кода. Празни редове и
+         коментари (#) се игнорират. Първата секция от име до празен ред в
+         края на файла се използва. */
+      let ALLOWED_NAMES = []; // populated by loadAllowedNames()
+      let _namesLoaded = false;
+
+      async function loadAllowedNames() {
+        try {
+          const res = await fetchWithTimeout("Names.md?_cb=" + Date.now(), { cache: "no-store" }, 8000);
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          const text = await res.text();
+          // Take only lines under the "## Списък" section (or fallback: any
+          // line that looks like a name — Cyrillic, optional spaces).
+          let section = text;
+          const m = text.match(/##\s*Списък[\s\S]*$/i);
+          if (m) section = m[0];
+          const names = section.split(/\r?\n/)
+            .map(l => l.trim())
+            .filter(l => l && !l.startsWith("#") && /^[Ѐ-ӿ][Ѐ-ӿ\s]*$/.test(l));
+          if (names.length > 0) {
+            ALLOWED_NAMES = names;
+            _namesLoaded = true;
+            console.log("[names] loaded " + names.length + " allowed inspector names");
+            // Re-render any screen that uses the names list
+            if (state.screen === "inspection") render();
+          }
+        } catch (err) {
+          console.warn("[names] failed to load Names.md:", err.message);
+          // Без списък оставяме старото поведение (свободно поле) за да не блокираме работата
+        }
+      }
+
+      // Kick off load early so it's ready by the time inspector renders the form
+      loadAllowedNames();
+
+      /* ── Капацитет на залите — от /Halls.md в repo-то ──
+         Позволява да смятаме заетите места: заети = капацитет − свободни.
+         Поддръжката минава през файла, не през кода. Липсваща зала → показваме
+         само свободните места (без изчисления). */
+      let HALL_CAPACITY = {};   // hallNum -> брой места
+
+      async function loadHallCapacities() {
+        try {
+          const res = await fetchWithTimeout("Halls.md?_cb=" + Date.now(), { cache: "no-store" }, 8000);
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          const text = await res.text();
+          let section = text;
+          const m = text.match(/##\s*Капацитет\s*$[\s\S]*/im);
+          if (m) section = m[0];
+          const caps = {};
+          section.split(/\r?\n/).forEach((line) => {
+            const t = line.trim();
+            if (!t || t.startsWith("#") || t.startsWith(">")) return;
+            const mm = /^(?:Зала\s*)?(\d+)\s*[=:]\s*(\d+)\s*$/i.exec(t);
+            if (mm) {
+              const n = parseInt(mm[1], 10), c = parseInt(mm[2], 10);
+              if (n > 0 && c > 0) caps[n] = c;
+            }
+          });
+          if (Object.keys(caps).length > 0) {
+            HALL_CAPACITY = caps;
+            console.log("[halls] loaded capacities for " + Object.keys(caps).length + " halls");
+            if (state.screen === "halls") render();
+          }
+        } catch (err) {
+          console.warn("[halls] failed to load Halls.md:", err.message);
+        }
+      }
+      loadHallCapacities();
+
+      /* ── Правила — съдържанието идва от /Rules.md в repo-то ──
+         Редактира се през GitHub, без промяна по кода. */
+      let RULES_MD = null;        // null = още не е зареден, "" = грешка
+      let _rulesBusy = false;
+
+      async function loadRules() {
+        if (_rulesBusy) return;
+        _rulesBusy = true;
+        try {
+          const res = await fetchWithTimeout("Rules.md?_cb=" + Date.now(), { cache: "no-store" }, 8000);
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          RULES_MD = await res.text();
+        } catch (err) {
+          console.warn("[rules] failed to load Rules.md:", err.message);
+          RULES_MD = "";
+        } finally {
+          _rulesBusy = false;
+          if (state.screen === "rules") render();
+        }
+      }
+
+      /* Минимален Markdown → HTML. Целият текст минава през escapeHtml
+         ПРЕДИ форматирането, така че съдържанието на файла не може да
+         вкара HTML в страницата. */
+      function renderMarkdown(md) {
+        const esc = escapeHtml(md || "");
+        const lines = esc.split(/\r?\n/);
+        const out = [];
+        let list = null;   // "ul" | "ol" | null
+
+        const inline = (t) => t
+          .replace(/\*\*([^*]+)\*\*/g, '<strong style="color:#fff;">$1</strong>')
+          .replace(/`([^`]+)`/g, '<code style="background:rgba(255,255,255,.07);padding:1px 6px;border-radius:5px;font-size:.92em;">$1</code>');
+
+        const closeList = () => { if (list) { out.push(`</${list}>`); list = null; } };
+        const openList = (t) => {
+          if (list === t) return;
+          closeList();
+          list = t;
+          out.push(`<${t} style="margin:8px 0 14px;padding-left:22px;display:grid;gap:6px;color:var(--muted);font-size:14.5px;line-height:1.6;">`);
+        };
+
+        for (const raw of lines) {
+          const l = raw.trim();
+          if (!l) { closeList(); continue; }
+
+          let m;
+          if ((m = /^---+$/.exec(l))) {
+            closeList();
+            out.push('<hr style="border:0;border-top:1px solid rgba(255,255,255,.09);margin:20px 0;">');
+          } else if ((m = /^(#{1,4})\s+(.*)$/.exec(l))) {
+            closeList();
+            const lvl = m[1].length;
+            const size = [26, 19, 15.5, 14][lvl - 1];
+            const mt = lvl === 1 ? 0 : 22;
+            out.push(`<div style="font-family:'Oswald',sans-serif;font-size:${size}px;font-weight:${lvl <= 2 ? 700 : 600};color:${lvl === 1 ? "#fff" : "var(--gold-2)"};letter-spacing:.03em;margin:${mt}px 0 10px;${lvl === 1 ? "text-transform:uppercase;" : ""}">${inline(m[2])}</div>`);
+          } else if ((m = /^&gt;\s?(.*)$/.exec(l))) {
+            closeList();
+            out.push(`<div style="border-left:3px solid var(--gold);background:rgba(200,120,24,.09);padding:11px 14px;border-radius:0 10px 10px 0;margin:12px 0;color:#f0d9a8;font-size:14px;line-height:1.6;">${inline(m[1])}</div>`);
+          } else if ((m = /^[-*]\s+(.*)$/.exec(l))) {
+            openList("ul");
+            out.push(`<li>${inline(m[1])}</li>`);
+          } else if ((m = /^(\d+)\.\s+(.*)$/.exec(l))) {
+            openList("ol");
+            out.push(`<li>${inline(m[2])}</li>`);
+          } else {
+            closeList();
+            out.push(`<p style="margin:0 0 12px;color:var(--muted);font-size:14.5px;line-height:1.65;">${inline(l)}</p>`);
+          }
+        }
+        closeList();
+        return out.join("");
+      }
+
+      function renderRulesScreen() {
+        const loading = RULES_MD === null;
+        const failed = RULES_MD === "";
+        const body = (!loading && !failed) ? renderMarkdown(RULES_MD) : "";
+        const emptyDoc = !loading && !failed && !body.trim();
+        return `<div class="page">
+          <div class="toolbar">
+            <div>
+              <h1 class="hero-title" style="display:flex;align-items:center;gap:12px;"><span style="font-size:30px;">📋</span> Правила за работа</h1>
+            </div>
+            <button class="btn btn-outline" data-action="go-home">← Начало</button>
+          </div>
+          <div class="panel" style="padding:26px 30px;">
+            ${loading ? `<div style="display:flex;align-items:center;gap:12px;color:var(--muted);padding:18px 0;"><span class="cg-bounce-dots sm"><span></span><span></span><span></span></span> Зареждам правилата…</div>`
+              : failed ? `<div style="color:#f59e0b;font-size:14px;padding:6px 0;">Правилата не можаха да бъдат заредени. Провери дали файлът <b>Rules.md</b> съществува в repo-то.</div>`
+              : emptyDoc ? `<div style="color:var(--muted);font-size:14px;padding:6px 0;">Файлът <b>Rules.md</b> е празен. Отвори го в GitHub и напиши правилата.</div>`
+              : body}
+          </div>
+        </div>`;
+      }
+
+      /* ── Странични банери ──
+         Слотът се показва САМО ако файлът в /banners/ е реална снимка.
+         Празният/placeholder файлът (1×1px) и липсващ файл се пропускат, за
+         да не стои празна рамка на екрана. Смяната е само качване на файл в
+         GitHub — виж banners/README.md. */
+      function initSideBanners() {
+        document.querySelectorAll(".cg-side-banner").forEach((slot) => {
+          const img = slot.querySelector("img");
+          if (!img) return;
+          const src = img.getAttribute("data-src");
+          if (!src) return;
+          const probe = new Image();
+          probe.onload = () => {
+            // 1×1 placeholder → третираме като „няма банер"
+            if (probe.naturalWidth <= 2 || probe.naturalHeight <= 2) return;
+            img.src = src + "?v=" + Date.now();
+            slot.classList.add("has-image");
+          };
+          probe.onerror = () => { /* липсва файл → слотът остава скрит */ };
+          probe.src = src + "?v=" + Date.now();
+        });
+      }
+      initSideBanners();
+
+      /* Заетост на прожекция от свободните места + капацитета на залата. */
+      function _occupancy(hallNum, freeSeats) {
+        const cap = HALL_CAPACITY[hallNum];
+        if (!cap || freeSeats == null || freeSeats < 0 || freeSeats > cap) return null;
+        const taken = cap - freeSeats;
+        const pct = Math.round((taken / cap) * 100);
+        let color, label;
+        if (pct >= 80)      { color = "#ef4444"; label = "пълна"; }
+        else if (pct >= 50) { color = "#f59e0b"; label = "почти пълна"; }
+        else if (pct >= 20) { color = "#60a5fa"; label = "средно"; }
+        else                { color = "#94a3b8"; label = "празна"; }
+        return { cap, taken, free: freeSeats, pct, color, label };
+      }
+      const NTFY_POLL_INTERVAL_MS = 3500;
+      let _phonePollTimer = null;
+      let _phonePollBusy = false;
+
+      function startPhonePhotoPolling() {
+        stopPhonePhotoPolling();
+        if (!state.pcSessionId) {
+          state.pcSessionId = "pcs_" + Date.now() + "_" + Math.random().toString(36).slice(2, 10);
+        }
+        console.log("[ntfy] start polling for topic cg-photos-" + state.pcSessionId);
+        updatePhonePollStatus("🟢 Слушане за снимки от телефон…", "ok");
+        pollNtfyOnce(); // immediate
+        _phonePollTimer = setInterval(pollNtfyOnce, NTFY_POLL_INTERVAL_MS);
+      }
+
+      function stopPhonePhotoPolling() {
+        if (_phonePollTimer) {
+          clearInterval(_phonePollTimer);
+          _phonePollTimer = null;
+        }
+        _phonePollBusy = false;
+      }
+
+      async function pollNtfyOnce() {
+        if (_phonePollBusy) return;
+        if (!state.pcSessionId) return;
+        if (state.screen !== "inspection") { stopPhonePhotoPolling(); return; }
+        _phonePollBusy = true;
+        try {
+          const topic = "cg-photos-" + state.pcSessionId;
+          const url = NTFY_BASE + "/" + encodeURIComponent(topic) + "/json?poll=1&since=all";
+          const res = await fetch(url, { method: "GET", cache: "no-store" });
+          if (!res.ok) {
+            updatePhonePollStatus("ntfy.sh HTTP " + res.status, "error");
+            return;
+          }
+          const text = await res.text();
+          const lines = text.split("\n").filter(Boolean);
+          const newUrls = [];
+          let sawTest = false;
+          for (const line of lines) {
+            try {
+              const data = JSON.parse(line);
+              if (!data || data.event !== "message" || !data.message) continue;
+              const photoUrl = String(data.message).trim();
+              if (!photoUrl) continue;
+              // Detect test/warmup signals separately so we can confirm the
+              // relay is alive without showing them as fake photos.
+              if (photoUrl.indexOf("example.invalid") !== -1 || photoUrl.indexOf("/cg-test/") !== -1 || photoUrl.indexOf("warmup-") === 0) {
+                sawTest = true;
+                continue;
+              }
+              if (!/^https?:\/\//.test(photoUrl)) continue;
+              if (photoUrl.indexOf("/test-") !== -1) continue;
+              if (!/drive\.google\.com|googleusercontent\.com/.test(photoUrl)) continue;
+              newUrls.push(photoUrl);
+            } catch (_) {}
+          }
+          if (sawTest) {
+            console.log("[ntfy] test signal received — relay alive");
+          }
+          // Dedupe + add only new
+          const current = state.remotePhotoUrls || [];
+          const seen = new Set(current);
+          const additions = [];
+          for (const u of newUrls) {
+            if (!seen.has(u)) { additions.push(u); seen.add(u); }
+          }
+          if (additions.length > 0) {
+            state.remotePhotoUrls = [...current, ...additions];
+            render();
+            showToast(`📱 Получена ${additions.length === 1 ? "нова снимка" : additions.length + " нови снимки"} от телефон.`);
+          }
+          // Status: connected, showing count
+          updatePhonePollStatus(
+            (state.remotePhotoUrls && state.remotePhotoUrls.length > 0)
+              ? `🟢 Получени ${state.remotePhotoUrls.length} снимки от телефон`
+              : "🟢 Слушане за снимки от телефон…",
+            "ok"
+          );
+        } catch (err) {
+          console.warn("[ntfy] poll error:", err);
+          updatePhonePollStatus("Мрежова грешка към ntfy.sh: " + (err && err.message ? err.message : err), "error");
+        } finally {
+          _phonePollBusy = false;
+        }
+      }
+
+      async function notifyPCOfPhoto(photoUrl) {
+        if (!state.pcSessionId || !photoUrl) return;
+        const topic = "cg-photos-" + state.pcSessionId;
+        const url = NTFY_BASE + "/" + encodeURIComponent(topic);
+        console.log("[ntfy] publishing photo URL to", topic);
+        try {
+          const res = await fetch(url, { method: "POST", body: photoUrl });
+          if (!res.ok) console.warn("[ntfy] publish failed: HTTP " + res.status);
+        } catch (err) {
+          console.warn("[ntfy] publish error:", err);
+        }
+      }
+
+      function updatePhonePollStatus(msg, kind) {
+        const prev = state.phonePhotoPollError || "";
+        if (msg === prev) return;
+        state.phonePhotoPollError = msg || "";
+        const el = document.getElementById("phone-photo-poll-status");
+        if (el) {
+          if (msg) {
+            const color = kind === "ok" ? "#10b981" : (kind === "info" ? "#888" : "#f59e0b");
+            el.textContent = msg;
+            el.style.color = color;
+            el.style.display = "";
+          } else {
+            el.textContent = "";
+            el.style.display = "none";
+          }
+        }
+      }
+
+      /* ── Photo Upload Utilities ── */
+      const MAX_PHOTOS = 5;
+      /* ── Compress an image data URL to fit within ~1MB JPEG ──
+         Inspection photos don't need full 12MP resolution — 1920px max edge
+         and JPEG 0.8 quality is plenty for spotting issues, and shrinks a
+         10MB iPhone photo to ~400-700KB so the upload to Apps Script is
+         reliable on mobile networks. */
+      function compressImageDataUrl(dataUrl, maxDim, quality) {
+        maxDim = maxDim || 1920;
+        quality = quality || 0.82;
+        return new Promise((resolve) => {
+          const img = new Image();
+          img.onload = () => {
+            try {
+              let { width, height } = img;
+              if (width > maxDim || height > maxDim) {
+                const scale = maxDim / Math.max(width, height);
+                width = Math.round(width * scale);
+                height = Math.round(height * scale);
+              }
+              const canvas = document.createElement("canvas");
+              canvas.width = width;
+              canvas.height = height;
+              const ctx = canvas.getContext("2d");
+              ctx.drawImage(img, 0, 0, width, height);
+              resolve(canvas.toDataURL("image/jpeg", quality));
+            } catch (e) {
+              console.warn("[compress] failed, using original:", e);
+              resolve(dataUrl);
+            }
+          };
+          img.onerror = () => {
+            console.warn("[compress] image load failed, using original");
+            resolve(dataUrl);
+          };
+          img.src = dataUrl;
+        });
+      }
+
+      function handlePhotoSelect(e) {
+        const files = Array.from(e.target.files || []);
+        state.photoFiles = [];
+        state.photoPreviews = [];
+        state.photoError = "";
+        state.notes = "";
+
+        if (files.length === 0) {
+          render();
+          return;
+        }
+
+        if (files.length > MAX_PHOTOS) {
+          state.photoError = `Може да изберете максимум ${MAX_PHOTOS} снимки. Избрахте ${files.length}.`;
+          render();
+          return;
+        }
+
+        const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB raw input — we compress before upload
+        for (const f of files) {
+          if (!validTypes.includes(f.type)) {
+            state.photoError = `Невалиден файл „${f.name}". Приемат се само JPEG, PNG, WebP.`;
+            render();
+            return;
+          }
+          if (f.size > MAX_FILE_SIZE) {
+            state.photoError = `Файлът „${f.name}" е над 25MB.`;
+            render();
+            return;
+          }
+        }
+
+        state.photoFiles = files;
+        state.photoPreviews = new Array(files.length).fill(null);
+        let loaded = 0;
+        files.forEach((file, idx) => {
+          const reader = new FileReader();
+          reader.onload = async (event) => {
+            const originalDataUrl = event.target.result;
+            // Compress before storing — this is what gets uploaded later
+            let dataUrl = originalDataUrl;
+            try {
+              dataUrl = await compressImageDataUrl(originalDataUrl, 1920, 0.82);
+              const origKB = Math.round((originalDataUrl.length * 3 / 4) / 1024);
+              const newKB = Math.round((dataUrl.length * 3 / 4) / 1024);
+              console.log(`[photo ${idx + 1}] compressed ${origKB}KB → ${newKB}KB`);
+            } catch (e) {
+              console.warn("[photo] compression failed:", e);
+            }
+            state.photoPreviews[idx] = dataUrl;
+            loaded++;
+            if (loaded === files.length) render();
+          };
+          reader.onerror = () => {
+            state.photoError = `Грешка при четене на файл „${file.name}".`;
+            state.photoFiles = [];
+            state.photoPreviews = [];
+            render();
+          };
+          reader.readAsDataURL(file);
+        });
+      }
+
+      let _lastUploadError = "";
+
+      async function uploadOnePhoto_(fileOrDataUrl, indexLabel) {
+        _lastUploadError = "";
+        const isPhoneScreen = state.screen === "phone-photo-upload";
+        const reportErr = (msg) => {
+          _lastUploadError = msg;
+          console.warn("[upload]", msg);
+          if (isPhoneScreen) setPhonePhotoStatus(`❌ ${msg}`, "error");
+          else alert("⚠ " + msg);
+        };
+
+        if (!SHEETS_WEB_APP_URL || SHEETS_WEB_APP_URL.indexOf("script.google.com") === -1) {
+          reportErr("SHEETS_WEB_APP_URL не е конфигуриран:\n" + SHEETS_WEB_APP_URL);
+          return null;
+        }
+
+        // Resolve to base64 — accept either a data URL string (already loaded
+        // by handlePhotoSelect into state.photoPreviews) or a File object.
+        let base64Data, fileNameHint;
+        try {
+          if (typeof fileOrDataUrl === "string" && fileOrDataUrl.startsWith("data:")) {
+            base64Data = fileOrDataUrl.split(",")[1] || "";
+            fileNameHint = "photo";
+          } else if (fileOrDataUrl instanceof Blob || (fileOrDataUrl && typeof fileOrDataUrl === "object" && fileOrDataUrl.size)) {
+            base64Data = await new Promise((res, rej) => {
+              const reader = new FileReader();
+              reader.onload = (ev) => res(String(ev.target.result || "").split(",")[1] || "");
+              reader.onerror = () => rej(new Error("FileReader failed"));
+              reader.readAsDataURL(fileOrDataUrl);
+            });
+            fileNameHint = (fileOrDataUrl.name || "photo").replace(/[^a-zA-Z0-9._-]/g, "_");
+          } else {
+            reportErr(`Невалиден формат на снимка ${indexLabel}`);
+            return null;
+          }
+        } catch (e) {
+          reportErr(`Грешка при четене на файла ${indexLabel}: ${e && e.message ? e.message : e}`);
+          return null;
+        }
+
+        if (!base64Data || base64Data.length === 0) {
+          reportErr(`Файлът ${indexLabel} е празен или невалиден`);
+          return null;
+        }
+
+        const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, -4);
+        const safeLoc = String(state.location || "unknown").replace(/\s+/g, "_");
+        const fileNameSafe = `photo_${timestamp}_${safeLoc}_${indexLabel}.jpg`;
+        const payload = JSON.stringify({
+          action: "uploadPhoto",
+          photoData: base64Data,
+          fileName: fileNameSafe,
+          comment: state.notes,
+          location: state.location,
+          inspector: state.inspector,
+          timestamp: new Date().toISOString(),
+          pcSessionId: state.pcSessionId || "",
+          _token: SHEETS_SECRET_TOKEN,
+        });
+
+        if (isPhoneScreen) setPhonePhotoStatus(`Подготвям връзката към Apps Script…`, "info");
+
+        // Warm up the Apps Script connection RIGHT before the upload so iOS
+        // has a live cellular/wifi connection and won't bail with "network
+        // error" on the redirected POST. We deliberately await this — the
+        // upload that follows is the network-critical call.
+        try {
+          await fetch(SHEETS_WEB_APP_URL, { method: "GET", credentials: "omit", cache: "no-store" });
+        } catch (_) { /* ignore — even a failed warmup primes TLS/DNS */ }
+
+        if (isPhoneScreen) setPhonePhotoStatus(`Изпращам снимка ${indexLabel} към Google Drive (${Math.round(base64Data.length / 1024)} KB)…`, "info");
+
+        // Use fetch with credentials:"omit" — iOS Safari's Intelligent
+        // Tracking Prevention can block the script.google.com →
+        // script.googleusercontent.com redirect when cookies are involved,
+        // producing the "XHR network error" we saw. Omitting credentials
+        // sidesteps that path.
+        let response;
+        try {
+          response = await fetch(SHEETS_WEB_APP_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=UTF-8" },
+            body: payload,
+            redirect: "follow",
+            credentials: "omit",
+            cache: "no-store",
+          });
+        } catch (netErr) {
+          // fetch died — fall back to XHR as a last resort
+          if (isPhoneScreen) setPhonePhotoStatus(`fetch падна (${netErr.message || netErr}), опитвам XHR…`, "info");
+          const xhrResult = await new Promise((resolve) => {
+            try {
+              const xhr = new XMLHttpRequest();
+              xhr.open("POST", SHEETS_WEB_APP_URL, true);
+              xhr.setRequestHeader("Content-Type", "text/plain;charset=UTF-8");
+              xhr.timeout = 90000;
+              xhr.onload = () => resolve({ ok: xhr.status >= 200 && xhr.status < 300, status: xhr.status, text: xhr.responseText || "" });
+              xhr.onerror = () => resolve({ ok: false, status: 0, text: "", err: "XHR network error" });
+              xhr.ontimeout = () => resolve({ ok: false, status: 0, text: "", err: "Timeout (>90s)" });
+              xhr.send(payload);
+            } catch (e) {
+              resolve({ ok: false, status: 0, text: "", err: (e && e.message) ? e.message : String(e) });
+            }
+          });
+          if (xhrResult.err) {
+            reportErr(`Мрежова грешка ${indexLabel} (fetch + XHR fall back failed): ${xhrResult.err}`);
+            return null;
+          }
+          if (!xhrResult.ok) {
+            reportErr(`Apps Script HTTP ${xhrResult.status} (снимка ${indexLabel}). Отговор: ${xhrResult.text.substring(0, 200)}`);
+            return null;
+          }
+          response = { ok: true, status: xhrResult.status, text: () => Promise.resolve(xhrResult.text) };
+        }
+
+        const rawText = typeof response.text === "function" ? await response.text() : "";
+        if (!response.ok) {
+          reportErr(`Apps Script HTTP ${response.status} (снимка ${indexLabel}). Отговор: ${rawText.substring(0, 200)}`);
+          try { localStorage.setItem("cg_last_photo_error", "HTTP " + response.status + " — " + rawText.substring(0, 1000)); } catch(_) {}
+          return null;
+        }
+
+        let result;
+        try {
+          result = JSON.parse(rawText);
+        } catch (parseErr) {
+          reportErr(`Apps Script върна невалиден отговор (не е JSON). Деплойнат ли е като 'Anyone'? Начало: ${rawText.substring(0, 200)}`);
+          try { localStorage.setItem("cg_last_photo_error", "Non-JSON response: " + rawText.substring(0, 1000)); } catch(_) {}
+          return null;
+        }
+
+        if (result && result.success && result.photoUrl) {
+          try { localStorage.setItem("cg_last_photo_error", ""); } catch(_) {}
+          // Live-sync to PC if there's an active pcSessionId (phone QR flow)
+          if (state.pcSessionId) {
+            if (isPhoneScreen) setPhonePhotoStatus(`Снимка ${indexLabel} качена. Изпращам сигнал към PC…`, "info");
+            const ntfyUrl = NTFY_BASE + "/" + encodeURIComponent("cg-photos-" + state.pcSessionId);
+            // Try sendBeacon first — it's designed for fire-and-forget POSTs
+            // that survive page lifecycle changes and don't need a live
+            // user gesture. Falls back to fetch+keepalive if unavailable.
+            let beaconQueued = false;
+            try {
+              if (navigator.sendBeacon) {
+                beaconQueued = navigator.sendBeacon(ntfyUrl, result.photoUrl);
+              }
+            } catch (e) {
+              console.warn("[ntfy] sendBeacon threw:", e);
+            }
+            if (!beaconQueued) {
+              try {
+                const r = await fetch(ntfyUrl, {
+                  method: "POST",
+                  body: result.photoUrl,
+                  keepalive: true,
+                });
+                if (!r.ok) _lastUploadError = `ntfy.sh HTTP ${r.status} (снимка ${indexLabel})`;
+              } catch (e) {
+                _lastUploadError = `ntfy.sh: ${e && e.message ? e.message : e}`;
+              }
+            } else {
+              console.log("[ntfy] queued via sendBeacon:", result.photoUrl.substring(0, 50));
+            }
+          }
+          return result.photoUrl;
+        }
+
+        reportErr(`Backend отказа качването ${indexLabel}: ` + (result && result.error ? result.error : "неизвестна грешка"));
+        try { localStorage.setItem("cg_last_photo_error", "Backend error: " + rawText.substring(0, 1000)); } catch(_) {}
+        return null;
+      }
+
+      async function uploadAllPhotos() {
+        if (!state.photoFiles || state.photoFiles.length === 0) return [];
+        const urls = [];
+        for (let i = 0; i < state.photoFiles.length; i++) {
+          const label = `${i + 1}/${state.photoFiles.length}`;
+          showToast(`Качване на снимка ${label}...`);
+          const url = await uploadOnePhoto_(state.photoFiles[i], label);
+          if (url) urls.push(url);
+        }
+        return urls;
       }
 
       let _submitBusy = false;
@@ -1913,58 +3556,83 @@
           showToast("Времето за проверка изтече (" + LOCK_TIMEOUT_MIN + " мин). Моля сканирайте QR кода отново.", "error");
           return;
         }
+
+
         const config = getConfig(state.inspectionType);
         state.showValidation = true;
         const allFilled = config.items.every((i) => isFilled(state.itemState[i.id]));
-        if (!state.inspector.trim()) { showToast("Моля въведи своето пълно име.", "error"); return; }
-        if (!/^[\u0400-\u04FF ]+$/.test(state.inspector.trim())) { showToast("Името трябва да е само на кирилица, без специални символи.", "error"); return; }
+        if (!state.inspector.trim()) { showToast("Моля въведи своето име.", "error"); render(); return; }
+        if (ALLOWED_NAMES.length && !ALLOWED_NAMES.includes(state.inspector.trim())) { showToast(`Името „${state.inspector.trim()}" не е в списъка. Избери от падащото меню.`, "error"); render(); return; }
         if (!allFilled) { showToast("Всички точки трябва да бъдат попълнени.", "error"); render(); return; }
         _submitBusy = true;
         try {
-        const record = {
-          id: Date.now(),
-          type: state.inspectionType,
-          location: state.location,
-          inspector: state.inspector.trim(),
-          timestamp: new Date().toISOString(),
-          items: config.items.map((i) => ({ id: i.id, label: i.label, icon: i.icon, status: state.itemState[i.id] })),
-          notes: state.notes,
-        };
-        state.records = [record, ...state.records];
-        cleanupOldRecords(); /* Изчистване на стари записи >7 дни */
-        persist();
-        /* Release location lock */
-        if (state.currentSessionId) {
-          releaseLock(state.currentSessionId);
-          state.currentSessionId = null;
-          _lockAcquiredAt = 0;
-          sessionStorage.removeItem(LOCK_SESSION_KEY);
-        }
-        showToast(`Проверката на „${state.location}" е записана.`);
-        if (isSheetsConfigured()) {
-          const syncResult = await syncRecord(record);
-          if (syncResult.success && syncResult.verified) {
-            showToast("\u2713 \u0421\u0438\u043d\u0445\u0440\u043e\u043d\u0438\u0437\u0438\u0440\u0430\u043d\u043e \u0441 Google Sheets.");
-          } else if (syncResult.success) {
-            showToast("\u2713 \u0417\u0430\u044f\u0432\u043a\u0430\u0442\u0430 \u0435 \u0438\u0437\u043f\u0440\u0430\u0442\u0435\u043d\u0430 \u043a\u044a\u043c Google Sheets. \u0410\u043a\u043e \u0440\u0435\u0434\u044a\u0442 \u043d\u0435 \u0441\u0435 \u043f\u043e\u044f\u0432\u0438, \u043f\u0440\u043e\u0432\u0435\u0440\u0438 Apps Script \u043b\u043e\u0433\u043e\u0432\u0435\u0442\u0435.");
-          } else {
-            showToast("\u26a0 \u0417\u0430\u043f\u0438\u0441\u044c\u0442 \u0435 \u0437\u0430\u043f\u0430\u0437\u0435\u043d \u043b\u043e\u043a\u0430\u043b\u043d\u043e. Sheets sync \u043d\u0435\u0443\u0441\u043f\u0435\u0448\u0435\u043d: " + (syncResult.error || "\u043d\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043d\u0430 \u0433\u0440\u0435\u0448\u043a\u0430"), "error");
+          // Upload photos if present
+          let localUrls = [];
+          if (state.photoFiles.length > 0) {
+            localUrls = await uploadAllPhotos();
+            if (localUrls.length === 0) {
+              showToast("Забележка: Снимките не са качени, но проверката ще бъде записана.", "error");
+            } else if (localUrls.length < state.photoFiles.length) {
+              showToast(`Внимание: качени са ${localUrls.length} от ${state.photoFiles.length} снимки.`, "error");
+            }
           }
-        }
-        if (sessionStorage.getItem(QR_MODE_KEY) === "1") {
-          setQRCooldown(state.inspectionType, state.location);
-          state.openedFromQR = false;
-          setTimeout(() => {
-            sessionStorage.removeItem(QR_SESSION_KEY);
-            sessionStorage.removeItem(QR_MODE_KEY);
-            sessionStorage.removeItem(QR_TYPE_KEY);
-            sessionStorage.removeItem(QR_LOC_KEY);
-            window.location.replace(QR_REDIRECT_URL);
-          }, 1200);
-          return;
-        }
-        state.screen = "home";
-        render();
+          // Combine: phone-uploaded URLs first, then local uploads
+          const photoUrls = [...(state.remotePhotoUrls || []), ...localUrls];
+          stopPhonePhotoPolling();
+
+          const record = {
+            id: Date.now(),
+            type: state.inspectionType,
+            location: state.location,
+            inspector: state.inspector.trim(),
+            timestamp: new Date().toISOString(),
+            items: config.items.map((i) => ({ id: i.id, label: i.label, icon: i.icon, status: state.itemState[i.id] })),
+            notes: state.notes,
+            photoUrl: photoUrls[0] || null,
+            photoUrls: photoUrls.length > 0 ? photoUrls : null,
+          };
+          state.records = [record, ...state.records];
+          cleanupOldRecords(); /* Изчистване на стари записи >7 дни */
+          persist();
+          /* Release location lock */
+          if (state.currentSessionId) {
+            releaseLock(state.currentSessionId);
+            state.currentSessionId = null;
+            _lockAcquiredAt = 0;
+            sessionStorage.removeItem(LOCK_SESSION_KEY);
+          }
+          showToast(`Проверката на „${state.location}" е записана.`);
+          if (isSheetsConfigured()) {
+            const syncResult = await syncRecord(record);
+            if (syncResult.success && syncResult.verified) {
+              showToast("\u2713 \u0421\u0438\u043d\u0445\u0440\u043e\u043d\u0438\u0437\u0438\u0440\u0430\u043d\u043e \u0441 Google Sheets.");
+            } else if (syncResult.success) {
+              showToast("\u2713 \u0417\u0430\u044f\u0432\u043a\u0430\u0442\u0430 \u0435 \u0438\u0437\u043f\u0440\u0430\u0442\u0435\u043d\u0430 \u043a\u044a\u043c Google Sheets. \u0410\u043a\u043e \u0440\u0435\u0434\u044a\u0442 \u043d\u0435 \u0441\u0435 \u043f\u043e\u044f\u0432\u0438, \u043f\u0440\u043e\u0432\u0435\u0440\u0438 Apps Script \u043b\u043e\u0433\u043e\u0432\u0435\u0442\u0435.");
+            } else {
+              showToast("\u26a0 \u0417\u0430\u043f\u0438\u0441\u044c\u0442 \u0435 \u0437\u0430\u043f\u0430\u0437\u0435\u043d \u043b\u043e\u043a\u0430\u043b\u043d\u043e. Sheets sync \u043d\u0435\u0443\u0441\u043f\u0435\u0448\u0435\u043d: " + (syncResult.error || "\u043d\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043d\u0430 \u0433\u0440\u0435\u0448\u043a\u0430"), "error");
+            }
+          }
+          if (sessionStorage.getItem(QR_MODE_KEY) === "1") {
+            setQRCooldown(state.inspectionType, state.location);
+            state.openedFromQR = false;
+            setTimeout(() => {
+              sessionStorage.removeItem(QR_SESSION_KEY);
+              sessionStorage.removeItem(QR_MODE_KEY);
+              sessionStorage.removeItem(QR_TYPE_KEY);
+              sessionStorage.removeItem(QR_LOC_KEY);
+              window.location.replace(QR_REDIRECT_URL);
+            }, 1200);
+            return;
+          }
+          // Clear photo state
+          state.photoFiles = [];
+          state.photoPreviews = [];
+          state.photoError = "";
+          state.remotePhotoUrls = [];
+          state.pcSessionId = null;
+          stopPhonePhotoPolling();
+          state.screen = "home";
+          render();
         } finally {
           _submitBusy = false;
         }
@@ -2044,11 +3712,14 @@
       function isQROnlySession() { return sessionStorage.getItem(QR_MODE_KEY) === "1"; }
 
       function renderTopbar() {
-        const navItems = isQROnlySession() ? "" : [
+        const navItems = (isQROnlySession() || state.screen === "phone-photo-upload") ? "" : [
           state.screen !== "home" ? `<button class="nav-btn" data-action="go-home" aria-label="Начална страница">Начало</button>` : "",
           `<button class="nav-btn" data-action="open-qr" aria-label="QR кодове за печат">QR кодове</button>`,
           `<a class="nav-btn${isSheetsConfigured() ? ' state' : ''}" href="${SHEETS_SPREADSHEET_URL}" target="_blank" rel="noopener" aria-label="Отвори Sheets таблица">${isSheetsConfigured() ? "Sheets ✓" : "Sheets ✗"}</a>`,
+          NEXTCLEAN_PROXY_URL ? `<button class="nav-btn ${state.screen === 'halls' ? 'state' : ''}" data-action="go-halls" aria-label="Статус на залите">&#127916; Зали</button>` : "",
           `<button class="nav-btn ${state.screen === 'charts' ? 'state' : ''} ${chartsCooldownUntil > Date.now() ? 'cooldown' : ''}" data-action="go-charts" aria-label="Данни от Sheets" ${chartsCooldownUntil > Date.now() ? 'disabled' : ''}>&#128202; ${chartsCooldownUntil > Date.now() ? "Данни (" + Math.ceil((chartsCooldownUntil - Date.now()) / 1000) + ")" : "Данни"}</button>`,
+          `<button class="nav-btn ${state.screen === 'rules' ? 'state' : ''}" data-action="go-rules" aria-label="Правила за работа">&#128203; Правила</button>`,
+          `<button class="nav-btn ${currentLang === 'en' ? 'state' : ''}" data-action="toggle-lang" aria-label="Language / Език">${currentLang === "en" ? "🌐 БГ" : "🌐 EN"}</button>`,
         ].filter(Boolean).join("");
 
         return `
@@ -2081,6 +3752,269 @@
                   <span class="cg-fx-label cg-fx-label-off">OFF</span>
                   <div class="cg-fx-track"><div class="cg-fx-thumb"></div></div>
                   <span class="cg-fx-label cg-fx-label-on">ON</span>
+                </div>
+              </div>
+            </div>
+          </div>`;
+      }
+
+      /* ── Last-checked badges ──
+         Reads the cached ИНФО rows and figures out when each location was
+         last inspected. Colour-codes: green <2h, amber 2-4h, red >4h. */
+      function _normalizeLocFromTypeField(typeStr) {
+        // ИНФО колона 3 е "Кинозала - Зала 1" или "Тоалетна - Дамска тоалетна".
+        if (!typeStr) return null;
+        const idx = typeStr.indexOf(" - ");
+        if (idx === -1) return null;
+        return typeStr.substring(idx + 3).trim();
+      }
+      function getLastCheckedByLocation() {
+        const out = {};
+        if (!_cachedChartRows || _cachedChartRows.length === 0) return out;
+        // ИНФО headers: ДАТА/ЧАС in row['ДАТА/ЧАС'] (or ДАТА И ЧАС etc.)
+        // Find the date header key dynamically — it's the second column.
+        const sample = _cachedChartRows[0];
+        const keys = Object.keys(sample);
+        const dateKey = keys.find(k => /дата|час/i.test(k)) || keys[1];
+        const typeKey = keys.find(k => /тип/i.test(k)) || keys[2];
+        const statusKey = keys.find(k => /статус/i.test(k)) || keys[4];
+        for (const row of _cachedChartRows) {
+          const loc = _normalizeLocFromTypeField(row[typeKey]);
+          if (!loc) continue;
+          const d = parseChartDate(row[dateKey]);
+          if (!d) continue;
+          const existing = out[loc];
+          if (!existing || d > existing.date) {
+            out[loc] = { date: d, status: row[statusKey] || "" };
+          }
+        }
+        return out;
+      }
+
+      /* Пълна история на една локация от ИНФО — за детайлния изглед.
+         Връща подредени записи (най-новите отгоре) + обобщена статистика. */
+      function getHallHistory(loc) {
+        const empty = { rows: [], today: 0, week: 0, total: 0, problems: 0, avgGapMin: null, inspectors: [] };
+        if (!_cachedChartRows || _cachedChartRows.length === 0) return empty;
+        const keys = Object.keys(_cachedChartRows[0]);
+        const dateKey = keys.find(k => /дата|час/i.test(k)) || keys[1];
+        const typeKey = keys.find(k => /тип/i.test(k)) || keys[2];
+        const whoKey = keys.find(k => /проверяващ/i.test(k)) || keys[3];
+        const statusKey = keys.find(k => /статус/i.test(k)) || keys[4];
+        const issuesKey = keys.find(k => /проблем/i.test(k)) || keys[5];
+        const notesKey = keys.find(k => /бележк/i.test(k)) || keys[6];
+        const photoKey = keys.find(k => /снимк/i.test(k)) || keys[7];
+
+        const rows = [];
+        for (const r of _cachedChartRows) {
+          if (_normalizeLocFromTypeField(r[typeKey]) !== loc) continue;
+          const d = parseChartDate(r[dateKey]);
+          if (!d) continue;
+          rows.push({
+            date: d,
+            who: (r[whoKey] || "").trim(),
+            status: (r[statusKey] || "").trim(),
+            issues: (r[issuesKey] || "").trim(),
+            notes: (r[notesKey] || "").trim(),
+            photo: (r[photoKey] || "").trim(),
+          });
+        }
+        rows.sort((a, b) => b.date - a.date);
+
+        const now = new Date();
+        const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+        const weekAgo = now.getTime() - 7 * 24 * 3600 * 1000;
+        const today = rows.filter(r => r.date.getTime() >= startToday).length;
+        const week = rows.filter(r => r.date.getTime() >= weekAgo).length;
+        const problems = rows.filter(r => /проблем/i.test(r.status)).length;
+
+        // Средно време между проверките (по днешните, ако са поне 2)
+        let avgGapMin = null;
+        const todayRows = rows.filter(r => r.date.getTime() >= startToday);
+        if (todayRows.length >= 2) {
+          let sum = 0;
+          for (let i = 0; i < todayRows.length - 1; i++) sum += todayRows[i].date - todayRows[i + 1].date;
+          avgGapMin = Math.round(sum / (todayRows.length - 1) / 60000);
+        }
+        // Кой е проверявал (последните 7 дни, по честота)
+        const cnt = {};
+        rows.filter(r => r.date.getTime() >= weekAgo && r.who).forEach(r => { cnt[r.who] = (cnt[r.who] || 0) + 1; });
+        const inspectors = Object.keys(cnt).map(n => ({ name: n, n: cnt[n] })).sort((a, b) => b.n - a.n);
+
+        return { rows, today, week, total: rows.length, problems, avgGapMin, inspectors };
+      }
+
+      function _formatAgo(ms) {
+        const mins = Math.floor(ms / 60000);
+        if (mins < 1) return "току-що";
+        if (mins < 60) return mins + " мин";
+        const hrs = Math.floor(mins / 60);
+        if (hrs < 24) return hrs + " ч";
+        const days = Math.floor(hrs / 24);
+        return days + " д";
+      }
+
+      /* Изчислява статус-метаданни за една локация спрямо последната проверка. */
+      function _locStatusMeta(last, now) {
+        if (!last) {
+          return { state: "none", color: "#6b7280", accent: "#3a3a3a", label: "Няма данни", sub: "никога", dot: "·" };
+        }
+        const ageMs = now - last.date.getTime();
+        const ageHrs = ageMs / 3600000;
+        const wasProblem = last.status === "Проблем";
+        let s;
+        if (ageHrs < 2) s = { state: "fresh", color: "#10b981", accent: "#10b981", dot: "✓" };
+        else if (ageHrs < 4) s = { state: "warn", color: "#f59e0b", accent: "#f59e0b", dot: "◐" };
+        else s = { state: "stale", color: "#ef4444", accent: "#ef4444", dot: "⚠" };
+        s.label = "преди " + _formatAgo(ageMs);
+        s.sub = last.date.toLocaleString("bg-BG", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+        s.wasProblem = wasProblem;
+        s.ageMs = ageMs;
+        return s;
+      }
+
+      function renderLastCheckedBadges() {
+        const lastBy = getLastCheckedByLocation();
+        const hasData = Object.keys(lastBy).length > 0;
+        // Self-heal: if we have no data yet, kick off a fetch (once).
+        if (!hasData) ensureSheetsDataLoaded();
+
+        const now = Date.now();
+        const groups = [
+          { title: "Кинозали", icon: "🎬", items: HALLS },
+          { title: "Тоалетни", icon: "🚿", items: BATHROOMS },
+        ];
+
+        // Summary counts across all locations
+        let fresh = 0, warn = 0, stale = 0, none = 0, problems = 0;
+        [...HALLS, ...BATHROOMS].forEach(loc => {
+          const m = _locStatusMeta(lastBy[loc], now);
+          if (m.state === "fresh") fresh++;
+          else if (m.state === "warn") warn++;
+          else if (m.state === "stale") stale++;
+          else none++;
+          if (m.wasProblem) problems++;
+        });
+
+        const summaryPill = (color, bg, txt) =>
+          `<span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:${color};background:${bg};border:1px solid ${color}40;padding:3px 9px;border-radius:999px;">${txt}</span>`;
+
+        const summary = hasData ? `<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+          ${fresh ? summaryPill("#10b981", "rgba(16,185,129,.1)", `✓ ${fresh} скоро`) : ""}
+          ${warn ? summaryPill("#f59e0b", "rgba(245,158,11,.1)", `◐ ${warn}`) : ""}
+          ${stale ? summaryPill("#ef4444", "rgba(239,68,68,.1)", `⚠ ${stale} просрочени`) : ""}
+          ${problems ? summaryPill("#f87171", "rgba(248,113,113,.1)", `● ${problems} с проблем`) : ""}
+        </div>` : `<span style="font-size:12px;color:#888;display:inline-flex;align-items:center;gap:6px;"><span class="cg-bounce-dots sm" style="transform:scale(.7);"><span></span><span></span><span></span></span> зареждам…</span>`;
+
+        const renderCard = (loc, groupIcon) => {
+          const m = _locStatusMeta(lastBy[loc], now);
+          const isNone = m.state === "none";
+          // „Просрочена" зала — над 4ч без проверка (или никога). Мига червен !
+          // 2-4ч → жълт ! с по-бавна пулсация (предупреждение).
+          const isOverdueRed = m.state === "stale" || isNone;
+          const isOverdueAmber = m.state === "warn";
+          const showAlert = isOverdueRed || isOverdueAmber;
+          const alertClass = isOverdueRed ? "cg-overdue-alert" : "cg-overdue-alert warn";
+          const alertTitle = isOverdueRed
+            ? (isNone ? "Никога не е проверявана — извърши проверка!" : "Просрочена проверка — над 4 часа!")
+            : "Скоро ще е просрочена — над 2 часа без проверка";
+          const cardGlow = isOverdueRed ? " cg-overdue-card" : "";
+          return `<div class="${cardGlow.trim()}" data-action="open-hall-detail" data-loc="${escapeHtml(loc)}" title="Виж подробна история за ${escapeHtml(loc)}" style="position:relative;display:flex;align-items:stretch;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);border-radius:12px;overflow:visible;transition:background .2s,transform .15s,border-color .2s;min-width:0;cursor:pointer;">
+            ${showAlert ? `<span class="${alertClass}" title="${alertTitle}" aria-label="${alertTitle}">!</span>` : ''}
+            <div style="width:4px;flex-shrink:0;background:${m.accent};border-radius:12px 0 0 12px;"></div>
+            <div style="padding:11px 13px;display:flex;align-items:center;gap:11px;min-width:0;flex:1;overflow:hidden;border-radius:0 12px 12px 0;">
+              ${(() => {
+                const hnn = (loc.match(/(\d+)/) || [])[1];
+                const hc = (hnn && groupIcon === "🎬") ? hallColor(parseInt(hnn, 10)) : null;
+                const bg = hc ? `rgba(${hc.g},.18)` : (isNone ? 'rgba(255,255,255,.04)' : m.color + '1a');
+                const bd = hc ? `border:1px solid rgba(${hc.g},.4);` : "";
+                return `<div style="width:34px;height:34px;border-radius:9px;background:${bg};${bd}display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;">${groupIcon}</div>`;
+              })()}
+              <div style="min-width:0;flex:1;">
+                <div style="font-size:13.5px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(loc)}</div>
+                <div style="font-size:11.5px;color:${m.color};font-weight:600;display:flex;align-items:center;gap:5px;margin-top:2px;">
+                  <span>${m.dot}</span><span>${m.label}</span>
+                  ${m.wasProblem ? '<span style="color:#f87171;font-size:10px;" title="Последна проверка: Проблем">● проблем</span>' : ''}
+                </div>
+                ${(() => {
+                  const hn = (loc.match(/(\d+)/) || [])[1];
+                  if (!hn || !NEXTCLEAN_PROXY_URL) return "";
+                  const num = parseInt(hn, 10);
+                  // Свършила прожекция (задържана поне 5 мин) → почисти сега
+                  const endedShow = _endedHallsSeen[num] && (Date.now() - _endedHallsSeen[num].ts <= ENDED_STICKY_MS);
+                  if (endedShow) {
+                    return `<div style="font-size:10.5px;color:#10b981;font-weight:700;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">✅ свърши — провери залата</div>`;
+                  }
+                  const show = _currentShowForHall(num);
+                  if (!show) return "";
+                  const soon = show.endsInMin != null && show.endsInMin <= 15;
+                  return `<div style="font-size:10.5px;color:${soon ? '#ef4444' : '#8aa0b8'};margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">🎬 свършва ${escapeHtml(show.end)}${show.endsInMin != null ? ` (${show.endsInMin} мин)` : ""}</div>`;
+                })()}
+              </div>
+              ${!isNone ? `<div style="font-size:10px;color:#666;text-align:right;flex-shrink:0;white-space:nowrap;">${escapeHtml(m.sub)}</div>` : ''}
+            </div>
+          </div>`;
+        };
+
+        return `<div class="panel" style="margin-bottom:18px;padding:18px 20px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
+            <h3 style="font-size:15px;font-weight:700;color:#fff;margin:0;letter-spacing:.04em;display:flex;align-items:center;gap:8px;">
+              <span style="font-size:17px;">⏱</span> Статус на проверките
+            </h3>
+            ${summary}
+          </div>
+          ${groups.map(g => `
+            <div style="margin-bottom:14px;">
+              <div style="font-size:11px;font-weight:700;letter-spacing:.1em;color:rgba(255,255,255,.4);margin-bottom:8px;text-transform:uppercase;">${g.icon} ${g.title}</div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:9px;">
+                ${g.items.map(loc => renderCard(loc, g.icon)).join("")}
+              </div>
+            </div>
+          `).join("")}
+          <div style="font-size:10.5px;color:#555;margin-top:2px;display:flex;gap:14px;flex-wrap:wrap;">
+            <span><span style="color:#10b981;">✓</span> до 2ч</span>
+            <span><span style="color:#f59e0b;">◐</span> 2–4ч</span>
+            <span><span style="color:#ef4444;">⚠</span> над 4ч</span>
+          </div>
+        </div>`;
+      }
+
+      /* ── Feature announcement (new phone photo upload) ── */
+      const FEATURE_ANN_KEY = "cg_feature_ann_phone_upload_v1";
+      function isFeatureAnnDismissed() {
+        try { return localStorage.getItem(FEATURE_ANN_KEY) === "1"; } catch (_) { return false; }
+      }
+      function renderFeatureAnnouncement() {
+        if (isFeatureAnnDismissed()) return "";
+        return `
+          <div style="background:linear-gradient(135deg, rgba(16,185,129,.12), rgba(96,165,250,.08));border:1px solid rgba(16,185,129,.3);border-radius:14px;padding:18px 20px;margin-bottom:18px;position:relative;overflow:hidden;">
+            <button type="button" data-action="dismiss-feature-ann" style="position:absolute;top:10px;right:10px;width:28px;height:28px;border-radius:6px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#ccc;cursor:pointer;font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;" aria-label="Затвори съобщението">✕</button>
+            <div style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;">
+              <div style="font-size:32px;line-height:1;flex-shrink:0;">📱📸</div>
+              <div style="flex:1;min-width:260px;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                  <span style="font-size:11px;font-weight:800;letter-spacing:.14em;color:#10b981;background:rgba(16,185,129,.18);padding:2px 8px;border-radius:4px;">НОВА ФУНКЦИЯ</span>
+                </div>
+                <div style="font-size:17px;font-weight:700;color:#fff;margin-bottom:6px;">Качване на снимки от телефон чрез QR код</div>
+                <div style="font-size:13px;color:rgba(255,255,255,.75);line-height:1.55;margin-bottom:10px;">
+                  По време на проверка може да изпратиш снимки от телефона си директно към компютъра. Снимките се качват автоматично в Google Drive и се показват веднага на проверяващия PC, готови за финално запазване.
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;font-size:12px;color:rgba(255,255,255,.7);">
+                  <div style="background:rgba(255,255,255,.04);border-radius:8px;padding:8px 10px;border:1px solid rgba(255,255,255,.07);">
+                    <b style="color:#10b981;">1.</b> Натисни <b>„📱 Качи снимки от телефон (QR код)"</b> в зоната за снимки
+                  </div>
+                  <div style="background:rgba(255,255,255,.04);border-radius:8px;padding:8px 10px;border:1px solid rgba(255,255,255,.07);">
+                    <b style="color:#10b981;">2.</b> Сканирай QR кода с телефона си — отваря се страница за качване
+                  </div>
+                  <div style="background:rgba(255,255,255,.04);border-radius:8px;padding:8px 10px;border:1px solid rgba(255,255,255,.07);">
+                    <b style="color:#10b981;">3.</b> Избери до <b>5 снимки</b>, напиши коментар (мин. 20 символа) и качи
+                  </div>
+                  <div style="background:rgba(255,255,255,.04);border-radius:8px;padding:8px 10px;border:1px solid rgba(255,255,255,.07);">
+                    <b style="color:#10b981;">4.</b> Снимките се появяват на PC в зелен панел — продължи проверката и я запази
+                  </div>
+                </div>
+                <div style="margin-top:10px;font-size:11px;color:rgba(255,255,255,.5);">
+                  💡 Удобно за служители работещи на PC — спестява time за импорт от телефона.
                 </div>
               </div>
             </div>
@@ -2279,6 +4213,8 @@
             </div>
           </div>
 
+          ${renderLastCheckedBadges()}
+          ${renderFeatureAnnouncement()}
           ${_annHtml}
 
           <div style="margin-bottom:24px;">
@@ -2411,7 +4347,7 @@
 
       async function fetchSheetsData() {
         const url = SHEETS_WEB_APP_URL + '?action=getInfo&_token=' + encodeURIComponent(SHEETS_SECRET_TOKEN) + '&_cb=' + Date.now();
-        const res = await fetch(url);
+        const res = await fetchWithTimeout(url, {}, 15000);
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const json = await res.json();
         if (!json.success) throw new Error(json.error || 'Error');
@@ -2600,6 +4536,23 @@
       let _chartsLoading = false;
       let _cachedChartRows = null;
       let _chartsFetchVersion = 0;
+      let _sheetsFetchInFlight = false;
+
+      /* Self-healing зареждане на ИНФО данните — извиква се от badge-овете на
+         home когато няма кеширани данни. Прави най-много едно паралелно
+         извикване и пре-рендерира home при успех. */
+      function ensureSheetsDataLoaded() {
+        if (_cachedChartRows && _cachedChartRows.length > 0) return;
+        if (_sheetsFetchInFlight) return;
+        if (!isSheetsConfigured()) return;
+        _sheetsFetchInFlight = true;
+        fetchSheetsData().then(r => {
+          _cachedChartRows = r;
+        }).catch(() => {}).finally(() => {
+          _sheetsFetchInFlight = false;
+          if (state.screen === "home") render();
+        });
+      }
 
       async function refreshChartsData() {
         const btn = document.getElementById('charts-refresh-btn');
@@ -2922,6 +4875,9 @@
                 ${config.title}
               </h1>
               <div class="muted">${isSheetsConfigured() ? "Данните ще се изпратят автоматично към Google Sheets след запис." : "Локален запис в браузъра."}</div>
+              ${isSheetsConfigured() ? (state.lockConfirmed
+                ? `<div style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;font-size:12px;color:var(--green);background:rgba(45,204,112,.1);border:1px solid rgba(45,204,112,.28);padding:4px 10px;border-radius:999px;">🔒 Залата е заключена за теб</div>`
+                : `<div style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;font-size:12px;color:#f59e0b;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.35);padding:4px 10px;border-radius:999px;">🔓 Без заключване (сървърна грешка) — друг може да отвори същата зала</div>`) : ""}
             </div>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
               <span class="muted"><strong style="color:var(--green);">${filledCount}</strong>/${config.items.length} попълнени</span>
@@ -2932,7 +4888,13 @@
           <div class="panel" style="margin-bottom:16px;">
             <div class="grid cards-2">
               <div class="field"><label>Локация *${!state.currentSessionId && !isQROnlySession() ? ' <span style="color:var(--red);font-size:11px;">(няма заключване)</span>' : ""}</label><select id="location-select" ${isQROnlySession() ? "disabled" : ""}>${config.locations.map((l) => `<option value="${l}" ${l === state.location ? "selected" : ""}>${l}</option>`).join("")}</select></div>
-              <div class="field"><label>Проверяващ *</label><input id="inspector-input" value="${escapeHtml(state.inspector)}" placeholder="Пълно име…" />${state.showValidation && !state.inspector.trim() ? `<div style="color:var(--red);font-size:12px;">Задължително поле</div>` : state.showValidation && !/^[\u0400-\u04FF ]+$/.test(state.inspector.trim()) ? `<div style="color:var(--red);font-size:12px;">Само кирилица, без специални символи</div>` : ""}</div>
+              <div class="field"><label>Проверяващ *</label>
+                <input id="inspector-input" list="cg-inspector-list" value="${escapeHtml(state.inspector)}" placeholder="${ALLOWED_NAMES.length ? 'Започни да пишеш име…' : 'Зареждам списъка с имена…'}" autocomplete="off" />
+                ${ALLOWED_NAMES.length ? `<datalist id="cg-inspector-list">${ALLOWED_NAMES.map(n => `<option value="${escapeHtml(n)}"></option>`).join("")}</datalist>` : ""}
+                ${ALLOWED_NAMES.length ? `<div style="font-size:11px;color:#888;margin-top:4px;">Избери от падащия списък (${ALLOWED_NAMES.length} разрешени имена)</div>` : ""}
+                ${state.showValidation && !state.inspector.trim() ? `<div style="color:var(--red);font-size:12px;margin-top:4px;">Задължително поле</div>` :
+                  state.showValidation && ALLOWED_NAMES.length && !ALLOWED_NAMES.includes(state.inspector.trim()) ? `<div style="color:var(--red);font-size:12px;margin-top:4px;">Името „${escapeHtml(state.inspector.trim())}" не е в списъка. Избери от падащото меню.</div>` : ""}
+              </div>
             </div>
             <div class="muted" style="font-size:13px;">Дата и час: ${fmt(new Date().toISOString())}</div>
           </div>
@@ -2952,8 +4914,45 @@
           </div>
 
           <div class="panel" style="margin-bottom:16px;">
-            <div class="field" style="margin:0;"><label>Бележки</label><textarea id="notes-input" rows="4" placeholder="Допълнителни коментари…">${escapeHtml(state.notes)}</textarea></div>
+            <div class="field" style="margin:0;"><label>Бележки</label><textarea id="notes-input" dir="ltr" rows="4" style="direction: ltr !important; unicode-bidi: plaintext !important;" placeholder="Допълнителни коментари…">${escapeHtml(state.notes)}</textarea></div>
           </div>
+
+          <div class="panel" style="margin-bottom:16px;">
+            <div class="field" style="margin:0;">
+              <label>Снимки при проблем (опционално, до 5)</label>
+              <input type="file" id="photo-input" accept="image/jpeg,image/png,image/webp" multiple />
+              <div style="font-size:11px;color:#888;margin-top:4px;">Може да изберете от 1 до 5 снимки наведнъж (Ctrl/Cmd + клик за избор на повече).</div>
+              <button type="button" class="btn btn-outline" data-action="open-phone-photo-qr" style="margin-top:10px;width:100%;padding:10px;font-size:14px;">📱 Качи снимки от телефон (QR код)</button>
+              <div id="phone-photo-poll-status" style="font-size:12px;margin-top:6px;color:#f59e0b;display:${state.phonePhotoPollError ? '' : 'none'};">${state.phonePhotoPollError ? "⚠ " + escapeHtml(state.phonePhotoPollError) : ""}</div>
+              ${state.photoError ? `<div style="color:var(--red);font-size:12px;margin-top:6px;">${escapeHtml(state.photoError)}</div>` : ""}
+              ${state.photoPreviews.length > 0 ? `<div style="margin-top:12px;padding:12px;background:rgba(255,255,255,.05);border-radius:12px;border:1px solid rgba(255,255,255,.1);">
+                <div style="font-size:12px;color:#888;margin-bottom:8px;">Преглед на снимки от PC (${state.photoPreviews.length}):</div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;">
+                  ${state.photoPreviews.map((src, idx) => `<div style="position:relative;border-radius:8px;overflow:hidden;border:1px solid rgba(255,255,255,.1);">
+                    ${src ? `<img src="${src}" style="width:100%;height:120px;object-fit:cover;display:block;" alt="Photo ${idx + 1}" />` : `<div style="width:100%;height:120px;background:#222;"></div>`}
+                    <span style="position:absolute;top:4px;left:4px;background:rgba(0,0,0,.7);color:#fff;font-size:11px;padding:2px 6px;border-radius:4px;">PC ${idx + 1}/${state.photoPreviews.length}</span>
+                  </div>`).join("")}
+                </div>
+              </div>` : ""}
+              ${(state.remotePhotoUrls && state.remotePhotoUrls.length > 0) ? `<div style="margin-top:12px;padding:12px;background:rgba(16,185,129,.08);border-radius:12px;border:1px solid rgba(16,185,129,.25);">
+                <div style="font-size:12px;color:#10b981;margin-bottom:8px;font-weight:600;">📱 Снимки получени от телефон (${state.remotePhotoUrls.length}):</div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;">
+                  ${state.remotePhotoUrls.map((url, idx) => `<a href="${url}" target="_blank" rel="noopener" style="position:relative;border-radius:8px;overflow:hidden;border:1px solid rgba(16,185,129,.35);text-decoration:none;display:block;background:#1a1a1a;height:120px;">
+                    <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#10b981;font-size:11px;text-align:center;padding:6px;">📱 Снимка ${idx + 1}<br/>(отвори в Drive)</div>
+                    <span style="position:absolute;top:4px;left:4px;background:rgba(16,185,129,.85);color:#000;font-size:11px;padding:2px 6px;border-radius:4px;font-weight:600;">📱 ${idx + 1}</span>
+                  </a>`).join("")}
+                </div>
+              </div>` : ""}
+            </div>
+          </div>
+
+          ${(state.photoFiles.length > 0 || (state.remotePhotoUrls && state.remotePhotoUrls.length > 0)) ? `<div class="panel" style="margin-bottom:16px;">
+            <div class="field" style="margin:0;">
+              <label>Коментар към снимките <span style="color:#888;font-weight:400;font-size:12px;">(по желание)</span></label>
+              <textarea id="photo-comment-input" dir="ltr" rows="3" style="direction: ltr !important; unicode-bidi: plaintext !important;" placeholder="Описание на проблема и причина за снимките…">${escapeHtml(state.notes)}</textarea>
+              <div id="photo-comment-counter" style="font-size:11px;margin-top:6px;color:#888;">${state.notes.length} символа</div>
+            </div>
+          </div>` : ""}
 
           <button class="btn btn-gold" data-action="submit-inspection" style="width:100%;padding:16px;font-size:16px;">
             ${allFilled && state.inspector.trim() ? `Запази${isSheetsConfigured() ? " и изпрати" : ""}` : `Попълни всички полета (${filledCount}/${config.items.length})`}
@@ -2978,6 +4977,166 @@
           </div>`;
       }
 
+      /* ── Phone-only photo upload screen (opened via QR scan from PC) ── */
+      function renderPhonePhotoUpload() {
+        const loc = state.phonePhotoLoc || "—";
+        const inspector = state.phonePhotoInspector || "—";
+        const typeLabel = state.phonePhotoType === "bathroom" ? "Тоалетна" : (state.phonePhotoType === "hall" ? "Кинозала" : "");
+        const uploadedCount = state.phonePhotoUploaded || 0;
+        const totalCount = state.phonePhotoTotal || 0;
+        const isUploading = !!state.phonePhotoBusy;
+        const isDone = !!state.phonePhotoDone;
+
+        if (isDone) {
+          return `<div style="max-width:640px;margin:0 auto;padding:16px;text-align:center;">
+            <div style="font-size:64px;margin:24px 0 12px;">✅</div>
+            <h2 class="section-title" style="margin:0 0 12px;">Снимките са качени успешно!</h2>
+            <p class="muted" style="margin:0 0 8px;">Качени са <b>${uploadedCount}</b> от <b>${totalCount}</b> снимки за <b>${escapeHtml(loc)}</b>.</p>
+            <p class="muted" style="margin:0 0 24px;font-size:13px;">Записани са в Google Sheets и пратени към компютъра на проверяващия.</p>
+            <button class="btn btn-gold" data-action="phone-photo-done" style="padding:14px 24px;width:100%;font-size:16px;margin-bottom:10px;">✅ Готово (затвори страницата)</button>
+            <button class="btn btn-outline" data-action="phone-photo-reset" style="padding:12px 20px;width:100%;">Качи още снимки</button>
+          </div>`;
+        }
+
+        return `<div style="max-width:640px;margin:0 auto;padding:16px;">
+          <div class="panel" style="margin-bottom:16px;text-align:center;">
+            <div style="font-size:32px;margin-bottom:6px;">📱📸</div>
+            <h2 class="section-title" style="margin:0 0 8px;">Качване на снимки</h2>
+            <div style="font-size:14px;color:#aaa;">${escapeHtml(typeLabel)}${typeLabel ? " — " : ""}<b style="color:#fff;">${escapeHtml(loc)}</b></div>
+            ${inspector !== "—" ? `<div style="font-size:12px;color:#888;margin-top:4px;">Проверяващ: ${escapeHtml(inspector)}</div>` : ""}
+          </div>
+
+          <div class="panel" style="margin-bottom:16px;">
+            <div class="field" style="margin:0;">
+              <label>Изберете до 5 снимки от галерията</label>
+              <input type="file" id="photo-input" accept="image/jpeg,image/png,image/webp" multiple ${isUploading ? "disabled" : ""} />
+              <div style="font-size:11px;color:#888;margin-top:4px;">JPEG / PNG / WebP, максимум 10MB на файл.</div>
+              ${state.photoError ? `<div style="color:var(--red);font-size:12px;margin-top:6px;">${escapeHtml(state.photoError)}</div>` : ""}
+              ${state.photoPreviews.length > 0 ? `<div style="margin-top:12px;padding:12px;background:rgba(255,255,255,.05);border-radius:12px;border:1px solid rgba(255,255,255,.1);">
+                <div style="font-size:12px;color:#888;margin-bottom:8px;">Преглед на снимки (${state.photoPreviews.length}):</div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;">
+                  ${state.photoPreviews.map((src, idx) => `<div style="position:relative;border-radius:8px;overflow:hidden;border:1px solid rgba(255,255,255,.1);">
+                    ${src ? `<img src="${src}" style="width:100%;height:110px;object-fit:cover;display:block;" alt="Photo ${idx + 1}" />` : `<div style="width:100%;height:110px;background:#222;"></div>`}
+                    <span style="position:absolute;top:4px;left:4px;background:rgba(0,0,0,.7);color:#fff;font-size:11px;padding:2px 6px;border-radius:4px;">${idx + 1}/${state.photoPreviews.length}</span>
+                  </div>`).join("")}
+                </div>
+              </div>` : ""}
+            </div>
+          </div>
+
+          ${state.photoFiles.length > 0 ? `<div class="panel" style="margin-bottom:16px;">
+            <div class="field" style="margin:0;">
+              <label>Коментар към снимките <span style="color:#888;font-weight:400;font-size:12px;">(по желание)</span></label>
+              <textarea id="photo-comment-input" dir="ltr" rows="3" style="direction: ltr !important; unicode-bidi: plaintext !important;" placeholder="Описание на проблема…" ${isUploading ? "disabled" : ""}>${escapeHtml(state.notes)}</textarea>
+              <div id="photo-comment-counter" style="font-size:11px;margin-top:6px;color:#888;">${state.notes.length} символа</div>
+            </div>
+          </div>` : ""}
+
+          ${isUploading ? `<div class="panel" style="margin-bottom:16px;text-align:center;">
+            <div style="font-size:14px;">Качване… ${uploadedCount}/${totalCount}</div>
+          </div>` : ""}
+
+          ${state.phonePhotoStatus ? `<div class="panel" style="margin-bottom:16px;background:${state.phonePhotoStatusKind === 'error' ? 'rgba(239,68,68,.1)' : 'rgba(16,185,129,.1)'};border:1px solid ${state.phonePhotoStatusKind === 'error' ? 'rgba(239,68,68,.3)' : 'rgba(16,185,129,.3)'};">
+            <div style="font-size:13px;color:${state.phonePhotoStatusKind === 'error' ? '#fca5a5' : '#10b981'};white-space:pre-wrap;">${escapeHtml(state.phonePhotoStatus)}</div>
+          </div>` : ""}
+
+          <button type="button" class="btn btn-gold" data-action="submit-phone-photos" id="yellow-upload-btn" style="width:100%;padding:16px;font-size:16px;${isUploading ? 'opacity:.6;' : ''}"
+            onclick="try{window.cgUploadFromPhone&&window.cgUploadFromPhone();}catch(e){console.warn(e);}">
+            ${isUploading ? "Качване…" : (state.photoFiles.length === 0 ? "Изберете снимки" : `Качи ${state.photoFiles.length} снимки`)}
+          </button>
+
+          <button type="button" class="btn btn-outline" data-action="phone-test-ntfy" style="width:100%;padding:10px;font-size:13px;margin-top:10px;">🧪 Тест: изпрати сигнал към PC</button>
+
+          <div style="margin-top:14px;padding:10px;background:rgba(255,255,255,.04);border-radius:8px;font-size:11px;color:#888;font-family:monospace;word-break:break-all;">
+            PC сесия: ${state.pcSessionId ? escapeHtml(state.pcSessionId) : '<span style="color:#fca5a5;">⚠ ЛИПСВА — QR кодът няма sid параметър</span>'}
+          </div>
+          <div style="margin-top:8px;text-align:center;font-size:10px;color:#444;">${BUILD_VERSION}</div>
+        </div>`;
+      }
+
+      function setPhonePhotoStatus(msg, kind) {
+        state.phonePhotoStatus = msg || "";
+        state.phonePhotoStatusKind = kind || "info";
+        render();
+      }
+
+      // Expose for inline onclick under a UNIQUE name so we don't collide
+      // with the original submitPhonePhotos symbol on window (which iOS
+      // Safari/JSCore was resolving to *itself* — infinite recursion → max
+      // call stack).
+      window.cgUploadFromPhone = function () { return submitPhonePhotos(); };
+
+      async function submitPhonePhotos() {
+        console.log("[phone] submitPhonePhotos called");
+        if (state.phonePhotoBusy) return;
+        if (state.photoFiles.length === 0) {
+          setPhonePhotoStatus("Изберете поне една снимка.", "error");
+          return;
+        }
+        if (!state.pcSessionId) {
+          setPhonePhotoStatus("⚠ ЛИПСВА PC сесия — сканирай QR кода отново от компютъра.", "error");
+          return;
+        }
+        state.phonePhotoBusy = true;
+        state.phonePhotoTotal = state.photoFiles.length;
+        state.phonePhotoUploaded = 0;
+        setPhonePhotoStatus("Започва качване…", "info");
+
+        // Fire-and-forget warmup (NO await) so the very next request below
+        // still runs inside iOS's user-activation window.
+        if (state.pcSessionId) {
+          fetch(NTFY_BASE + "/" + encodeURIComponent("cg-photos-" + state.pcSessionId), {
+            method: "POST", body: "warmup-" + Date.now(), keepalive: true,
+          }).catch(() => {});
+        }
+
+        try {
+          // Use the location/inspector from URL params for the upload metadata
+          const savedLoc = state.location;
+          const savedInspector = state.inspector;
+          state.location = state.phonePhotoLoc || state.location || "";
+          state.inspector = state.phonePhotoInspector || state.inspector || "";
+
+          let uploaded = 0;
+          let failed = 0;
+          let lastError = "";
+          for (let i = 0; i < state.photoFiles.length; i++) {
+            const label = `${i + 1}/${state.photoFiles.length}`;
+            setPhonePhotoStatus(`Качвам снимка ${label} към Google Drive…`, "info");
+            // Pass already-loaded data URL (from preview) to avoid a second
+            // FileReader pass that would lose user-gesture activation on iOS.
+            const photoSource = (state.photoPreviews && state.photoPreviews[i]) || state.photoFiles[i];
+            const url = await uploadOnePhoto_(photoSource, label);
+            if (url) {
+              uploaded++;
+            } else {
+              failed++;
+            }
+            if (_lastUploadError) lastError = _lastUploadError;
+            state.phonePhotoUploaded = uploaded;
+            render();
+          }
+
+          state.location = savedLoc;
+          state.inspector = savedInspector;
+
+          state.phonePhotoBusy = false;
+          state.phonePhotoDone = (uploaded > 0 && failed === 0 && !lastError);
+          if (state.phonePhotoDone) {
+            setPhonePhotoStatus(`✅ Всички ${uploaded} снимки са качени и пратени към PC.`, "info");
+          } else if (uploaded > 0) {
+            setPhonePhotoStatus(`Качени ${uploaded}/${state.photoFiles.length} снимки. Грешка: ${lastError || "неизвестна"}`, "error");
+          } else {
+            setPhonePhotoStatus(`Не успях да кача нито една снимка. ${lastError || ""}`, "error");
+          }
+          render();
+        } catch (err) {
+          state.phonePhotoBusy = false;
+          showToast("Грешка при качване: " + (err && err.message ? err.message : err), "error");
+          render();
+        }
+      }
+
       /* ── Targeted DOM update for item status (avoids full re-render) ── */
       function updateItemRow(itemId) {
         const config = getConfig(state.inspectionType);
@@ -2986,6 +5145,7 @@
         const row = document.querySelector(`.item-row[data-item-id="${itemId}"]`);
         if (!row) return;
         row.outerHTML = renderItemRow(item);
+        applyTranslation(document.querySelector(`.item-row[data-item-id="${itemId}"]`));
 
         /* Update progress bar & counters */
         const filledCount = config.items.filter((i) => isFilled(state.itemState[i.id])).length;
@@ -3009,8 +5169,107 @@
           </div>`;
         }
         if (state.showQRModal) html += renderQRModal();
+        if (state.showPhonePhotoQRModal) html += renderPhonePhotoQRModal();
+        if (state.hallDetail) html += renderHallDetailModal();
         if (state.toast) html += `<div class="toast ${escapeHtml(state.toast.type)}" role="status" aria-live="polite">${escapeHtml(state.toast.msg)}</div>`;
         return html;
+      }
+
+      /* Детайлен изглед на зала — история, статистика, проблеми. */
+      function renderHallDetailModal() {
+        const loc = state.hallDetail;
+        if (!loc) return "";
+        const h = getHallHistory(loc);
+        const now = Date.now();
+        const isHall = /Зала/i.test(loc);
+        const hn = (loc.match(/(\d+)/) || [])[1];
+        const hc = (isHall && hn) ? hallColor(parseInt(hn, 10)) : { c: "#60a5fa", g: "96,165,250" };
+        const last = h.rows[0] || null;
+        const m = _locStatusMeta(last ? { date: last.date, status: last.status } : null, now);
+
+        const stat = (val, label, color) => `<div style="flex:1;min-width:80px;text-align:center;padding:10px 8px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:12px;">
+            <div style="font-size:23px;font-weight:800;color:${color};font-family:'Oswald',sans-serif;line-height:1;">${val}</div>
+            <div style="font-size:9.5px;color:#8a97a8;letter-spacing:.08em;text-transform:uppercase;margin-top:4px;">${label}</div>
+          </div>`;
+
+        const rowsHtml = h.rows.slice(0, 25).map((r) => {
+          const bad = /проблем/i.test(r.status);
+          const when = r.date.toLocaleString("bg-BG", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+          const photoUrl = (r.photo.match(/https?:\/\/\S+/) || [])[0] || "";
+          return `<div style="display:flex;gap:10px;padding:9px 11px;border-radius:10px;background:rgba(255,255,255,.02);border-left:3px solid ${bad ? "var(--red)" : "var(--green)"};">
+            <div style="flex-shrink:0;width:88px;font-size:11px;color:#9fb2c8;font-weight:600;">${escapeHtml(when)}</div>
+            <div style="flex:1;min-width:0;">
+              <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">
+                <span style="font-size:12px;font-weight:700;color:#fff;">${escapeHtml(r.who || "—")}</span>
+                <span class="pill ${bad ? "bad" : "ok"}" style="font-size:10px;padding:2px 8px;">${bad ? "Проблем" : "Чисто"}</span>
+                ${photoUrl ? `<a href="${photoUrl}" target="_blank" rel="noopener" style="font-size:10px;color:#60a5fa;text-decoration:none;">📷 снимка</a>` : ""}
+              </div>
+              ${bad && r.issues && r.issues !== "—" ? `<div style="font-size:11px;color:#fca5a5;margin-top:3px;">${escapeHtml(r.issues)}</div>` : ""}
+              ${r.notes && r.notes !== "—" ? `<div style="font-size:10.5px;color:#7c8ba0;margin-top:2px;font-style:italic;">${escapeHtml(r.notes)}</div>` : ""}
+            </div>
+          </div>`;
+        }).join("");
+
+        return `<div class="modal-backdrop" data-action="close-hall-detail" role="presentation">
+          <div class="modal" role="dialog" aria-modal="true" onclick="if(!event.target.closest('[data-action]'))event.stopPropagation()" style="max-width:680px;">
+            <div style="display:flex;align-items:center;gap:13px;margin-bottom:16px;">
+              <div style="width:52px;height:52px;border-radius:14px;background:rgba(${hc.g},.18);border:1px solid rgba(${hc.g},.45);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">${isHall ? "🎬" : "🚿"}</div>
+              <div style="flex:1;min-width:0;">
+                <h2 class="section-title" style="margin:0;font-size:21px;">${escapeHtml(loc)}</h2>
+                <div style="font-size:12px;color:${m.color};font-weight:600;margin-top:2px;">${m.dot} ${escapeHtml(m.label)}${last ? " · " + escapeHtml(last.who || "") : ""}</div>
+              </div>
+              <button type="button" class="btn btn-outline" data-action="close-hall-detail" style="padding:7px 14px;font-size:13px;flex-shrink:0;">✕</button>
+            </div>
+
+            <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+              ${stat(h.today, "днес", "#10b981")}
+              ${stat(h.week, "7 дни", "#60a5fa")}
+              ${stat(h.total, "общо", "#a78bfa")}
+              ${stat(h.problems, "проблема", h.problems ? "#ef4444" : "#8a97a8")}
+              ${h.avgGapMin != null ? stat(_formatAgo(h.avgGapMin * 60000), "средно", "#fbbf24") : ""}
+            </div>
+
+            ${h.inspectors.length ? `<div style="margin-bottom:14px;">
+              <div style="font-size:10.5px;font-weight:700;letter-spacing:.09em;color:rgba(255,255,255,.4);text-transform:uppercase;margin-bottom:7px;">Проверявали (7 дни)</div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;">${h.inspectors.map(i => `<span class="tag">${escapeHtml(i.name)} · ${i.n}</span>`).join("")}</div>
+            </div>` : ""}
+
+            <div style="font-size:10.5px;font-weight:700;letter-spacing:.09em;color:rgba(255,255,255,.4);text-transform:uppercase;margin-bottom:8px;">История${h.rows.length > 25 ? " (последни 25)" : ""}</div>
+            ${h.rows.length ? `<div style="display:grid;gap:6px;max-height:44vh;overflow-y:auto;">${rowsHtml}</div>`
+              : `<div style="font-size:13px;color:#888;padding:14px 2px;">Няма записани проверки за тази локация.</div>`}
+          </div>
+        </div>`;
+      }
+
+      function renderPhonePhotoQRModal() {
+        const base = getQRBaseUrl().replace(/\/?$/, "");
+        const sep = base.includes("?") ? "&" : "?";
+        // Include a build-version cache buster — iOS Safari aggressively
+        // caches HTML for the same URL and was serving an old bundle. A
+        // changing _v query string forces it to re-fetch.
+        const url = base + sep + "phonephoto=1"
+          + "&type=" + encodeURIComponent(state.inspectionType || "")
+          + "&loc=" + encodeURIComponent(state.location || "")
+          + "&inspector=" + encodeURIComponent(state.inspector || "")
+          + "&sid=" + encodeURIComponent(state.pcSessionId || "")
+          + "&_v=" + encodeURIComponent(BUILD_VERSION.replace(/[^a-zA-Z0-9._-]/g, ""));
+        const remoteCount = (state.remotePhotoUrls || []).length;
+        const imgSrc = "https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=2&data=" + encodeURIComponent(url);
+        return `
+          <div class="modal-backdrop" id="phone-photo-qr-backdrop" data-action="close-phone-photo-qr" role="presentation">
+            <div class="modal" role="dialog" aria-modal="true" aria-labelledby="phone-photo-qr-title" onclick="if(!event.target.closest('[data-action]'))event.stopPropagation()" style="max-width:420px;text-align:center;">
+              <h2 id="phone-photo-qr-title" class="section-title" style="margin:0 0 12px;">📱 Качи снимки от телефон</h2>
+              <p class="muted" style="margin:0 0 16px;font-size:13px;">Сканирай QR кода с телефона си, за да отвориш страницата за качване на снимки за <b>${escapeHtml(state.location || "")}</b>.</p>
+              <img src="${imgSrc}" width="260" height="260" alt="QR код за качване на снимки" style="display:block;margin:0 auto;border-radius:12px;background:#fff;padding:6px;" />
+              <div id="phone-photo-qr-status" style="margin:14px 0 4px;font-size:13px;color:${remoteCount > 0 ? '#10b981' : '#888'};">
+                ${remoteCount > 0 ? `✅ Получени ${remoteCount} снимки от телефон` : "⏳ Очакване на снимки от телефон…"}
+              </div>
+              <p class="muted" style="margin:4px 0;font-size:11px;">Може да затвориш модала — снимките ще се появят на страницата автоматично.</p>
+              <div style="margin-top:18px;">
+                <button type="button" class="btn btn-gold" data-action="close-phone-photo-qr">Готово</button>
+              </div>
+            </div>
+          </div>`;
       }
 
       function renderQRModal() {
@@ -3150,6 +5409,7 @@
         const el = document.getElementById('modals');
         if (el) el.innerHTML = renderModals();
         if (state.showDeleteModal) setupModalFocusTrap();
+        applyTranslation(el);
       }
 
       /* ════════════════════════════════════════════════════════
@@ -3171,13 +5431,17 @@
         return pad(d.getDate()) + "." + pad(d.getMonth() + 1) + "." + d.getFullYear();
       }
 
-      /* Today at midnight local */
-      function crToday() {
-        const t = new Date();
-        t.setHours(0, 0, 0, 0);
-        return t;
+          /* Today at midnight local — with 1-hour grace period after midnight */
+    function crToday() {
+      const now = new Date();
+      const t = new Date(now);
+      t.setHours(0, 0, 0, 0);
+      // Ако е преди 01:00 ч., третираме вчерашния ден като "днес"
+      if (now.getHours() < 1) {
+        t.setDate(t.getDate() - 1);
       }
-
+      return t;
+    }
       /* Fetch all rows from "Почистване съблекални" sheet via gviz */
       async function fetchChangingRoomData() {
         state.crLoading = true;
@@ -3186,7 +5450,7 @@
         render();
         try {
           const url = SHEETS_WEB_APP_URL + '?action=getChangingRooms&_token=' + encodeURIComponent(SHEETS_SECRET_TOKEN) + '&_cb=' + Date.now();
-          const resp = await fetch(url, { cache: "no-store" });
+          const resp = await fetchWithTimeout(url, { cache: "no-store" }, 15000);
           if (!resp.ok) throw new Error("HTTP " + resp.status);
           const json = await resp.json();
           if (!json.success) throw new Error(json.error || "Error");
@@ -3464,8 +5728,11 @@
           state.screen === "inspection" ? renderInspection() :
           state.screen === "history" ? renderHistory() :
           state.screen === "charts" ? renderCharts() :
+          state.screen === "halls" ? renderHallsScreen() :
+          state.screen === "rules" ? renderRulesScreen() :
           state.screen === "select-cr" ? renderChangingRoomSelect() :
           state.screen === "cr-detail" ? renderChangingRoomDetail() :
+          state.screen === "phone-photo-upload" ? renderPhonePhotoUpload() :
           renderHome();
         app.innerHTML = renderShell(content);
         updateModals();
@@ -3479,6 +5746,7 @@
         applyPerfMode();
         if (state.screen === "home" && typeof cgUpdateReviews === 'function') cgUpdateReviews();
         initSearchBar();
+        applyTranslation(app);
       }
 
       /* ── Search Bar ── */
@@ -3632,8 +5900,29 @@
           }
           state.location = newLoc;
         });
-        bind("inspector-input", "input", (e) => { const filtered = e.target.value.replace(/[^\u0400-\u04FF ]/g, ""); e.target.value = filtered; state.inspector = filtered; });
-        bind("notes-input", "input", (e) => { state.notes = e.target.value; });
+        bind("inspector-input", "input", (e) => {
+          const filtered = e.target.value.replace(/[^\u0400-\u04FF ]/g, "");
+          if (e.target.value !== filtered) e.target.value = filtered;
+          state.inspector = filtered;
+        });
+        // On blur — ако стойността не съвпада точно с име от списъка,
+        // опитай case-insensitive съвпадение (за да хванем малки/големи букви).
+        bind("inspector-input", "blur", (e) => {
+          if (!ALLOWED_NAMES.length) return;
+          const v = e.target.value.trim();
+          if (!v || ALLOWED_NAMES.includes(v)) return;
+          const match = ALLOWED_NAMES.find(n => n.toLowerCase() === v.toLowerCase());
+          if (match) { e.target.value = match; state.inspector = match; }
+        });
+        bind("notes-input", "input", (e) => {
+          state.notes = e.target.value;
+        });
+        bind("photo-input", "change", (e) => { handlePhotoSelect(e); });
+        bind("photo-comment-input", "input", (e) => {
+          state.notes = e.target.value;
+          const counter = document.getElementById("photo-comment-counter");
+          if (counter) counter.textContent = e.target.value.length + " символа";
+        });
         bind("delete-pass-input", "input", (e) => { state.deletePass = e.target.value; state.deleteErr = ""; });
         bind("export-range-select", "change", (e) => { state.exportRange = e.target.value; render(); });
         bind("history-type-filter", "change", (e) => { state.historyTypeFilter = e.target.value; render(); });
@@ -3788,8 +6077,17 @@
           return;
         }
 
-        if (action === "go-home") { cleanupSessionLock(); state.screen = "home"; render(); return; }
+        if (action === "go-home") { cleanupSessionLock(); stopPhonePhotoPolling(); state.pcSessionId = null; state.remotePhotoUrls = []; state.screen = "home"; render(); return; }
         if (action === "go-history") { state.screen = "history"; render(); return; }
+        if (action === "go-halls") { state.screen = "halls"; fetchNextClean(); fetchNextBoard(); render(); return; }
+        if (action === "go-rules") { state.screen = "rules"; if (RULES_MD === null) loadRules(); render(); return; }
+        if (action === "toggle-lang") {
+          currentLang = currentLang === "bg" ? "en" : "bg";
+          try { localStorage.setItem(LANG_KEY, currentLang); } catch (_) {}
+          document.documentElement.lang = currentLang === "en" ? "en" : "bg";
+          render();
+          return;
+        }
         if (action === "go-charts") {
           if (Date.now() < chartsCooldownUntil) {
             showToast("Моля да не спамиш. След няколко секунди опитай пак.", "error");
@@ -3841,6 +6139,9 @@
         if (action === "start-inspection") {
           state.screen = "select-hall";
           state.inspectionType = btn.dataset.type;
+          // Warmup — събуди Apps Script докато потребителят избира локация,
+          // за да е „топъл" при следващото заключване (по-малко cold-start).
+          warmUpBackend();
           render();
           return;
         }
@@ -3869,6 +6170,88 @@
         /* QR modal — само updateModals(), не презареждаме съдържанието, данните остават */
         if (action === "open-qr") { state.showQRModal = true; updateModals(); return; }
         if (action === "close-qr") { state.showQRModal = false; updateModals(); return; }
+        if (action === "open-hall-detail") {
+          state.hallDetail = btn.dataset.loc || null;
+          updateModals();
+          // Ако данните още не са заредени — дръпни ги и опресни
+          if (!_cachedChartRows || !_cachedChartRows.length) {
+            fetchSheetsData().then(r => { _cachedChartRows = r; if (state.hallDetail) updateModals(); }).catch(() => {});
+          }
+          return;
+        }
+        if (action === "close-hall-detail") { state.hallDetail = null; updateModals(); return; }
+        if (action === "dismiss-feature-ann") {
+          try { localStorage.setItem(FEATURE_ANN_KEY, "1"); } catch (_) {}
+          render();
+          return;
+        }
+        if (action === "open-phone-photo-qr") {
+          if (!state.pcSessionId) {
+            state.pcSessionId = "pcs_" + Date.now() + "_" + Math.random().toString(36).slice(2, 10);
+          }
+          startPhonePhotoPolling();
+          state.showPhonePhotoQRModal = true;
+          updateModals();
+          return;
+        }
+        if (action === "close-phone-photo-qr") { state.showPhonePhotoQRModal = false; updateModals(); return; }
+
+        /* Phone-photo screen submit */
+        if (action === "submit-phone-photos") { submitPhonePhotos(); return; }
+        if (action === "phone-test-ntfy") {
+          if (!state.pcSessionId) {
+            setPhonePhotoStatus("⚠ Няма PC сесия — сканирай QR-а отново.", "error");
+            return;
+          }
+          setPhonePhotoStatus("Изпращам тестов сигнал към PC…", "info");
+          try {
+            // Use a clearly non-Drive URL so the PC's poller correctly
+            // treats it as a test signal (and the PC just confirms receipt
+            // in the green status line instead of showing a fake photo).
+            const testUrl = "https://example.invalid/cg-test/" + Date.now();
+            const r = await fetch(NTFY_BASE + "/" + encodeURIComponent("cg-photos-" + state.pcSessionId), {
+              method: "POST",
+              body: testUrl,
+            });
+            if (r.ok) {
+              setPhonePhotoStatus(`✅ Тестов сигнал изпратен. Виж дали се появи на PC в зеления панел (като "test-${Date.now()}"). Ако да — ntfy работи.`, "info");
+            } else {
+              setPhonePhotoStatus(`❌ ntfy.sh върна HTTP ${r.status}.`, "error");
+            }
+          } catch (e) {
+            setPhonePhotoStatus(`❌ Не мога да достигна ntfy.sh: ${e && e.message ? e.message : e}`, "error");
+          }
+          return;
+        }
+        if (action === "phone-photo-done") {
+          // Show a goodbye screen and try to close the tab. iOS/Android Safari
+          // typically can't auto-close a user-opened tab — fall back to a
+          // friendly message.
+          document.body.innerHTML = `
+            <div style="display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px;background:#0a0a0a;font-family:-apple-system,BlinkMacSystemFont,sans-serif;color:#fff;text-align:center;">
+              <div>
+                <div style="font-size:80px;margin-bottom:16px;">✅</div>
+                <div style="font-size:22px;color:#10b981;margin-bottom:12px;font-weight:600;">Готово!</div>
+                <div style="font-size:14px;color:#888;line-height:1.5;">Снимките са изпратени.<br/>Може да затворите тази страница.</div>
+              </div>
+            </div>`;
+          try { window.close(); } catch (_) {}
+          return;
+        }
+        if (action === "phone-photo-reset") {
+          state.photoFiles = [];
+          state.photoPreviews = [];
+          state.notes = "";
+          state.photoError = "";
+          state.phonePhotoDone = false;
+          state.phonePhotoBusy = false;
+          state.phonePhotoUploaded = 0;
+          state.phonePhotoTotal = 0;
+          state.phonePhotoStatus = "";
+          state.phonePhotoStatusKind = "";
+          render();
+          return;
+        }
       });
 
       document.addEventListener("keydown", (e) => {
@@ -3879,6 +6262,12 @@
         } else if (state.showQRModal) {
           state.showQRModal = false;
           updateModals();
+        } else if (state.showPhonePhotoQRModal) {
+          state.showPhonePhotoQRModal = false;
+          updateModals();
+        } else if (state.hallDetail) {
+          state.hallDetail = null;
+          updateModals();
         }
       });
 
@@ -3888,6 +6277,7 @@
         if (sid) releaseLockBeacon(sid);
       }
       window.addEventListener("beforeunload", (e) => {
+        if (state.screen === "phone-photo-upload") return;
         e.preventDefault();
         e.returnValue = "";
       });
@@ -3899,6 +6289,7 @@
       document.addEventListener("visibilitychange", () => {
         if (document.visibilityState !== "hidden") return;
         if (state.screen !== "inspection") return;
+        if (state.screen === "phone-photo-upload") return;
         if (!_isMobileDevice) return;
         const sid = state.currentSessionId || sessionStorage.getItem(LOCK_SESSION_KEY);
         if (sid) releaseLockBeacon(sid);
@@ -3926,11 +6317,65 @@
             const c = document.getElementById('charts-container');
             if (c && r && r.length) buildChartsFromData(c, r);
           }
+          // Re-render home if it's currently visible so the "last checked"
+          // badges populate with real timestamps instead of "няма данни".
+          if (state.screen === "home") render();
         }).catch(() => {});
+        /* Periodic refresh of ИНФО cache while on home so the "last checked"
+           badges stay current as other inspectors submit. Every 3 minutes. */
+        setInterval(() => {
+          if (state.screen !== "home") return;
+          fetchSheetsData().then(r => {
+            _cachedChartRows = r;
+            render();
+          }).catch(() => {});
+        }, 3 * 60 * 1000);
+        /* Lighter every-minute re-render so the "преди X" ages tick over
+           without an extra Sheets request. */
+        setInterval(() => { if (state.screen === "home") render(); }, 60 * 1000);
+        /* Cine Grand прожекции (next-clean табло) — първоначално + на всеки 60с.
+           Обновява се във фонов режим (нужно за sticky „свърши" таймера) и
+           пре-рендерира на всеки 30с докато сме на екрана „Зали". */
+        if (NEXTCLEAN_PROXY_URL) {
+          fetchNextClean();
+          fetchNextBoard();
+          setInterval(fetchNextClean, 60 * 1000);
+          setInterval(() => { if (state.screen === "halls") fetchNextBoard(); }, 60 * 1000);
+          setInterval(() => { if (state.screen === "halls") render(); }, 30 * 1000);
+        }
         /* Обработи URL параметри от QR сканиране */
         const search = window.location.search || "";
         const hash = window.location.hash || "";
         const params = new URLSearchParams(search || (hash.startsWith("#") ? hash.slice(1) : ""));
+        if (params.get("phonephoto") === "1") {
+          /* Phone photo upload mode — самостоятелна страница, без lock/inspection */
+          state.phonePhotoLoc = decodeURIComponent((params.get("loc") || "").replace(/\+/g, "%20"));
+          state.phonePhotoType = params.get("type") || "";
+          state.phonePhotoInspector = decodeURIComponent((params.get("inspector") || "").replace(/\+/g, "%20"));
+          state.pcSessionId = params.get("sid") || "";
+          state.photoFiles = [];
+          state.photoPreviews = [];
+          state.notes = "";
+          state.photoError = "";
+          state.phonePhotoBusy = false;
+          state.phonePhotoDone = false;
+          state.phonePhotoUploaded = 0;
+          state.phonePhotoTotal = 0;
+          state.screen = "phone-photo-upload";
+          // Warm up the Apps Script + ntfy connections so the first real
+          // POST after photo selection isn't blocked by iOS's transient-
+          // activation gate. Fire-and-forget; failures are ignored.
+          if (SHEETS_WEB_APP_URL) {
+            fetch(SHEETS_WEB_APP_URL, { method: "GET", mode: "no-cors", cache: "no-store" }).catch(() => {});
+          }
+          if (state.pcSessionId) {
+            fetch(NTFY_BASE + "/" + encodeURIComponent("cg-photos-" + state.pcSessionId), {
+              method: "POST", body: "warmup-init-" + Date.now(), keepalive: true,
+            }).catch(() => {});
+          }
+          render();
+          return;
+        }
         if (params.get("open") === "inspection") {
           const type = params.get("type");
           const loc = params.get("location");
@@ -3942,10 +6387,14 @@
             updateLoadingText("Заключване на локация…");
             const sessionId = generateSessionId();
             const lockResult = await acquireLock(type, resolvedLoc, sessionId);
-            if (!lockResult.success) {
-              showLocationLocked(resolvedLoc, lockResult.error);
+            if (!lockResult.success && lockResult.locked) {
+              showLocationLocked(resolvedLoc, lockResult, { type });
               return;
             }
+            if (!lockResult.success) {
+              console.warn("[Lock] QR: server slow — proceeding без заключване:", lockResult.error);
+            }
+            state.lockConfirmed = (lockResult.success === true && !lockResult.offline);
             state.currentSessionId = sessionId;
             _lockAcquiredAt = Date.now();
             sessionStorage.setItem(LOCK_SESSION_KEY, sessionId);
@@ -3962,10 +6411,14 @@
           const resolvedLoc = config.locations.includes(decodedLoc) ? decodedLoc : config.locations[0];
           const sessionId = generateSessionId();
           const lockResult = await acquireLock(savedType, resolvedLoc, sessionId);
-          if (!lockResult.success) {
-            showLocationLocked(resolvedLoc, lockResult.error);
+          if (!lockResult.success && lockResult.locked) {
+            showLocationLocked(resolvedLoc, lockResult, { type: savedType });
             return;
           }
+          if (!lockResult.success) {
+            console.warn("[Lock] QR reload: server slow — proceeding без заключване:", lockResult.error);
+          }
+          state.lockConfirmed = (lockResult.success === true && !lockResult.offline);
           state.currentSessionId = sessionId;
           _lockAcquiredAt = Date.now();
           sessionStorage.setItem(LOCK_SESSION_KEY, sessionId);

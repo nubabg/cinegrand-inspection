@@ -6,6 +6,11 @@
 // ── Shared secret — трябва да съвпада с SHEETS_SECRET_TOKEN в index.html ──
 var SECRET_TOKEN = "cg-2025-secret-token";
 
+// ── Lock constants ──
+var LOCK_SHEET_NAME = "Locks";
+var LOCK_TIMEOUT_MIN = 10;
+var LOCK_SPREADSHEET_ID = "1UDZQAZU2WAs8G6Yh_II-PZp_0oTj6kGj__b8qecgMAU";
+
 // -----------------------------------------------------------
 // 1. doGet(e) - четене на данни от таблицата (частен достъп)
 // -----------------------------------------------------------
@@ -71,6 +76,8 @@ function doPost(e) {
     if (data.action === "checkLock") return handleCheckLock_(data);
     if (data.action === "acquireLockFirstFree") return handleAcquireLockFirstFree_(data);
     if (data.action === "updateChangingRoom") return handleUpdateChangingRoom_(data);
+    if (data.action === "uploadPhoto") return handleUploadPhoto_(data);
+    if (data.action === "getPhotosBySession") return handleGetPhotosBySession_(data);
 
     var record = data.record;
     var ss = SpreadsheetApp.openById("17cuchNPS7ajySczy-Wc7eUlDFgAClaE8gsZrqCXAKcA");
@@ -104,6 +111,22 @@ function doPost(e) {
     sheet.getRange(nextRow, 5).setValue(status);
     sheet.getRange(nextRow, 6).setValue(issuesText);
     sheet.getRange(nextRow, 7).setValue(notes);
+    // Колона 8: Линк(ове) към снимка/снимки (ако има)
+    var photoUrls = [];
+    if (record.photoUrls && record.photoUrls.length) {
+      photoUrls = record.photoUrls;
+    } else if (record.photoUrl) {
+      photoUrls = [record.photoUrl];
+    }
+    if (photoUrls.length === 1) {
+      sheet.getRange(nextRow, 8).setFormula('=HYPERLINK("' + photoUrls[0] + '";"📷 Виж снимка")');
+    } else if (photoUrls.length > 1) {
+      var label = "📷 " + photoUrls.length + " снимки";
+      sheet.getRange(nextRow, 8).setFormula('=HYPERLINK("' + photoUrls[0] + '";"' + label + '")');
+      sheet.getRange(nextRow, 8).setNote(photoUrls.join("\n"));
+    } else {
+      sheet.getRange(nextRow, 8).setValue("—");
+    }
     // Автоматично форматиране на новия ред
     styleInfoRow(sheet, nextRow);
     return ContentService
@@ -120,7 +143,7 @@ function doPost(e) {
 // -----------------------------------------------------------
 function styleInfoRow(sheet, row) {
   try {
-    var range = sheet.getRange(row, 1, 1, 7);
+    var range = sheet.getRange(row, 1, 1, 8);
     // Редуване на цветове: четни = тъмно синьо, нечетни = малко по-светло
     var bgColor = (row % 2 === 0) ? "#1a2744" : "#1e3054";
     range.setBackground(bgColor);
@@ -134,9 +157,12 @@ function styleInfoRow(sheet, row) {
     range.setHorizontalAlignment("center");
     sheet.getRange(row, 6, 1, 1).setHorizontalAlignment("left"); // ПРОБЛЕМИ - ляво
     sheet.getRange(row, 7, 1, 1).setHorizontalAlignment("left"); // БЕЛЕЖКИ - ляво
+    sheet.getRange(row, 8, 1, 1).setHorizontalAlignment("center"); // СНИМКА - центрирано
     // Wrap text за ПРОБЛЕМИ и БЕЛЕЖКИ
     sheet.getRange(row, 6, 1, 1).setWrap(true);
     sheet.getRange(row, 7, 1, 1).setWrap(true);
+    // СНИМКА линк - синьо оцветяване
+    sheet.getRange(row, 8, 1, 1).setFontColor("#4da6ff").setFontWeight("bold");
     // Оцветяване на СТАТУС (колона 5)
     var statusCell = sheet.getRange(row, 5);
     var statusVal = statusCell.getValue();
@@ -154,6 +180,32 @@ function styleInfoRow(sheet, row) {
   } catch(err) {
     Logger.log("styleInfoRow error: " + err.toString());
   }
+}
+
+// -----------------------------------------------------------
+// setupInfoHeaders - добавя хедър "СНИМКА" в колона 8
+// -----------------------------------------------------------
+function setupInfoHeaders() {
+  var ss = SpreadsheetApp.openById("17cuchNPS7ajySczy-Wc7eUlDFgAClaE8gsZrqCXAKcA");
+  var sheet = ss.getSheetByName("ИНФО") || ss.getSheetByName("Sheet1") || ss.getSheets()[0];
+  // Проверка дали има хедър в колона 8
+  var existingHeader = sheet.getRange(1, 8).getValue();
+  if (!existingHeader || existingHeader === "") {
+    sheet.getRange(1, 8).setValue("СНИМКА");
+    // Форматиране на хедъра (съвпада с останалите)
+    var headerCell = sheet.getRange(1, 8);
+    headerCell.setBackground("#1A1A1A");
+    headerCell.setFontColor("#C9A84C");
+    headerCell.setFontFamily("Arial");
+    headerCell.setFontSize(11);
+    headerCell.setFontWeight("bold");
+    headerCell.setVerticalAlignment("middle");
+    headerCell.setHorizontalAlignment("center");
+    headerCell.setBorder(true, true, true, true, true, true, "#C9A84C", SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
+  }
+  // Задаване на ширина на колона 8
+  sheet.setColumnWidth(8, 140);
+  Logger.log("✅ Хедър СНИМКА добавен в колона 8.");
 }
 // -----------------------------------------------------------
 // 3. onEditHandler - тригер при ръчно редактиране в ИНФО
@@ -349,6 +401,7 @@ function formatInfoSheetFull() {
   sheet.setColumnWidth(5, 90);   // СТАТУС
   sheet.setColumnWidth(6, 220);  // ПРОБЛЕМИ
   sheet.setColumnWidth(7, 180);  // БЕЛЕЖКИ
+  sheet.setColumnWidth(8, 140);  // СНИМКА
   Logger.log("formatInfoSheetFull completed for " + (lastRow - 1) + " rows.");
   Logger.log("✅ Всички редове са форматирани!");
 }
@@ -371,7 +424,7 @@ function applyProfessionalDesign() {
   var COLOR_STATUS_ERR  = "#3A1A1A";
   var COLOR_STATUS_OK_TEXT  = "#4CAF50";
   var COLOR_STATUS_ERR_TEXT = "#F44336";
-  var headerRange = sheet.getRange(1, 1, 1, 7);
+  var headerRange = sheet.getRange(1, 1, 1, 8);
   headerRange.setBackground(COLOR_HEADER_BG);
   headerRange.setFontColor(COLOR_HEADER_TEXT);
   headerRange.setFontFamily("Arial");
@@ -381,8 +434,12 @@ function applyProfessionalDesign() {
   headerRange.setHorizontalAlignment("center");
   headerRange.setBorder(true, true, true, true, true, true, COLOR_BORDER, SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
   sheet.setRowHeight(1, 40);
+  // Добавяне на "СНИМКА" хедър ако липсва
+  if (!sheet.getRange(1, 8).getValue()) {
+    sheet.getRange(1, 8).setValue("СНИМКА");
+  }
   for (var r = 2; r <= totalRows; r++) {
-    var rowRange = sheet.getRange(r, 1, 1, 7);
+    var rowRange = sheet.getRange(r, 1, 1, 8);
     var bgColor = (r % 2 === 0) ? COLOR_ROW_EVEN : COLOR_ROW_ODD;
     rowRange.setBackground(bgColor);
     rowRange.setFontColor(COLOR_TEXT);
@@ -401,6 +458,7 @@ function applyProfessionalDesign() {
     sheet.getRange(r, 5, 1, 1).setHorizontalAlignment("center");
     sheet.getRange(r, 6, 1, 1).setHorizontalAlignment("left");
     sheet.getRange(r, 7, 1, 1).setHorizontalAlignment("left");
+    sheet.getRange(r, 8, 1, 1).setHorizontalAlignment("center");
     var statusCell = sheet.getRange(r, 5);
     var statusVal = statusCell.getValue();
     if (statusVal === "Чисто") {
@@ -416,7 +474,7 @@ function applyProfessionalDesign() {
     sheet.getRange(r, 7, 1, 1).setWrap(true);
     sheet.setRowHeight(r, 32);
   }
-  var fullRange = sheet.getRange(1, 1, totalRows, 7);
+  var fullRange = sheet.getRange(1, 1, totalRows, 8);
   fullRange.setBorder(true, true, true, true, null, null, COLOR_BORDER, SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
   sheet.setColumnWidth(1, 90);
   sheet.setColumnWidth(2, 145);
@@ -425,6 +483,7 @@ function applyProfessionalDesign() {
   sheet.setColumnWidth(5, 100);
   sheet.setColumnWidth(6, 230);
   sheet.setColumnWidth(7, 190);
+  sheet.setColumnWidth(8, 140);
   Logger.log("✅ Корпоративният дизайн е приложен успешно!");
   SpreadsheetApp.getActiveSpreadsheet().toast("✅ Корпоративен дизайн приложен!", "Ciné Grand Style", 5);
 }
@@ -442,7 +501,7 @@ function applyDesignFull1000() {
   var ROW_FG = "#E8E8E8";
   var GOLD   = "#C9A84C";
   var INNER  = "#2A2A2A";
-  var hdr = sheet.getRange(1, 1, 1, 7);
+  var hdr = sheet.getRange(1, 1, 1, 8);
   hdr.setBackground(HDR_BG);
   hdr.setFontColor(HDR_FG);
   hdr.setFontFamily("Arial");
@@ -452,7 +511,11 @@ function applyDesignFull1000() {
   hdr.setHorizontalAlignment("center");
   hdr.setBorder(true, true, true, true, true, true, GOLD, SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
   sheet.setRowHeight(1, 40);
-  var allData = sheet.getRange(2, 1, totalRows - 1, 7);
+  // Добавяне на "СНИМКА" хедър ако липсва
+  if (!sheet.getRange(1, 8).getValue()) {
+    sheet.getRange(1, 8).setValue("СНИМКА");
+  }
+  var allData = sheet.getRange(2, 1, totalRows - 1, 8);
   allData.setBackground(ODD_BG);
   allData.setFontColor(ROW_FG);
   allData.setFontFamily("Arial");
@@ -461,7 +524,7 @@ function applyDesignFull1000() {
   allData.setFontWeight("normal");
   allData.setBorder(true, true, true, true, true, true, INNER, SpreadsheetApp.BorderStyle.SOLID);
   for (var r = 3; r <= totalRows; r += 2) {
-    sheet.getRange(r, 1, 1, 7).setBackground(EVN_BG);
+    sheet.getRange(r, 1, 1, 8).setBackground(EVN_BG);
   }
   sheet.getRange(2, 1, totalRows - 1, 1).setHorizontalAlignment("center");
   sheet.getRange(2, 2, totalRows - 1, 1).setHorizontalAlignment("center");
@@ -470,10 +533,11 @@ function applyDesignFull1000() {
   sheet.getRange(2, 5, totalRows - 1, 1).setHorizontalAlignment("center");
   sheet.getRange(2, 6, totalRows - 1, 1).setHorizontalAlignment("left");
   sheet.getRange(2, 7, totalRows - 1, 1).setHorizontalAlignment("left");
+  sheet.getRange(2, 8, totalRows - 1, 1).setHorizontalAlignment("center");
   sheet.getRange(2, 6, totalRows - 1, 1).setWrap(true);
   sheet.getRange(2, 7, totalRows - 1, 1).setWrap(true);
   sheet.setRowHeightsForced(2, totalRows - 1, 30);
-  sheet.getRange(1, 1, totalRows, 7).setBorder(true, true, true, true, null, null, GOLD, SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
+  sheet.getRange(1, 1, totalRows, 8).setBorder(true, true, true, true, null, null, GOLD, SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
   sheet.setColumnWidth(1, 90);
   sheet.setColumnWidth(2, 145);
   sheet.setColumnWidth(3, 160);
@@ -481,6 +545,7 @@ function applyDesignFull1000() {
   sheet.setColumnWidth(5, 100);
   sheet.setColumnWidth(6, 230);
   sheet.setColumnWidth(7, 190);
+  sheet.setColumnWidth(8, 140);
   var lastData = sheet.getLastRow();
   if (lastData >= 2) {
     var sv = sheet.getRange(2, 5, lastData - 1, 1).getValues();
@@ -531,4 +596,348 @@ function handleUpdateChangingRoom_(data) {
       .createTextOutput(JSON.stringify({ success: false, error: err.toString() }))
       .setMimeType(ContentService.MimeType.JSON);
   }
+}
+
+// -------------------------------------------------------
+// Качване на снимка в Google Drive и логване в PHOTOS
+// -------------------------------------------------------
+function handleUploadPhoto_(data) {
+  try {
+    var photoData = data.photoData;
+    var fileName = data.fileName || "photo.jpg";
+    var comment = data.comment || "";
+    var location = data.location || "";
+    var inspector = data.inspector || "";
+    var timestamp = data.timestamp || new Date().toISOString();
+    var pcSessionId = data.pcSessionId || "";
+
+    if (!photoData || photoData.length === 0) {
+      return ContentService
+        .createTextOutput(JSON.stringify({ success: false, error: "No photo data" }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // Преобразуване на base64 в blob
+    var blob = Utilities.newBlob(Utilities.base64Decode(photoData), "image/jpeg", fileName);
+
+    // Получаване или създаване на папка за снимки
+    var folder = getOrCreatePhotosFolder_();
+    if (!folder) {
+      return ContentService
+        .createTextOutput(JSON.stringify({ success: false, error: "Failed to create/get photos folder" }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // Качване на файл в папката
+    var file = folder.createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+
+    // Логване на снимката в PHOTOS лист
+    var ss = SpreadsheetApp.openById("17cuchNPS7ajySczy-Wc7eUlDFgAClaE8gsZrqCXAKcA");
+    logPhotoToSheet_(ss, file, comment, location, inspector, timestamp, pcSessionId);
+
+    return ContentService
+      .createTextOutput(JSON.stringify({
+        success: true,
+        photoUrl: file.getUrl(),
+        fileName: file.getName()
+      }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (error) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ success: false, error: error.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+// -------------------------------------------------------
+// Получаване на папка за снимки по хардкоднато ID
+// -------------------------------------------------------
+var PHOTOS_FOLDER_ID = "1upFim6e3ToquhqJl9KO2u_6m9QoZ-Iek";
+
+function getOrCreatePhotosFolder_() {
+  try {
+    return DriveApp.getFolderById(PHOTOS_FOLDER_ID);
+  } catch (error) {
+    Logger.log("Error in getOrCreatePhotosFolder_: " + error);
+    return null;
+  }
+}
+
+// -------------------------------------------------------
+// Логване на снимка в PHOTOS лист
+// -------------------------------------------------------
+function logPhotoToSheet_(ss, file, comment, location, inspector, timestamp, pcSessionId) {
+  try {
+    // Получаване или създаване на PHOTOS лист
+    var sheet = ss.getSheetByName("PHOTOS");
+    if (!sheet) {
+      sheet = ss.insertSheet("PHOTOS");
+      // Добавяне на хедъри (включително PC сесия)
+      sheet.getRange("A1").setValue("Линк към снимка");
+      sheet.getRange("B1").setValue("Дата и час");
+      sheet.getRange("C1").setValue("Коментар");
+      sheet.getRange("D1").setValue("Локация");
+      sheet.getRange("E1").setValue("Инспектор");
+      sheet.getRange("F1").setValue("PC сесия");
+
+      // Форматиране на хедър ред
+      var headerRange = sheet.getRange("A1:F1");
+      headerRange.setBackground("#1a2744");
+      headerRange.setFontColor("#FFFFFF");
+      headerRange.setFontWeight("bold");
+      headerRange.setHorizontalAlignment("center");
+
+      // Настройка на ширини на колони
+      sheet.setColumnWidth(1, 400);
+      sheet.setColumnWidth(2, 180);
+      sheet.setColumnWidth(3, 300);
+      sheet.setColumnWidth(4, 150);
+      sheet.setColumnWidth(5, 150);
+      sheet.setColumnWidth(6, 220);
+    } else {
+      // Ако листът съществува без F хедър — добави го
+      var fHeader = sheet.getRange("F1").getValue();
+      if (!fHeader) {
+        sheet.getRange("F1").setValue("PC сесия");
+        sheet.getRange("F1").setBackground("#1a2744").setFontColor("#FFFFFF").setFontWeight("bold").setHorizontalAlignment("center");
+        sheet.setColumnWidth(6, 220);
+      }
+    }
+
+    // Получаване на последния ред и добавяне на нов запис
+    var lastRow = sheet.getLastRow();
+    var nextRow = lastRow + 1;
+
+    // Форматиране на дата/час
+    var date = new Date(timestamp);
+    var dateStr = Utilities.formatDate(date, "Europe/Sofia", "yyyy-MM-dd HH:mm:ss");
+
+    // Записване на данните
+    sheet.getRange(nextRow, 1).setValue(file.getUrl());
+    sheet.getRange(nextRow, 2).setValue(dateStr);
+    sheet.getRange(nextRow, 3).setValue(comment);
+    sheet.getRange(nextRow, 4).setValue(location);
+    sheet.getRange(nextRow, 5).setValue(inspector);
+    sheet.getRange(nextRow, 6).setValue(pcSessionId || "");
+
+    // Форматиране на новия ред
+    var dataRange = sheet.getRange(nextRow, 1, 1, 6);
+    dataRange.setBackground("#1e3054");
+    dataRange.setFontColor("#FFFFFF");
+    dataRange.setFontSize(10);
+    dataRange.setVerticalAlignment("top");
+    dataRange.setWrap(true);
+
+    // Линкът в колона A трябва да е синьо и подчертано
+    sheet.getRange(nextRow, 1).setFontColor("#4da6ff");
+
+    Logger.log("Photo logged to PHOTOS sheet: " + file.getName() + " (sid=" + (pcSessionId || "") + ")");
+  } catch (error) {
+    Logger.log("Error in logPhotoToSheet_: " + error);
+  }
+}
+
+// -------------------------------------------------------
+// Връща всички снимки за дадена PC сесия (за live polling от PC)
+// -------------------------------------------------------
+function handleGetPhotosBySession_(data) {
+  try {
+    var pcSessionId = data.pcSessionId || "";
+    if (!pcSessionId) return jsonResponse_({ success: false, error: "No pcSessionId" });
+    var ss = SpreadsheetApp.openById("17cuchNPS7ajySczy-Wc7eUlDFgAClaE8gsZrqCXAKcA");
+    var sheet = ss.getSheetByName("PHOTOS");
+    if (!sheet) return jsonResponse_({ success: true, photos: [] });
+    var lastRow = sheet.getLastRow();
+    if (lastRow < 2) return jsonResponse_({ success: true, photos: [] });
+    var values = sheet.getRange(2, 1, lastRow - 1, 6).getValues();
+    var photos = [];
+    for (var i = 0; i < values.length; i++) {
+      if (String(values[i][5]) === String(pcSessionId)) {
+        photos.push({
+          url: values[i][0],
+          timestamp: values[i][1],
+          comment: values[i][2],
+          location: values[i][3],
+          inspector: values[i][4]
+        });
+      }
+    }
+    return jsonResponse_({ success: true, photos: photos });
+  } catch (err) {
+    return jsonResponse_({ success: false, error: err.toString() });
+  }
+}
+
+// -------------------------------------------------------
+// LOCK FUNCTIONS — управление на заключванията
+// -------------------------------------------------------
+function getLockSheet_() {
+  var ss = SpreadsheetApp.openById(LOCK_SPREADSHEET_ID);
+  var sheet = ss.getSheetByName(LOCK_SHEET_NAME);
+  if (!sheet) {
+    sheet = ss.insertSheet(LOCK_SHEET_NAME);
+    sheet.appendRow(["type", "location", "session_id", "locked_at", "expires_at"]);
+    sheet.setFrozenRows(1);
+    sheet.setColumnWidth(1, 100);
+    sheet.setColumnWidth(2, 180);
+    sheet.setColumnWidth(3, 280);
+    sheet.setColumnWidth(4, 200);
+    sheet.setColumnWidth(5, 200);
+  }
+  return sheet;
+}
+
+function cleanExpiredLocks_(sheet) {
+  // ОПТИМИЗИРАНО: вместо deleteRow() в цикъл (бавно, N операции, причинява
+  // Google timeout/грешки при натоварване) — четем всичко веднъж, филтрираме
+  // изтеклите и презаписваме листа с ЕДНА операция.
+  var data = sheet.getDataRange().getValues();
+  if (data.length <= 1) return;
+  var now = new Date();
+  var header = data[0];
+  var cols = header.length;
+  var keep = [];
+  for (var i = 1; i < data.length; i++) {
+    var expiresAt = new Date(data[i][4]);
+    if (!(now > expiresAt)) keep.push(data[i]); // задръж само НЕизтеклите
+  }
+  // Ако няма изтекли — не пипай листа (спестява запис)
+  if (keep.length === data.length - 1) return;
+  // Изчисти старите data редове и презапиши задържаните с една операция
+  var oldRows = data.length - 1;
+  sheet.getRange(2, 1, oldRows, cols).clearContent();
+  if (keep.length > 0) {
+    sheet.getRange(2, 1, keep.length, cols).setValues(keep);
+  }
+}
+
+function handleAcquireLock_(data) {
+  var lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(10000);
+  } catch (e) {
+    return jsonResponse_({ success: false, error: "Сървърът е зает. Опитайте отново." });
+  }
+
+  try {
+    var sheet = getLockSheet_();
+    cleanExpiredLocks_(sheet);
+
+    var allData = sheet.getDataRange().getValues();
+    for (var i = 1; i < allData.length; i++) {
+      if (allData[i][0] === data.type && allData[i][1] === data.location) {
+        var expiresAt = new Date(allData[i][4]);
+        var minutesLeft = Math.max(1, Math.ceil((expiresAt - new Date()) / 60000));
+        lock.releaseLock();
+        return jsonResponse_({
+          success: false,
+          locked: true,
+          minutesLeft: minutesLeft,
+          error: data.location + " вече се проверява. Опитайте след ~" + minutesLeft + " мин."
+        });
+      }
+    }
+
+    var now = new Date();
+    var expires = new Date(now.getTime() + LOCK_TIMEOUT_MIN * 60 * 1000);
+    sheet.appendRow([
+      data.type,
+      data.location,
+      data.sessionId,
+      now.toISOString(),
+      expires.toISOString()
+    ]);
+
+    lock.releaseLock();
+    return jsonResponse_({ success: true });
+
+  } catch (e) {
+    lock.releaseLock();
+    return jsonResponse_({ success: false, error: e.message });
+  }
+}
+
+function handleReleaseLock_(data) {
+  var lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(10000);
+  } catch (e) {
+    return jsonResponse_({ success: false, error: "Сървърът е зает." });
+  }
+
+  try {
+    var sheet = getLockSheet_();
+    var allData = sheet.getDataRange().getValues();
+    for (var i = allData.length - 1; i >= 1; i--) {
+      if (allData[i][2] === data.sessionId) {
+        sheet.deleteRow(i + 1);
+      }
+    }
+    lock.releaseLock();
+    return jsonResponse_({ success: true });
+  } catch (e) {
+    lock.releaseLock();
+    return jsonResponse_({ success: false, error: e.message });
+  }
+}
+
+function handleAcquireLockFirstFree_(data) {
+  var lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(10000);
+  } catch (e) {
+    return jsonResponse_({ success: false, error: "Сървърът е зает. Опитайте отново." });
+  }
+
+  try {
+    var sheet = getLockSheet_();
+    cleanExpiredLocks_(sheet);
+    var allData = sheet.getDataRange().getValues();
+    var lockedLocations = {};
+    for (var i = 1; i < allData.length; i++) {
+      lockedLocations[allData[i][0] + "|" + allData[i][1]] = true;
+    }
+
+    var locations = data.locations || [];
+    var type = data.type || "";
+    var sessionId = data.sessionId || "";
+    for (var j = 0; j < locations.length; j++) {
+      var loc = locations[j];
+      if (!lockedLocations[type + "|" + loc]) {
+        var now = new Date();
+        var expires = new Date(now.getTime() + LOCK_TIMEOUT_MIN * 60 * 1000);
+        sheet.appendRow([type, loc, sessionId, now.toISOString(), expires.toISOString()]);
+        lock.releaseLock();
+        return jsonResponse_({ success: true, location: loc });
+      }
+    }
+
+    lock.releaseLock();
+    return jsonResponse_({ success: false, allLocked: true, error: "Всички локации са заети." });
+  } catch (e) {
+    lock.releaseLock();
+    return jsonResponse_({ success: false, error: e.message });
+  }
+}
+
+function handleCheckLock_(data) {
+  try {
+    var sheet = getLockSheet_();
+    cleanExpiredLocks_(sheet);
+    var allData = sheet.getDataRange().getValues();
+    for (var i = 1; i < allData.length; i++) {
+      if (allData[i][2] === data.sessionId) {
+        return jsonResponse_({ success: true, valid: true });
+      }
+    }
+    return jsonResponse_({ success: true, valid: false });
+  } catch (e) {
+    return jsonResponse_({ success: false, error: e.message });
+  }
+}
+
+function jsonResponse_(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
 }
